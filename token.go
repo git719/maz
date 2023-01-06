@@ -3,6 +3,7 @@
 package ezmsal
 
 import (
+	"fmt"
 	"context"
 	"path/filepath"
 	"strings"
@@ -19,7 +20,7 @@ func GetTokenInteractively(scopes []string, confDir, tokenFile, authorityUrl, us
 	cacheFilePath := filepath.Join(confDir, tokenFile)
 	cacheAccessor := &TokenCache{cacheFilePath}
 
-	// Note we're using constant constAzPowerShellClientId
+	// Note we're using constant constAzPowerShellClientId for interactive login
 	app, err := public.New(constAzPowerShellClientId, public.WithAuthority(authorityUrl), public.WithCache(cacheAccessor))
 	if err != nil { panic(err.Error()) }
 
@@ -44,7 +45,7 @@ func GetTokenInteractively(scopes []string, confDir, tokenFile, authorityUrl, us
 }
 
 func GetTokenByCredentials(scopes []string, confDir, tokenFile, authorityUrl, clientId, clientSecret string) (token string, err error) {
-	// Client_id + secret login automated login with 'confidential' app
+	// ClientId+Secret automated login with 'confidential' app
 	// See See https://github.com/AzureAD/microsoft-authentication-library-for-go/blob/dev/apps/confidential/confidential.go
 
 	// Set up token cache storage file and accessor
@@ -53,7 +54,7 @@ func GetTokenByCredentials(scopes []string, confDir, tokenFile, authorityUrl, cl
 	
 	// Initializing the client credential
 	cred, err := confidential.NewCredFromSecret(clientSecret)
-	if err != nil { print("Could not create a cred object from client_secret.\n") }
+	if err != nil { fmt.Println("Could not create a cred object from client_secret.") }
 
 	// Automated login obviously uses the registered app client_id (App ID)
 	app, err := confidential.New(clientId,	cred, confidential.WithAuthority(authorityUrl), confidential.WithAccessor(cacheAccessor))
