@@ -7,7 +7,6 @@ import (
 	"context"
 	"path/filepath"
 	"strings"
-
 	"github.com/AzureAD/microsoft-authentication-library-for-go/apps/public"
 	"github.com/AzureAD/microsoft-authentication-library-for-go/apps/confidential"
 )
@@ -21,7 +20,7 @@ func GetTokenInteractively(scopes []string, confDir, tokenFile, authorityUrl, us
 	cacheAccessor := &TokenCache{cacheFilePath}
 
 	// Note we're using constant constAzPowerShellClientId for interactive login
-	app, err := public.New(constAzPowerShellClientId, public.WithAuthority(authorityUrl), public.WithCache(cacheAccessor))
+	app, err := public.New(ConstAzPowerShellClientId, public.WithAuthority(authorityUrl), public.WithCache(cacheAccessor))
 	if err != nil { panic(err.Error()) }
 
 	// Select the account to use based on username variable 

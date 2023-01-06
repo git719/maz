@@ -13,7 +13,6 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-
 	"github.com/AzureAD/microsoft-authentication-library-for-go/apps/cache"
 )
 
