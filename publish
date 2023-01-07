@@ -20,8 +20,11 @@ go mod tidy
 printf "=> Running go test ./... (fix any errors that my appear below)\n"
 go test ./...
 
-printf "\nWE ARE GOOD NOW\n\n=> To publish, now do:\n\n"
+printf "\n=> GOOD TO GO! To publish, now do:\n\n"
+printf "P=mymod && T=v0.1.1 && git add . && git commit -m \"\$P: updates \$T\" && git tag \$T && git push origin \$T && git push\n\n"
+printf "or\n\n"
 printf "git add .\n"
-printf "git commit -m \"mymod: updates v0.1.0\"\n"
+printf "git commit -m \"mymod: updates v0.1.0\n"
 printf "git tag v0.1.0\n"
-printf "git push origin v0.1.0\n\n"
+printf "git push origin v0.1.0\n"
+printf "git push\n\n"
