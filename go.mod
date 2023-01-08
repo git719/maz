@@ -1,4 +1,4 @@
-module github.com/git719/ezmsal
+module github.com/git719/aza
 
 go 1.19
 

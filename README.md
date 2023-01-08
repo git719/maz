@@ -1,31 +1,31 @@
-# ezmsal
-Easy Azure MSAL authentication for command line utilities.
+# aza
+Easy Azure MSAL authentication for command line and automated utilities.
 
 # Getting Started
-1. Any utility using this ezmsal module must instantiate a variable of type `ezmsal.GlobVarsType`. For example: 
+1. Any utility using this `aza` module must instantiate a variable of type `aza.AzaBundle`. For example: 
 
 ```
 import (
-    "github.com/git719/ezmsal"
+    "github.com/git719/aza"
 )
 
-z := make(ezmsal.GlobVarsType{
-    confDir:      "",               // Set to your liking, e.g., filepath.Join(os.Getenv("HOME"), "." + prgname)
-    credsFile:    "",               // Set to something like "credentials.yaml"
-    tokenFile:    "",               // Set to something like "accessTokens.json"
-    tenantId:     "",               // Set the following 5 according to credsFile
+z := aza.AzaBundle{
+    confDir:      "",               // To be set to filepath.Join(os.Getenv("HOME"), "." + prgname)
+    credsFile:    "",               // To be set to something like "credentials.yaml"
+    tokenFile:    "",               // To be set to something like "accessTokens.json"
+    tenantId:     "",               // The following 5 to be set according to credsFile
     clientId:     "",
     clientSecret: "",
-    interactive:  nil,
+    interactive:  false,
     username:     "",
-    authorityUrl: "",               // Set to constAuthUrl + tenantID
+    authorityUrl: "",               // Set to ConstAuthUrl + tenantID
     mgToken:      "",               // Below 4 will be set up by SetupApiTokens()
-    mgHeaders:    ezmsl.MapType{},
+    mgHeaders:    aza.MapString{},
     azToken:      "",
-    azHeaders:    ezmsl.MapType{},  
-})
+    azHeaders:    aza.MapString{},  
+}
 ```
 
 2. Then call `SetupInterativeLogin(z)` or `SetupAutomatedLogin(z)` to setup the credentials file accordingly.
-3. Then call `z := SetupApiTokens(z)` to acquire the respective API tokens and web headers.
-4. Now use `z.mgHeaders` and/or `z.azHeaders` to call your own functions to do whatever you want with those APIs.
+3. Then call `z := SetupApiTokens(*z)` to acquire the respective API tokens and web headers.
+4. Now use `z.mgHeaders` and/or `z.azHeaders` to call your own REST API functions to do whatever you want.
