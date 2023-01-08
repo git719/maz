@@ -1,6 +1,6 @@
-// ezmsal.go
+// aza.go
 
-package ezmsal
+package aza
 
 import (
 	"fmt"
@@ -23,7 +23,7 @@ const (
 
 type MapString map[string]string
 
-type MsalVariables struct {
+type AzaBundle struct {
 	ConfDir      string // Directory where utility will store all its file
 	CredsFile    string
 	TokenFile    string
@@ -43,7 +43,7 @@ func StrVal(x interface{}) string {
 	return utl.StrVal(x) // Shorthand
 }
 
-func DumpVariables(z MsalVariables) {
+func DumpVariables(z AzaBundle) {
 	// Dump essential global variables
 	fmt.Printf("%-16s %s\n", "tenant_id:", z.TenantId)
 	if z.Interactive {
@@ -65,7 +65,7 @@ func DumpVariables(z MsalVariables) {
 	os.Exit(0)
 }
 
-func DumpCredentials(z MsalVariables) {
+func DumpCredentials(z AzaBundle) {
 	// Dump credentials file
 	filePath := filepath.Join(z.ConfDir, z.CredsFile) // credentials.yaml
 	credsRaw, err := utl.LoadFileYaml(filePath)
@@ -84,7 +84,7 @@ func DumpCredentials(z MsalVariables) {
 	os.Exit(0)
 }
 
-func SetupInterativeLogin(z MsalVariables) {
+func SetupInterativeLogin(z AzaBundle) {
 	// Set up credentials file for interactive login
 	filePath := filepath.Join(z.ConfDir, z.CredsFile) // credentials.yaml
 	if !utl.ValidUuid(z.TenantId) {
@@ -97,7 +97,7 @@ func SetupInterativeLogin(z MsalVariables) {
 	fmt.Printf("[%s] Updated credentials\n", filePath)
 }
 
-func SetupAutomatedLogin(z MsalVariables) {
+func SetupAutomatedLogin(z AzaBundle) {
 	// Set up credentials file for client_id + secret login
 	filePath := filepath.Join(z.ConfDir, z.CredsFile) // credentials.yaml
 	if !utl.ValidUuid(z.TenantId) {
@@ -113,7 +113,7 @@ func SetupAutomatedLogin(z MsalVariables) {
 	fmt.Printf("[%s] Updated credentials\n", filePath)
 }
 
-func SetupCredentials(z MsalVariables) MsalVariables {
+func SetupCredentials(z *AzaBundle) AzaBundle {
 	// Read credentials file and set up authentication parameters as global variables
 	filePath := filepath.Join(z.ConfDir, z.CredsFile) // credentials.yaml
 	if utl.FileNotExist(filePath) && utl.FileSize(filePath) < 1 {
@@ -146,12 +146,12 @@ func SetupCredentials(z MsalVariables) MsalVariables {
 			utl.Die("[%s] client_secret is blank\n", filePath)
 		}
 	}
-	return z
+	return *z
 }
 
-func SetupApiTokens(z MsalVariables) MsalVariables {
+func SetupApiTokens(z *AzaBundle) AzaBundle {
 	// Initialize necessary global variables, acquire all API tokens, and set them up for use
-	z = SetupCredentials(z) // Sets up tenant ID, client ID, authentication method, etc
+	*z = SetupCredentials(z) // Sets up tenant ID, client ID, authentication method, etc
 	z.AuthorityUrl = ConstAuthUrl + z.TenantId
 
 	// Currently supporting calls for 2 different APIs (Azure Resource Management (ARM) and MS Graph), so each needs its own
@@ -184,5 +184,5 @@ func SetupApiTokens(z MsalVariables) MsalVariables {
 
 	// Support for other APIs can be added here in the future ...
 
-	return z
+	return *z
 }

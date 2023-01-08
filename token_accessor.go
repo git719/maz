@@ -7,7 +7,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-package ezmsal
+package aza
 
 import (
 	"github.com/AzureAD/microsoft-authentication-library-for-go/apps/cache"

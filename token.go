@@ -1,6 +1,6 @@
 // token.go
 
-package ezmsal
+package aza
 
 import (
 	"context"
