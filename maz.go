@@ -4,21 +4,23 @@ package maz
 
 import (
 	"fmt"
+	"github.com/git719/utl"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
-	"github.com/git719/utl"
 )
 
 const (
-	ConstAuthUrl = "https://login.microsoftonline.com/"
-	ConstMgUrl   = "https://graph.microsoft.com"
-	ConstAzUrl   = "https://management.azure.com"
+	ConstAuthUrl              = "https://login.microsoftonline.com/"
+	ConstMgUrl                = "https://graph.microsoft.com"
+	ConstAzUrl                = "https://management.azure.com"
 	ConstAzPowerShellClientId = "1950a258-227b-4e31-a9cf-717495945fc2"
 	// Interactive login uses above 'Azure PowerShell' clientId
 	// See https://stackoverflow.com/questions/30454771/how-does-azure-powershell-work-with-username-password-based-auth
+        rUp = "\x1B[2K\r" // Used to print in previous line
+	// See https://stackoverflow.com/questions/1508490/erase-the-current-printed-console-line
 )
 
 type Bundle struct {
@@ -31,14 +33,16 @@ type Bundle struct {
 	Interactive  bool
 	Username     string
 	AuthorityUrl string
-	MgToken      string // MS Graph API ...
-	MgHeaders    map[string]string
-	AzToken      string // Azure Resource Management API
-	AzHeaders    map[string]string
-}
 
-func StrVal(x interface{}) string {
-	return utl.StrVal(x) // Shorthand
+        // To support MS Graph API
+	MgToken      string 
+	MgHeaders    map[string]string
+
+        // To support Azure Resource Management API
+	AzToken      string
+	AzHeaders    map[string]string
+
+       // In the future, other token/headers pairs for other APIs can be added below
 }
 
 func DumpVariables(z Bundle) {
@@ -54,11 +58,11 @@ func DumpVariables(z Bundle) {
 	fmt.Printf("%-16s %s\n%-16s %s\n%-16s %s\n", "authority_url:", z.AuthorityUrl, "mg_url:", ConstMgUrl, "az_url:", ConstAzUrl)
 	fmt.Printf("mg_headers:\n")
 	for k, v := range z.MgHeaders {
-		fmt.Printf("  %-14s %s\n", StrVal(k)+":", StrVal(v))
+		fmt.Printf("  %-14s %s\n", utl.Str(k)+":", utl.Str(v))
 	}
 	fmt.Printf("az_headers:\n")
 	for k, v := range z.AzHeaders {
-		fmt.Printf("  %-14s %s\n", StrVal(k)+":", StrVal(v))
+		fmt.Printf("  %-14s %s\n", utl.Str(k)+":", utl.Str(v))
 	}
 	os.Exit(0)
 }
@@ -71,13 +75,13 @@ func DumpCredentials(z Bundle) {
 		utl.Die("[%s] %s\n", filePath, err)
 	}
 	creds := credsRaw.(map[string]interface{})
-	fmt.Printf("%-14s %s\n", "tenant_id:", StrVal(creds["tenant_id"]))
-	if strings.ToLower(StrVal(creds["interactive"])) == "true" {
-		fmt.Printf("%-14s %s\n", "username:", StrVal(creds["username"]))
+	fmt.Printf("%-14s %s\n", "tenant_id:", utl.Str(creds["tenant_id"]))
+	if strings.ToLower(utl.Str(creds["interactive"])) == "true" {
+		fmt.Printf("%-14s %s\n", "username:", utl.Str(creds["username"]))
 		fmt.Printf("%-14s %s\n", "interactive:", "true")
 	} else {
-		fmt.Printf("%-14s %s\n", "client_id:", StrVal(creds["client_id"]))
-		fmt.Printf("%-14s %s\n", "client_secret:", StrVal(creds["client_secret"]))
+		fmt.Printf("%-14s %s\n", "client_id:", utl.Str(creds["client_id"]))
+		fmt.Printf("%-14s %s\n", "client_secret:", utl.Str(creds["client_secret"]))
 	}
 	os.Exit(0)
 }
@@ -125,21 +129,21 @@ func SetupCredentials(z *Bundle) Bundle {
 	creds := credsRaw.(map[string]interface{})
 
 	// Note that we are updating variables to be returned and used globally
-	z.TenantId = StrVal(creds["tenant_id"])
+	z.TenantId = utl.Str(creds["tenant_id"])
 	if !utl.ValidUuid(z.TenantId) {
 		utl.Die("[%s] tenant_id '%s' is not a valid UUID\n", filePath, z.TenantId)
 	}
 
-	z.Interactive, err = strconv.ParseBool(StrVal(creds["interactive"]))
+	z.Interactive, err = strconv.ParseBool(utl.Str(creds["interactive"]))
 
 	if z.Interactive {
-		z.Username = strings.ToLower(StrVal(creds["username"]))
+		z.Username = strings.ToLower(utl.Str(creds["username"]))
 	} else {
-		z.ClientId = StrVal(creds["client_id"])
+		z.ClientId = utl.Str(creds["client_id"])
 		if !utl.ValidUuid(z.ClientId) {
 			utl.Die("[%s] client_id '%s' is not a valid UUID\n", filePath, z.ClientId)
 		}
-		z.ClientSecret = StrVal(creds["client_secret"])
+		z.ClientSecret = utl.Str(creds["client_secret"])
 		if z.ClientSecret == "" {
 			utl.Die("[%s] client_secret is blank\n", filePath)
 		}

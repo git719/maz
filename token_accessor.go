@@ -10,10 +10,10 @@
 package maz
 
 import (
+	"github.com/AzureAD/microsoft-authentication-library-for-go/apps/cache"
 	"io/ioutil"
 	"log"
 	"os"
-	"github.com/AzureAD/microsoft-authentication-library-for-go/apps/cache"
 )
 
 type TokenCache struct {

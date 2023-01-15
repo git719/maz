@@ -19,11 +19,15 @@ go mod tidy
 printf "==> Running go test ./... (fix any errors that my appear below)\n"
 go test ./...
 
-printf "\n==> Good to go! To publish, now do one of these:\n\n"
-printf "P=mymod && T=v0.1.1 && git add . && git commit -m \"\$P: updates \$T\" && git tag \$T && git push origin \$T && git push\n\n"
+printf "\n\n==> Last 3 tag versions:\n"
+git tag | tail -3
+CurrentTag=`git tag | tail -1`
+Prg=`head -1 go.mod | awk -F'/' '{print $NF}' | awk '{print $NF}'`
+printf "\n==> Good to go. To publish, do below One-liner or multiple commands, advancing Tag version:\n\n"
+printf "Tag=$CurrentTag && Prg=$Prg && git add . && git commit -m \"\$Prg: updates \$Tag\" && git tag \$Tag && git push origin \$Tag && git push\n\n"
 printf "or\n\n"
 printf "git add .\n"
-printf "git commit -m \"mymod: updates v0.1.0\n"
-printf "git tag v0.1.0\n"
-printf "git push origin v0.1.0\n"
+printf "git commit -m \"mymod: updates $CurrentTag\n"
+printf "git tag $CurrentTag\n"
+printf "git push origin $CurrentTag\n"
 printf "git push\n\n"
