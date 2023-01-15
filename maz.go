@@ -19,7 +19,7 @@ const (
 	ConstAzPowerShellClientId = "1950a258-227b-4e31-a9cf-717495945fc2"
 	// Interactive login uses above 'Azure PowerShell' clientId
 	// See https://stackoverflow.com/questions/30454771/how-does-azure-powershell-work-with-username-password-based-auth
-        rUp = "\x1B[2K\r" // Used to print in previous line
+	rUp = "\x1B[2K\r" // Used to print in previous line
 	// See https://stackoverflow.com/questions/1508490/erase-the-current-printed-console-line
 )
 
@@ -34,15 +34,15 @@ type Bundle struct {
 	Username     string
 	AuthorityUrl string
 
-        // To support MS Graph API
-	MgToken      string 
-	MgHeaders    map[string]string
+	// To support MS Graph API
+	MgToken   string
+	MgHeaders map[string]string
 
-        // To support Azure Resource Management API
-	AzToken      string
-	AzHeaders    map[string]string
+	// To support Azure Resource Management API
+	AzToken   string
+	AzHeaders map[string]string
 
-       // In the future, other token/headers pairs for other APIs can be added below
+	// In the future, other token/headers pairs for other APIs can be added below
 }
 
 func DumpVariables(z Bundle) {

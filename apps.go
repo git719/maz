@@ -130,7 +130,7 @@ func PrintApp(x map[string]interface{}, z Bundle) {
 			if api["resourceAccess"] != nil && len(api["resourceAccess"].([]interface{})) > 0 {
 				Perms := api["resourceAccess"].([]interface{})
 				apiName := utl.Str(sp["displayName"]) // This API's name
-				for _, i := range Perms {            // Iterate through perms
+				for _, i := range Perms {             // Iterate through perms
 					perm := i.(map[string]interface{})
 					pid := utl.Str(perm["id"]) // JSON string
 					fmt.Printf("  %-50s %s\n", apiName, roleMap[pid])
