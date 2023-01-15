@@ -10,7 +10,7 @@ import (
     "github.com/git719/maz"
 )
 z := maz.Bundle{
-    ConfDir:      "",                   // You set later to something like filepath.Join(os.Getenv("HOME"), "." + prgname)
+    ConfDir:      "",                   // You set later, see example below
     CredsFile:    "credentials.yaml",
     TokenFile:    "accessTokens.json",
     TenantId:     "",
