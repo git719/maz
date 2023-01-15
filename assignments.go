@@ -14,12 +14,13 @@ func PrintRoleAssignment(x map[string]interface{}, z Bundle) {
 	if x == nil {
 		return
 	}
+	co := utl.ColRed(":") // Colorize ":" text to Red
 	if x["name"] != nil {
-		xId := utl.Blu + "id:" + utl.Rst
-		fmt.Printf("%s %s\n", xId, utl.Str(x["name"]))
+		cId := utl.ColCya("id") + co // Colorize "id" text to Cyan
+		fmt.Printf("%s %s\n", cId, utl.Str(x["name"]))
 	}
 
-	fmt.Printf("properties:\n")
+	fmt.Printf(utl.ColCya("properties") + co + "\n")
 	if x["properties"] == nil {
 		fmt.Printf("  <Missing??>\n")
 		return
@@ -28,7 +29,9 @@ func PrintRoleAssignment(x map[string]interface{}, z Bundle) {
 
 	roleNameMap := GetIdMapRoleDefs(z) // Get all role definition id:name pairs
 	roleId := utl.LastElem(utl.Str(xProp["roleDefinitionId"]), "/")
-	fmt.Printf("  %-17s %s  # roleName = \"%s\"\n", "roleDefinitionId:", roleId, roleNameMap[roleId])
+	cRoleDefinitionId := utl.ColCya("roleDefinitionId") + co
+	cComment := utl.ColBlu("# roleName = \"" + roleNameMap[roleId] + "\"")
+	fmt.Printf("  %-17s %s  %s\n", cRoleDefinitionId, roleId, cComment)
 
 	var principalNameMap map[string]string = nil
 	pType := utl.Str(xProp["principalType"])
@@ -47,21 +50,26 @@ func PrintRoleAssignment(x map[string]interface{}, z Bundle) {
 	if pName == "" {
 		pName = "???"
 	}
-	fmt.Printf("  %-17s %s  # principaltype = %s, displayName = \"%s\"\n", "principalId:", principalId, pType, pName)
+	cPrincipalId := utl.ColCya("principalId") + co
+	cComment = utl.ColBlu("# principalType = " + pType + ", displayName = \"" + pName + "\"")
+	fmt.Printf("  %-17s %s  %s\n", cPrincipalId, principalId, cComment)
 
 	subNameMap := GetIdMapSubs(z) // Get all subscription id:name pairs
 	scope := utl.Str(xProp["scope"])
 	if scope == "" {
 		scope = utl.Str(xProp["Scope"])
 	} // Account for possibly capitalized key
+	cScope := utl.ColCya("scope") + co
 	if strings.HasPrefix(scope, "/subscriptions") {
 		split := strings.Split(scope, "/")
 		subName := subNameMap[split[2]]
-		fmt.Printf("  %-17s %s  # Sub = %s\n", "scope:", scope, subName)
+		cComment = utl.ColBlu("# Sub = " + subName)
+		fmt.Printf("  %-17s %s  %s\n", cScope, scope, cComment)
 	} else if scope == "/" {
-		fmt.Printf("  %-17s %s  # Entire tenant\n", "scope:", scope)
+		cComment = utl.ColBlu("# Entire tenant")
+		fmt.Printf("  %-17s %s  %s\n", cScope, scope, cComment)
 	} else {
-		fmt.Printf("  %-17s %s\n", "scope:", scope)
+		fmt.Printf("  %-17s %s\n", cScope, scope)
 	}
 }
 
