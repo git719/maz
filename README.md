@@ -1,5 +1,7 @@
 # maz
-Microsoft Azure module for calling Azure resource and MS Graph API. It provides simple MSAL authentication and common object calls.
+Microsoft Azure module for simple MSAL authentication, and calling MS Graph and Azure resource APIs. Other APIs could be added in the future.
+
+WARNING: Currently under constant changes.
 
 ## Getting Started
 1. Any program or utility wanting to use this module can simply import it, then instantiate a variable of type `maz.Bundle`
@@ -10,7 +12,7 @@ import (
     "github.com/git719/maz"
 )
 z := maz.Bundle{
-    ConfDir:      "",                   // You set later to something like filepath.Join(os.Getenv("HOME"), "." + prgname)
+    ConfDir:      "",                   // You set later, see example below
     CredsFile:    "credentials.yaml",
     TokenFile:    "accessTokens.json",
     TenantId:     "",
