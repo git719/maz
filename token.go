@@ -1,14 +1,14 @@
 // token.go
 
-package aza
+package maz
 
 import (
 	"context"
 	"fmt"
-	"github.com/AzureAD/microsoft-authentication-library-for-go/apps/confidential"
-	"github.com/AzureAD/microsoft-authentication-library-for-go/apps/public"
 	"path/filepath"
 	"strings"
+	"github.com/AzureAD/microsoft-authentication-library-for-go/apps/confidential"
+	"github.com/AzureAD/microsoft-authentication-library-for-go/apps/public"
 )
 
 func GetTokenInteractively(scopes []string, confDir, tokenFile, authorityUrl, username string) (token string, err error) {

@@ -1,29 +1,27 @@
-// aza.go
+// maz.go
 
-package aza
+package maz
 
 import (
 	"fmt"
-	"github.com/git719/utl"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"github.com/git719/utl"
 )
 
 const (
-	ConstAuthUrl              = "https://login.microsoftonline.com/"
-	ConstMgUrl                = "https://graph.microsoft.com"
-	ConstAzUrl                = "https://management.azure.com"
+	ConstAuthUrl = "https://login.microsoftonline.com/"
+	ConstMgUrl   = "https://graph.microsoft.com"
+	ConstAzUrl   = "https://management.azure.com"
 	ConstAzPowerShellClientId = "1950a258-227b-4e31-a9cf-717495945fc2"
 	// Interactive login uses above 'Azure PowerShell' clientId
 	// See https://stackoverflow.com/questions/30454771/how-does-azure-powershell-work-with-username-password-based-auth
 )
 
-type MapString map[string]string
-
-type AzaBundle struct {
+type Bundle struct {
 	ConfDir      string // Directory where utility will store all its file
 	CredsFile    string
 	TokenFile    string
@@ -34,16 +32,16 @@ type AzaBundle struct {
 	Username     string
 	AuthorityUrl string
 	MgToken      string // MS Graph API ...
-	MgHeaders    MapString
+	MgHeaders    map[string]string
 	AzToken      string // Azure Resource Management API
-	AzHeaders    MapString
+	AzHeaders    map[string]string
 }
 
 func StrVal(x interface{}) string {
 	return utl.StrVal(x) // Shorthand
 }
 
-func DumpVariables(z AzaBundle) {
+func DumpVariables(z Bundle) {
 	// Dump essential global variables
 	fmt.Printf("%-16s %s\n", "tenant_id:", z.TenantId)
 	if z.Interactive {
@@ -65,7 +63,7 @@ func DumpVariables(z AzaBundle) {
 	os.Exit(0)
 }
 
-func DumpCredentials(z AzaBundle) {
+func DumpCredentials(z Bundle) {
 	// Dump credentials file
 	filePath := filepath.Join(z.ConfDir, z.CredsFile) // credentials.yaml
 	credsRaw, err := utl.LoadFileYaml(filePath)
@@ -84,7 +82,7 @@ func DumpCredentials(z AzaBundle) {
 	os.Exit(0)
 }
 
-func SetupInterativeLogin(z AzaBundle) {
+func SetupInterativeLogin(z Bundle) {
 	// Set up credentials file for interactive login
 	filePath := filepath.Join(z.ConfDir, z.CredsFile) // credentials.yaml
 	if !utl.ValidUuid(z.TenantId) {
@@ -97,7 +95,7 @@ func SetupInterativeLogin(z AzaBundle) {
 	fmt.Printf("[%s] Updated credentials\n", filePath)
 }
 
-func SetupAutomatedLogin(z AzaBundle) {
+func SetupAutomatedLogin(z Bundle) {
 	// Set up credentials file for client_id + secret login
 	filePath := filepath.Join(z.ConfDir, z.CredsFile) // credentials.yaml
 	if !utl.ValidUuid(z.TenantId) {
@@ -113,7 +111,7 @@ func SetupAutomatedLogin(z AzaBundle) {
 	fmt.Printf("[%s] Updated credentials\n", filePath)
 }
 
-func SetupCredentials(z *AzaBundle) AzaBundle {
+func SetupCredentials(z *Bundle) Bundle {
 	// Read credentials file and set up authentication parameters as global variables
 	filePath := filepath.Join(z.ConfDir, z.CredsFile) // credentials.yaml
 	if utl.FileNotExist(filePath) && utl.FileSize(filePath) < 1 {
@@ -149,7 +147,7 @@ func SetupCredentials(z *AzaBundle) AzaBundle {
 	return *z
 }
 
-func SetupApiTokens(z *AzaBundle) AzaBundle {
+func SetupApiTokens(z *Bundle) Bundle {
 	// Initialize necessary global variables, acquire all API tokens, and set them up for use
 	*z = SetupCredentials(z) // Sets up tenant ID, client ID, authentication method, etc
 	z.AuthorityUrl = ConstAuthUrl + z.TenantId

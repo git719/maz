@@ -1,4 +1,4 @@
-module github.com/git719/aza
+module github.com/git719/maz
 
 go 1.19
 

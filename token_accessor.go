@@ -7,13 +7,13 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-package aza
+package maz
 
 import (
-	"github.com/AzureAD/microsoft-authentication-library-for-go/apps/cache"
 	"io/ioutil"
 	"log"
 	"os"
+	"github.com/AzureAD/microsoft-authentication-library-for-go/apps/cache"
 )
 
 type TokenCache struct {

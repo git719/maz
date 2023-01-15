@@ -1,31 +1,46 @@
-# aza
-Easy Azure MSAL authentication for command line and automated utilities.
+# maz
+Microsoft Azure module for calling Azure resource and MS Graph API. It provides simple MSAL authentication and common object calls.
 
-# Getting Started
-1. Any utility using this `aza` module must instantiate a variable of type `aza.AzaBundle`. For example: 
+## Getting Started
+1. Any program or utility wanting to use this module can simply import it, then instantiate a variable of type `maz.Bundle`
+to manage the interaction. For example: 
 
 ```
 import (
-    "github.com/git719/aza"
+    "github.com/git719/maz"
 )
-
-z := aza.AzaBundle{
-    confDir:      "",               // To be set to filepath.Join(os.Getenv("HOME"), "." + prgname)
-    credsFile:    "",               // To be set to something like "credentials.yaml"
-    tokenFile:    "",               // To be set to something like "accessTokens.json"
-    tenantId:     "",               // The following 5 to be set according to credsFile
-    clientId:     "",
-    clientSecret: "",
-    interactive:  false,
-    username:     "",
-    authorityUrl: "",               // Set to ConstAuthUrl + tenantID
-    mgToken:      "",               // Below 4 will be set up by SetupApiTokens()
-    mgHeaders:    aza.MapString{},
-    azToken:      "",
-    azHeaders:    aza.MapString{},  
+z := maz.Bundle{
+    ConfDir:      "",                   // You set later to something like filepath.Join(os.Getenv("HOME"), "." + prgname)
+    CredsFile:    "credentials.yaml",
+    TokenFile:    "accessTokens.json",
+    TenantId:     "",
+    ClientId:     "",
+    ClientSecret: "",
+    Interactive:  false,
+    Username:     "",
+    AuthorityUrl: "",                   // You set later to maz.ConstAuthUrl + z.TenantId
+    MgToken:      "",                   // you set below 4 with function maz.SetupApiTokens()
+    MgHeaders:    map[string]string{},
+    AzToken:      "",
+    AzHeaders:    map[string]string{},  
+}
+// Then update the variables within the Bundle, to set up configuration directory
+z.ConfDir = filepath.Join(os.Getenv("HOME"), "." + prgname)
+if utl.FileNotExist(z.ConfDir) {
+    if err := os.Mkdir(z.ConfDir, 0700); err != nil {
+        panic(err.Error())
+    }
 }
 ```
 
-2. Then call `SetupInterativeLogin(z)` or `SetupAutomatedLogin(z)` to setup the credentials file accordingly.
-3. Then call `z := SetupApiTokens(*z)` to acquire the respective API tokens and web headers.
-4. Now use `z.mgHeaders` and/or `z.azHeaders` to call your own REST API functions to do whatever you want.
+2. Then call `maz.SetupInterativeLogin(z)` or `maz.SetupAutomatedLogin(z)` to setup the credentials file accordingly.
+3. Then call `z := maz.SetupApiTokens(*z)` to acquire the respective API tokens, web headers, and other variables.
+4. Now pass and use the `z` variables, with its `z.mgHeaders` and/or `z.azHeaders` attributes, to call your own REST
+API functions to do whatever you want.
+
+## Functions
+A breakdown of available functions.
+
+### maz.SetupInterativeLogin
+This functions allows you to set up interactive Azure login.
+...
