@@ -15,7 +15,8 @@ func PrintRoleAssignment(x map[string]interface{}, z Bundle) {
 		return
 	}
 	if x["name"] != nil {
-		fmt.Printf("id: %s\n", utl.Str(x["name"]))
+		xId := utl.Blu + "id:" + utl.Rst
+		fmt.Printf("%s %s\n", xId, utl.Str(x["name"]))
 	}
 
 	fmt.Printf("properties:\n")
