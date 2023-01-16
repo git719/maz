@@ -4,8 +4,8 @@ package maz
 
 import (
 	"fmt"
-	"os"
 	"github.com/git719/utl"
+	"os"
 )
 
 func PrintCountStatus(z Bundle) {
@@ -79,16 +79,16 @@ func PrintObjectById(id string, z Bundle) {
 	list := GetObjectsWithThisUuid(id, z)
 	for _, i := range list {
 		x := i.(map[string]interface{})
-        if x != nil && x["mazType"] != nil {
+		if x != nil && x["mazType"] != nil {
 			PrintObject(utl.Str(x["mazType"]), x, z)
 		}
 	}
-    // Hopefully below is ever rarely seen
+	// Hopefully below is ever rarely seen
 	if len(list) > 1 {
-        fmt.Println(utl.ColRed("WARNING! Multiple Azure object types share this UUID!"))
-    }
+		fmt.Println(utl.ColRed("WARNING! Multiple Azure object types share this UUID!"))
+	}
 }
-  
+
 func PrintObject(t string, x map[string]interface{}, z Bundle) {
 	switch t {
 	case "d":

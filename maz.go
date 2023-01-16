@@ -33,9 +33,9 @@ type Bundle struct {
 	Interactive  bool
 	Username     string
 	AuthorityUrl string
-	MgToken   	 string               // This and below to support MS Graph API
-	MgHeaders 	 map[string]string
-	AzToken      string               // This and below to support Azure Resource Management API
+	MgToken      string // This and below to support MS Graph API
+	MgHeaders    map[string]string
+	AzToken      string // This and below to support Azure Resource Management API
 	AzHeaders    map[string]string
 	// To support other future APIs, those token/headers pairs can be added here
 }

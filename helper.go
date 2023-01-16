@@ -19,11 +19,11 @@ func GetObjectsWithThisUuid(id string, z Bundle) (list []interface{}) {
 		x := GetObjectById(t, id, z)
 		if x != nil && x["id"] != nil { // Valid objects have an 'id' attribute
 			// Note, we are extending the object by adding a mazType as an additional FIELD
-			x["mazType"] = t 		// Found one of these types with this UUID
-			list = append(list, x) 	// Add it to the list
+			x["mazType"] = t       // Found one of these types with this UUID
+			list = append(list, x) // Add it to the list
 		}
 	}
-    return list
+	return list
 }
 
 func GetObjectById(t, id string, z Bundle) (x map[string]interface{}) {
