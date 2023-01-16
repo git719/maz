@@ -30,7 +30,7 @@ func PrintRoleAssignment(x map[string]interface{}, z Bundle) {
 	roleNameMap := GetIdMapRoleDefs(z) // Get all role definition id:name pairs
 	roleId := utl.LastElem(utl.Str(xProp["roleDefinitionId"]), "/")
 	cRoleDefinitionId := utl.ColCya("roleDefinitionId") + co
-	cComment := utl.ColBlu("# roleName = \"" + roleNameMap[roleId] + "\"")
+	cComment := utl.ColBlu("# roleName = \"" + roleNameMap[roleId] + "\"") // Blue comments
 	fmt.Printf("  %-17s %s  %s\n", cRoleDefinitionId, roleId, cComment)
 
 	var principalNameMap map[string]string = nil

@@ -6,37 +6,6 @@ import (
 	"github.com/git719/utl"
 )
 
-func MergeMaps(m1, m2 map[string]string) (result map[string]string) {
-	result = map[string]string{}
-	for k, v := range m1 {
-		result[k] = v
-	}
-	for k, v := range m2 {
-		result[k] = v
-	}
-	return result
-}
-
-func MergeObjects(x, y map[string]interface{}) (obj map[string]interface{}) {
-	// Merge JSON object y into x
-	// NOTES:
-	// 1. Non-recursive, only works attributes at first level
-	// 2. If attribute exists in y, we assume it's new and x needs to be updated with it
-	obj = x
-	for k, v := range x { // Update existing x values with updated y values
-		obj[k] = v
-		if y[k] != nil {
-			obj[k] = y[k]
-		}
-	}
-	for k, _ := range y { // Add new y values to x
-		if x[k] == nil {
-			obj[k] = y[k]
-		}
-	}
-	return obj
-}
-
 func SelectObject(id string, objSet []interface{}) (x map[string]interface{}) {
 	// Select JSON object with given ID from slice
 	for _, obj := range objSet {
@@ -108,7 +77,7 @@ func NormalizeCache(baseSet, deltaSet []interface{}) (list []interface{}) {
 		} else {
 			// Merge object updates, then add it to our growing list
 			y := SelectObject(id, duplicates)
-			x = MergeObjects(x, y)
+			x = utl.MergeObjects(x, y)
 			list = append(list, x)
 		}
 	}

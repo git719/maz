@@ -4,6 +4,7 @@ package maz
 
 import (
 	"fmt"
+	"os"
 	"github.com/git719/utl"
 )
 
@@ -69,6 +70,25 @@ func PrintTersely(t string, object interface{}) {
 	}
 }
 
+func PrintObjectById(id string, z Bundle) {
+	// Search for object with given UUID and print it
+	if !utl.ValidUuid(id) {
+		os.Exit(1) // Do nothing if UUID is invalid
+	}
+	// Search for all mazType objects with this UUID
+	list := GetObjectsWithThisUuid(id, z)
+	for _, i := range list {
+		x := i.(map[string]interface{})
+        if x != nil && x["mazType"] != nil {
+			PrintObject(utl.Str(x["mazType"]), x, z)
+		}
+	}
+    // Hopefully below is ever rarely seen
+	if len(list) > 1 {
+        fmt.Println(utl.ColRed("WARNING! Multiple Azure object types share this UUID!"))
+    }
+}
+  
 func PrintObject(t string, x map[string]interface{}, z Bundle) {
 	switch t {
 	case "d":

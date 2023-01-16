@@ -33,16 +33,11 @@ type Bundle struct {
 	Interactive  bool
 	Username     string
 	AuthorityUrl string
-
-	// To support MS Graph API
-	MgToken   string
-	MgHeaders map[string]string
-
-	// To support Azure Resource Management API
-	AzToken   string
-	AzHeaders map[string]string
-
-	// In the future, other token/headers pairs for other APIs can be added below
+	MgToken   	 string               // This and below to support MS Graph API
+	MgHeaders 	 map[string]string
+	AzToken      string               // This and below to support Azure Resource Management API
+	AzHeaders    map[string]string
+	// To support other future APIs, those token/headers pairs can be added here
 }
 
 func DumpVariables(z Bundle) {
