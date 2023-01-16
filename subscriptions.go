@@ -121,6 +121,6 @@ func GetAzSubscriptionById(id string, headers map[string]string) map[string]inte
 	params := map[string]string{"api-version": "2022-09-01"} // subscriptions
 	url := ConstAzUrl + "/subscriptions/" + id
 	r := ApiGet(url, headers, params)
-	ApiErrorCheck(r, utl.Trace())
+	//ApiErrorCheck(r, utl.Trace()) // Commented out to do this quietly. Use for DEBUGging
 	return r
 }

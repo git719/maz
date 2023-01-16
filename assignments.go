@@ -342,6 +342,7 @@ func GetAzRoleAssignmentById(id string, z Bundle) map[string]interface{} {
 		url = ConstAzUrl + scope + "/providers/Microsoft.Authorization/roleAssignments"
 		r = ApiGet(url, z.AzHeaders, params)
 		ApiErrorCheck(r, utl.Trace())
+		//ApiErrorCheck(r, utl.Trace()) // Commented out to do this quietly. Use for DEBUGging
 		if r != nil && r["value"] != nil {
 			assignmentsInThisSubscription := r["value"].([]interface{})
 			for _, i := range assignmentsInThisSubscription {

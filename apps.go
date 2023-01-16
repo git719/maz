@@ -261,7 +261,7 @@ func GetAzAppById(id string, headers map[string]string) map[string]interface{} {
 		url = baseUrl + selection
 		params := map[string]string{"$filter": "appId eq '" + id + "'"}
 		r := ApiGet(url, headers, params)
-		ApiErrorCheck(r, utl.Trace())
+		//ApiErrorCheck(r, utl.Trace()) // Commented out to do this quietly. Use for DEBUGging
 		if r != nil && r["value"] != nil {
 			list := r["value"].([]interface{})
 			count := len(list)

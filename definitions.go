@@ -335,7 +335,7 @@ func GetAzRoleDefinitionById(id string, z Bundle) map[string]interface{} {
 	params := map[string]string{"api-version": "2022-04-01"} // roleDefinitions
 	url := ConstAzUrl + "/providers/Microsoft.Authorization/roleDefinitions/" + id
 	r := ApiGet(url, z.AzHeaders, params)
-	ApiErrorCheck(r, utl.Trace())
+	//ApiErrorCheck(r, utl.Trace()) // Commented out to do this quietly. Use for DEBUGging
 	if r != nil && r["name"] != nil && utl.Str(r["name"]) == id {
 		return r // Return immediately as found
 	}
@@ -344,7 +344,7 @@ func GetAzRoleDefinitionById(id string, z Bundle) map[string]interface{} {
 	for _, scope := range scopes {
 		url = ConstAzUrl + scope + "/providers/Microsoft.Authorization/roleDefinitions/" + id
 		r = ApiGet(url, z.AzHeaders, params)
-		ApiErrorCheck(r, utl.Trace())
+		//ApiErrorCheck(r, utl.Trace()) // DEBUG
 		if r != nil && r["name"] != nil && utl.Str(r["name"]) == id {
 			return r // Return immediately as found
 		}

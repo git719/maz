@@ -192,7 +192,7 @@ func GetAzGroupById(id string, headers map[string]string) map[string]interface{}
 	selection += "securityIdentifier,memberOf,members,owners"
 	url := baseUrl + "/" + id + selection
 	r := ApiGet(url, headers, nil)
-	ApiErrorCheck(r, utl.Trace())
+	//ApiErrorCheck(r, utl.Trace()) // Commented out to do this quietly. Use for DEBUGging
 	return r
 }
 

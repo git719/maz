@@ -124,7 +124,7 @@ func PrintMgTree(z Bundle) {
 		"$recurse":    "true",
 	}
 	r := ApiGet(url, z.AzHeaders, params)
-	ApiErrorCheck(r, utl.Trace())
+	ApiErrorCheck(r, utl.Trace()) // DEBUG: Need to see when this is failing for some users
 	if r["properties"] != nil {
 		// Print everything under the hierarchy
 		Prop := r["properties"].(map[string]interface{})
