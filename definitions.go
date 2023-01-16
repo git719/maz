@@ -345,6 +345,9 @@ func GetAzRoleDefinitionById(id string, z Bundle) map[string]interface{} {
 		url = ConstAzUrl + scope + "/providers/Microsoft.Authorization/roleDefinitions/" + id
 		r = ApiGet(url, z.AzHeaders, params)
 		//ApiErrorCheck(r, utl.Trace()) // DEBUG
+		//
+		// NOTE: The more idiomatic thing to do is to return 2 values: object & err! 
+		//
 		if r != nil && r["name"] != nil && utl.Str(r["name"]) == id {
 			return r // Return immediately as found
 		}

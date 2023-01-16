@@ -17,7 +17,7 @@ func GetObjectsWithThisUuid(id string, z Bundle) (list []interface{}) {
 	mazTypes := []string{"d", "a", "s", "u", "g", "sp", "ap", "ad"}
 	for _, t := range mazTypes {
 		x := GetObjectById(t, id, z)
-		if x != nil {
+		if x != nil && x["id"] != nil { // Valid objects have an 'id' attribute
 			// Note, we are extending the object by adding a mazType as an additional FIELD
 			x["mazType"] = t 		// Found one of these types with this UUID
 			list = append(list, x) 	// Add it to the list
