@@ -215,9 +215,9 @@ func GetAzRoleAssignments(verbose bool, z Bundle) (list []interface{}) {
 	var uuIds []string // Keep track of each unique objects to eliminate inherited repeats
 	k := 1             // Track number of API calls to provide progress
 	mgGroupNameMap := GetIdMapMgGroups(z)
-	subNameMap := GetIdMapSubs(z) // Get all subscription id:name pairs
-	scopes := GetAzRbacScopes(z) // Get all RBAC hierarchy scopes to search for all role assignments
-	params := map[string]string{"api-version": "2022-04-01"}  // roleAssignments
+	subNameMap := GetIdMapSubs(z)                            // Get all subscription id:name pairs
+	scopes := GetAzRbacScopes(z)                             // Get all RBAC hierarchy scopes to search for all role assignments
+	params := map[string]string{"api-version": "2022-04-01"} // roleAssignments
 	for _, scope := range scopes {
 		scopeName := scope // Default scope name is the whole scope string
 		if strings.HasPrefix(scope, "/providers") {
@@ -233,11 +233,11 @@ func GetAzRoleAssignments(verbose bool, z Bundle) (list []interface{}) {
 			u := 0 // Keep track of assignments in this scope
 			for _, i := range assignmentsUnderThisScope {
 				x := i.(map[string]interface{})
-				uuid := utl.Str(x["name"])  // Note that 'name' is actually the role assignment UUID
+				uuid := utl.Str(x["name"]) // Note that 'name' is actually the role assignment UUID
 				if utl.ItemInList(uuid, uuIds) {
 					continue // Role assignments DO repeat! Skip if it's already been added.
 				}
-				list = append(list, x) // This one is unique, append to growing list
+				list = append(list, x)      // This one is unique, append to growing list
 				uuIds = append(uuIds, uuid) // Keep track of the UUIDs we are seeing
 				u++
 			}
@@ -250,7 +250,7 @@ func GetAzRoleAssignments(verbose bool, z Bundle) (list []interface{}) {
 	if verbose {
 		fmt.Printf("\n") // Use newline now
 	}
-	cacheFile := filepath.Join(z.ConfDir, z.TenantId + "_roleAssignments.json")
+	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_roleAssignments.json")
 	utl.SaveFileJson(list, cacheFile) // Update the local cache
 	return list
 }
@@ -318,8 +318,8 @@ func GetAzRoleAssignmentByUuid(uuid string, z Bundle) (x map[string]interface{})
 	// Get Azure resource roleAssignment by Object UUID. Unfortunately we have to traverse
 	// and search the ENTIRE Azure resource scope hierarchy, which can take time.
 	x = nil
-	scopes := GetAzRbacScopes(z) // Get all scopes
-	params := map[string]string{"api-version": "2022-04-01"}  // roleAssignments
+	scopes := GetAzRbacScopes(z)                             // Get all scopes
+	params := map[string]string{"api-version": "2022-04-01"} // roleAssignments
 	for _, scope := range scopes {
 		url := ConstAzUrl + scope + "/providers/Microsoft.Authorization/roleAssignments"
 		r := ApiGet(url, z.AzHeaders, params)

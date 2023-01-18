@@ -218,8 +218,8 @@ func GetAzRoleDefinitions(verbose bool, z Bundle) (list []interface{}) {
 	var uuIds []string // Keep track of each unique object to eliminate inherited repeats
 	k := 1             // Track number of API calls to provide progress
 	mgGroupNameMap := GetIdMapMgGroups(z)
-	subNameMap := GetIdMapSubs(z) // Get all subscription id:name pairs
-	scopes := GetAzRbacScopes(z) // Get all scopes
+	subNameMap := GetIdMapSubs(z)                            // Get all subscription id:name pairs
+	scopes := GetAzRbacScopes(z)                             // Get all scopes
 	params := map[string]string{"api-version": "2022-04-01"} // roleDefinitions
 	for _, scope := range scopes {
 		scopeName := scope // Default scope name is the whole scope string
@@ -388,8 +388,8 @@ func GetAzRoleDefinitionByUuid(uuid string, z Bundle) (x map[string]interface{})
 	// Get Azure resource roleDefinitions by Object Id. Unfortunately we have to traverse
 	// and search the ENTIRE Azure resource scope hierarchy, which can take time.
 	x = nil
-	scopes := GetAzRbacScopes(z) // Get all scopes
-	params := map[string]string{"api-version": "2022-04-01"}  // roleDefinitions
+	scopes := GetAzRbacScopes(z)                             // Get all scopes
+	params := map[string]string{"api-version": "2022-04-01"} // roleDefinitions
 	for _, scope := range scopes {
 		url := ConstAzUrl + scope + "/providers/Microsoft.Authorization/roleDefinitions"
 		r := ApiGet(url, z.AzHeaders, params)
