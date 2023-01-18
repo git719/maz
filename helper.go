@@ -34,7 +34,7 @@ func UpsertAzObject(filePath string, z Bundle) {
 
 func DeleteAzObjectPrompt(t string, fqid string, z Bundle) {
 	// Prompt for Azure object deletion and delete if confirmed
-	fmt.Print(utl.ColYel("DELETE above? y/n "))
+	fmt.Print(utl.Yel("DELETE above? y/n "))
 	reader := bufio.NewReader(os.Stdin)
 	confirm, _, err := reader.ReadRune()
 	if err != nil {
@@ -60,7 +60,7 @@ func DeleteAzObject(specifier string, z Bundle) {
 	if utl.ValidUuid(specifier) {
 		list := FindAzObjectsByUuid(specifier, z) // Get all objects that may match this UUID, hopefully just one
 		if len(list) > 1 {
-			utl.Die(utl.ColRed("UUID collision! Run utility with UUID argument to see the list.\n"))
+			utl.Die(utl.Red("UUID collision! Run utility with UUID argument to see the list.\n"))
 		}
 		if len(list) < 1 {
 			utl.Die("Object does not exist in current Azure tenant\n")

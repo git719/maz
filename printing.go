@@ -85,7 +85,7 @@ func PrintObjectByUuid(uuid string, z Bundle) {
 	}
 	// Hopefully below is ever rarely seen
 	if len(list) > 1 {
-		fmt.Println(utl.ColRed("WARNING! Multiple Azure object types share this UUID!"))
+		fmt.Println(utl.Red("WARNING! Multiple Azure object types share this UUID!"))
 	}
 }
 

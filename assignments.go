@@ -15,13 +15,13 @@ func PrintRoleAssignment(x map[string]interface{}, z Bundle) {
 	if x == nil {
 		return
 	}
-	co := utl.ColRed(":") // Colorize ":" text to Red
+	co := utl.Red(":") // Colorize ":" text to Red
 	if x["name"] != nil {
-		cId := utl.ColCya("id") + co // Colorize "id" text to Cyan
+		cId := utl.Cya("id") + co // Colorize "id" text to Cyan
 		fmt.Printf("%s %s\n", cId, utl.Str(x["name"]))
 	}
 
-	fmt.Printf(utl.ColCya("properties") + co + "\n")
+	fmt.Printf(utl.Cya("properties") + co + "\n")
 	if x["properties"] == nil {
 		fmt.Printf("  <Missing??>\n")
 		return
@@ -30,8 +30,8 @@ func PrintRoleAssignment(x map[string]interface{}, z Bundle) {
 
 	roleNameMap := GetIdMapRoleDefs(z) // Get all role definition id:name pairs
 	roleId := utl.LastElem(utl.Str(xProp["roleDefinitionId"]), "/")
-	cRoleDefinitionId := utl.ColCya("roleDefinitionId") + co
-	cComment := utl.ColBlu("# roleName = \"" + roleNameMap[roleId] + "\"") // Blue comments
+	cRoleDefinitionId := utl.Cya("roleDefinitionId") + co
+	cComment := utl.Blu("# roleName = \"" + roleNameMap[roleId] + "\"") // Blue comments
 	fmt.Printf("  %-17s %s  %s\n", cRoleDefinitionId, roleId, cComment)
 
 	var principalNameMap map[string]string = nil
@@ -51,8 +51,8 @@ func PrintRoleAssignment(x map[string]interface{}, z Bundle) {
 	if pName == "" {
 		pName = "???"
 	}
-	cPrincipalId := utl.ColCya("principalId") + co
-	cComment = utl.ColBlu("# principalType = " + pType + ", displayName = \"" + pName + "\"")
+	cPrincipalId := utl.Cya("principalId") + co
+	cComment = utl.Blu("# principalType = " + pType + ", displayName = \"" + pName + "\"")
 	fmt.Printf("  %-17s %s  %s\n", cPrincipalId, principalId, cComment)
 
 	subNameMap := GetIdMapSubs(z) // Get all subscription id:name pairs
@@ -60,14 +60,14 @@ func PrintRoleAssignment(x map[string]interface{}, z Bundle) {
 	if scope == "" {
 		scope = utl.Str(xProp["Scope"])
 	} // Account for possibly capitalized key
-	cScope := utl.ColCya("scope") + co
+	cScope := utl.Cya("scope") + co
 	if strings.HasPrefix(scope, "/subscriptions") {
 		split := strings.Split(scope, "/")
 		subName := subNameMap[split[2]]
-		cComment = utl.ColBlu("# Sub = " + subName)
+		cComment = utl.Blu("# Sub = " + subName)
 		fmt.Printf("  %-17s %s  %s\n", cScope, scope, cComment)
 	} else if scope == "/" {
-		cComment = utl.ColBlu("# Entire tenant")
+		cComment = utl.Blu("# Entire tenant")
 		fmt.Printf("  %-17s %s  %s\n", cScope, scope, cComment)
 	} else {
 		fmt.Printf("  %-17s %s\n", cScope, scope)

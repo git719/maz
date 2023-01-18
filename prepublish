@@ -24,10 +24,10 @@ git tag | tail -3
 CurrentTag=`git tag | tail -1`
 Prg=`head -1 go.mod | awk -F'/' '{print $NF}' | awk '{print $NF}'`
 printf "\n==> Good to go. To publish, do below One-liner or multiple commands, advancing Tag version:\n\n"
-printf "Tag=$CurrentTag && Prg=$Prg && git add . && git commit -m \"\$Prg: updates \$Tag\" && git tag \$Tag && git push origin \$Tag && git push\n\n"
+printf "Tag=$CurrentTag && Prg=$Prg && git add . && git commit -m \"\$Tag: updates\" && git tag \$Tag && git push origin \$Tag && git push\n\n"
 printf "or\n\n"
 printf "git add .\n"
-printf "git commit -m \"mymod: updates $CurrentTag\n"
+printf "git commit -m \"$Prg: updates $CurrentTag\n"
 printf "git tag $CurrentTag\n"
 printf "git push origin $CurrentTag\n"
 printf "git push\n\n"

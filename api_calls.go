@@ -89,7 +89,7 @@ func ApiCall(method, url string, payload map[string]interface{}, headers, params
 
 	// === MAKE THE CALL ============
 	if verbose {
-		fmt.Printf(utl.ColCya("==== REQUEST =================================") + "\n")
+		fmt.Printf(utl.Cya("==== REQUEST =================================") + "\n")
 		fmt.Printf(method + " " + url + "\n")
 		fmt.Printf("HEADERS:\n")
 		utl.PrintJson(req.Header)
@@ -112,7 +112,7 @@ func ApiCall(method, url string, payload map[string]interface{}, headers, params
 	}
 
 	if verbose {
-		fmt.Printf(utl.ColCya("==== RESPONSE ================================") + "\n")
+		fmt.Printf(utl.Cya("==== RESPONSE ================================") + "\n")
 		fmt.Printf("STATUS: %d %s\n", r.StatusCode, http.StatusText(r.StatusCode))
 		fmt.Printf("RESULT:\n")
 		utl.PrintJson(result)
