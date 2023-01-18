@@ -143,8 +143,8 @@ func CreateAzRoleAssignment(x map[string]interface{}, z Bundle) {
 	}
 	params := map[string]string{"api-version": "2022-04-01"} // roleAssignments
 	url := ConstAzUrl + scope + "/providers/Microsoft.Authorization/roleAssignments/" + roleAssignmentName.String()
-	r := ApiPut(url, payload, z.AzHeaders, params)
-	ApiErrorCheck(r, utl.Trace())
+	r, _, _ := ApiPut(url, payload, z.AzHeaders, params)
+	ApiErrorCheck("PUT", url, utl.Trace(), r)
 	utl.PrintJson(r)
 	return
 }
@@ -226,8 +226,8 @@ func GetAzRoleAssignments(verbose bool, z Bundle) (list []interface{}) {
 			scopeName = subNameMap[utl.LastElem(scope, "/")] // If it's a sub, user its name
 		}
 		url := ConstAzUrl + scope + "/providers/Microsoft.Authorization/roleAssignments"
-		r := ApiGet(url, z.AzHeaders, params)
-		ApiErrorCheck(r, utl.Trace())
+		r, _, _ := ApiGet(url, z.AzHeaders, params)
+		ApiErrorCheck("GET", url, utl.Trace(), r)
 		if r["value"] != nil {
 			assignmentsUnderThisScope := r["value"].([]interface{})
 			u := 0 // Keep track of assignments in this scope
@@ -262,8 +262,11 @@ func DeleteAzRoleAssignmentByFqid(fqid string, z Bundle) map[string]interface{} 
 	//    /providers/Microsoft.Authorization/roleAssignments/5d586a7b-3f4b-4b5c-844a-3fa8efe49ab3"
 	params := map[string]string{"api-version": "2022-04-01"} // roleAssignments
 	url := ConstAzUrl + fqid
-	r := ApiDeleteDebug(url, z.AzHeaders, params)
-	ApiErrorCheck(r, utl.Trace()) // DEBUG. Comment out to do this quietly
+	r, sCode, _ := ApiDeleteDebug(url, z.AzHeaders, params)
+	ApiErrorCheck("DELETE", url, utl.Trace(), r) // DEBUG. Comment out to do this quietly
+	if sCode != 204 {
+		fmt.Printf("Error deleting assignment " + fqid)
+	}
 	return nil
 }
 
@@ -297,7 +300,7 @@ func GetAzRoleAssignmentByObject(x map[string]interface{}, z Bundle) (y map[stri
 		"$filter":     "principalId eq '" + xPrincipalId + "'",
 	}
 	url := ConstAzUrl + xScope + "/providers/Microsoft.Authorization/roleAssignments"
-	r := ApiGet(url, z.AzHeaders, params)
+	r, _, _ := ApiGet(url, z.AzHeaders, params)
 	if r != nil && r["value"] != nil {
 		results := r["value"].([]interface{})
 		for _, i := range results {
@@ -310,7 +313,7 @@ func GetAzRoleAssignmentByObject(x map[string]interface{}, z Bundle) (y map[stri
 			}
 		}
 	}
-	ApiErrorCheck(r, utl.Trace())
+	ApiErrorCheck("GET", url, utl.Trace(), r)
 	return nil
 }
 
@@ -322,8 +325,8 @@ func GetAzRoleAssignmentByUuid(uuid string, z Bundle) (x map[string]interface{})
 	params := map[string]string{"api-version": "2022-04-01"} // roleAssignments
 	for _, scope := range scopes {
 		url := ConstAzUrl + scope + "/providers/Microsoft.Authorization/roleAssignments"
-		r := ApiGet(url, z.AzHeaders, params)
-		//ApiErrorCheck(r, utl.Trace()) // DEBUG. Until ApiGet rewrite with nullable _ err
+		r, _, _ := ApiGet(url, z.AzHeaders, params)
+		//ApiErrorCheck("GET", url, utl.Trace(), r) // DEBUG. Until ApiGet rewrite with nullable _ err
 		if r != nil && r["value"] != nil {
 			assignmentsUnderThisScope := r["value"].([]interface{})
 			for _, i := range assignmentsUnderThisScope {

@@ -27,8 +27,8 @@ func PrintGroup(x map[string]interface{}, z Bundle) {
 
 	// Print owners of this group
 	url := ConstMgUrl + "/beta/groups/" + id + "/owners"
-	r := ApiGet(url, z.MgHeaders, nil)
-	ApiErrorCheck(r, utl.Trace())
+	r, _, _ := ApiGet(url, z.MgHeaders, nil)
+	ApiErrorCheck("GET", url, utl.Trace(), r)
 	if r["value"] != nil {
 		owners := r["value"].([]interface{}) // Assert as JSON array type
 		if len(owners) > 0 {
@@ -44,8 +44,8 @@ func PrintGroup(x map[string]interface{}, z Bundle) {
 
 	// Print all groups and roles it is a member of
 	url = ConstMgUrl + "/v1.0/groups/" + id + "/transitiveMemberOf"
-	r = ApiGet(url, z.MgHeaders, nil)
-	ApiErrorCheck(r, utl.Trace())
+	r, _, _ = ApiGet(url, z.MgHeaders, nil)
+	ApiErrorCheck("GET", url, utl.Trace(), r)
 	if r != nil && r["value"] != nil {
 		memberOf := r["value"].([]interface{})
 		PrintMemberOfs("g", memberOf)
@@ -53,8 +53,8 @@ func PrintGroup(x map[string]interface{}, z Bundle) {
 
 	// Print members of this group
 	url = ConstMgUrl + "/beta/groups/" + id + "/members"
-	r = ApiGet(url, z.MgHeaders, nil)
-	ApiErrorCheck(r, utl.Trace())
+	r, _, _ = ApiGet(url, z.MgHeaders, nil)
+	ApiErrorCheck("GET", url, utl.Trace(), r)
 	if r != nil && r["value"] != nil {
 		members := r["value"].([]interface{})
 		if len(members) > 0 {
@@ -95,8 +95,8 @@ func GroupsCountAzure(z Bundle) int64 {
 	// Return number of entries in Azure tenant
 	z.MgHeaders["ConsistencyLevel"] = "eventual"
 	url := ConstMgUrl + "/v1.0/groups/$count"
-	r := ApiGet(url, z.MgHeaders, nil)
-	ApiErrorCheck(r, utl.Trace())
+	r, _, _ := ApiGet(url, z.MgHeaders, nil)
+	ApiErrorCheck("GET", url, utl.Trace(), r)
 	if r["value"] != nil {
 		return r["value"].(int64) // Expected result is a single int64 value for the count
 	}
@@ -191,8 +191,8 @@ func GetAzGroupByUuid(uuid string, headers map[string]string) map[string]interfa
 	selection += "onPremisesSecurityIdentifier,onPremisesSyncEnabled,renewedDateTime,securityEnabled,"
 	selection += "securityIdentifier,memberOf,members,owners"
 	url := baseUrl + "/" + uuid + selection
-	r := ApiGet(url, headers, nil)
-	//ApiErrorCheck(r, utl.Trace()) // Commented out to do this quietly. Use for DEBUGging
+	r, _, _ := ApiGet(url, headers, nil)
+	//ApiErrorCheck("GET", url, utl.Trace(), r) // Commented out to do this quietly. Use for DEBUGging
 	return r
 }
 

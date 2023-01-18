@@ -105,8 +105,8 @@ func GetAzSubscriptions(z Bundle) (list []interface{}) {
 	list = nil                                               // We have to zero it out
 	params := map[string]string{"api-version": "2022-09-01"} // subscriptions
 	url := ConstAzUrl + "/subscriptions"
-	r := ApiGet(url, z.AzHeaders, params)
-	ApiErrorCheck(r, utl.Trace())
+	r, _, _ := ApiGet(url, z.AzHeaders, params)
+	ApiErrorCheck("GET", url, utl.Trace(), r)
 	if r != nil && r["value"] != nil {
 		objects := r["value"].([]interface{})
 		list = append(list, objects...)
@@ -120,7 +120,7 @@ func GetAzSubscriptionByUuid(uuid string, headers map[string]string) map[string]
 	// Get Azure subscription by Object UUID
 	params := map[string]string{"api-version": "2022-09-01"} // subscriptions
 	url := ConstAzUrl + "/subscriptions/" + uuid
-	r := ApiGet(url, headers, params)
-	//ApiErrorCheck(r, utl.Trace()) // Commented out to do this quietly. Use for DEBUGging
+	r, _, _ := ApiGet(url, headers, params)
+	//ApiErrorCheck("GET", url, utl.Trace(), r) // Commented out to do this quietly. Use for DEBUGging
 	return r
 }

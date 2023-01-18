@@ -229,8 +229,8 @@ func GetAzRoleDefinitions(verbose bool, z Bundle) (list []interface{}) {
 			scopeName = subNameMap[utl.LastElem(scope, "/")] // If it's a sub, user its name
 		}
 		url := ConstAzUrl + scope + "/providers/Microsoft.Authorization/roleDefinitions"
-		r := ApiGet(url, z.AzHeaders, params)
-		ApiErrorCheck(r, utl.Trace()) // DEBUG. Until ApiGet rewrite with nullable _ err
+		r, _, _ := ApiGet(url, z.AzHeaders, params)
+		ApiErrorCheck("GET", url, utl.Trace(), r) // DEBUG. Until ApiGet rewrite with nullable _ err
 		if r != nil && r["value"] != nil {
 			definitionsUnderThisScope := r["value"].([]interface{})
 			u := 0 // Keep track of unique definitions in this scope
@@ -305,8 +305,11 @@ func DeleteAzRoleDefinitionByFqid(fqid string, z Bundle) map[string]interface{} 
 	//   "/providers/Microsoft.Authorization/roleDefinitions/50a6ff7c-3ac5-4acc-b4f4-9a43aee0c80f"
 	params := map[string]string{"api-version": "2022-04-01"} // roleDefinitions
 	url := ConstAzUrl + fqid
-	r := ApiDelete(url, z.AzHeaders, params)
-	ApiErrorCheck(r, utl.Trace()) // DEBUG. Comment out to do this quietly
+	r, sCode, _ := ApiDelete(url, z.AzHeaders, params)
+	ApiErrorCheck("DELETE", url, utl.Trace(), r) // DEBUG. Comment out to do this quietly
+	if sCode != 204 {
+		fmt.Printf("Error deleting definition " + fqid)
+	}
 	return nil
 }
 
@@ -321,8 +324,8 @@ func GetAzRoleDefinitionByName(specifier string, z Bundle) (y map[string]interfa
 	}
 	for _, scope := range scopes {
 		url := ConstAzUrl + scope + "/providers/Microsoft.Authorization/roleDefinitions"
-		r := ApiGet(url, z.AzHeaders, params)
-		ApiErrorCheck(r, utl.Trace()) // DEBUG. Until ApiGet rewrite with nullable _ err
+		r, _, _ := ApiGet(url, z.AzHeaders, params)
+		ApiErrorCheck("GET", url, utl.Trace(), r) // DEBUG. Until ApiGet rewrite with nullable _ err
 		if r != nil && r["value"] != nil {
 			results := r["value"].([]interface{})
 			if len(results) == 1 {
@@ -369,8 +372,8 @@ func GetAzRoleDefinitionByObject(x map[string]interface{}, z Bundle) (y map[stri
 			"$filter":     "roleName eq '" + xRoleName + "'",
 		}
 		url := ConstAzUrl + scope + "/providers/Microsoft.Authorization/roleDefinitions"
-		r := ApiGet(url, z.AzHeaders, params)
-		ApiErrorCheck(r, utl.Trace())
+		r, _, _ := ApiGet(url, z.AzHeaders, params)
+		ApiErrorCheck("GET", url, utl.Trace(), r)
 		if r != nil && r["value"] != nil {
 			results := r["value"].([]interface{})
 			if len(results) == 1 {
@@ -392,8 +395,8 @@ func GetAzRoleDefinitionByUuid(uuid string, z Bundle) (x map[string]interface{})
 	params := map[string]string{"api-version": "2022-04-01"} // roleDefinitions
 	for _, scope := range scopes {
 		url := ConstAzUrl + scope + "/providers/Microsoft.Authorization/roleDefinitions"
-		r := ApiGet(url, z.AzHeaders, params)
-		//ApiErrorCheck(r, utl.Trace()) // DEBUG. Until ApiGet rewrite with nullable _ err
+		r, _, _ := ApiGet(url, z.AzHeaders, params)
+		//ApiErrorCheck("GET", url, utl.Trace(), r) // DEBUG. Until ApiGet rewrite with nullable _ err
 		if r != nil && r["value"] != nil {
 			definitionsUnderThisScope := r["value"].([]interface{})
 			for _, i := range definitionsUnderThisScope {

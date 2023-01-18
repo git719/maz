@@ -28,8 +28,8 @@ func PrintSp(x map[string]interface{}, z Bundle) {
 
 	// Print owners
 	url := ConstMgUrl + "/beta/servicePrincipals/" + id + "/owners"
-	r := ApiGet(url, z.MgHeaders, nil)
-	ApiErrorCheck(r, utl.Trace())
+	r, _, _ := ApiGet(url, z.MgHeaders, nil)
+	ApiErrorCheck("GET", url, utl.Trace(), r)
 	if r["value"] != nil {
 		owners := r["value"].([]interface{}) // JSON array
 		if len(owners) > 0 {
@@ -57,8 +57,8 @@ func PrintSp(x map[string]interface{}, z Bundle) {
 
 	// Print members and their roles
 	url = ConstMgUrl + "/beta/servicePrincipals/" + id + "/appRoleAssignedTo"
-	r = ApiGet(url, z.MgHeaders, nil)
-	ApiErrorCheck(r, utl.Trace())
+	r, _, _ = ApiGet(url, z.MgHeaders, nil)
+	ApiErrorCheck("GET", url, utl.Trace(), r)
 	if r["value"] != nil {
 		members := r["value"].([]interface{}) // JSON array
 		if len(members) > 0 {
@@ -93,8 +93,8 @@ func PrintSp(x map[string]interface{}, z Bundle) {
 
 	// Print all groups and roles it is a member of
 	url = ConstMgUrl + "/v1.0/servicePrincipals/" + id + "/transitiveMemberOf"
-	r = ApiGet(url, z.MgHeaders, nil)
-	ApiErrorCheck(r, utl.Trace())
+	r, _, _ = ApiGet(url, z.MgHeaders, nil)
+	ApiErrorCheck("GET", url, utl.Trace(), r)
 	if r != nil && r["value"] != nil {
 		memberOf := r["value"].([]interface{})
 		PrintMemberOfs("g", memberOf)
@@ -102,8 +102,8 @@ func PrintSp(x map[string]interface{}, z Bundle) {
 
 	// Print API permissions
 	url = ConstMgUrl + "/v1.0/servicePrincipals/" + id + "/oauth2PermissionGrants"
-	r = ApiGet(url, z.MgHeaders, nil)
-	ApiErrorCheck(r, utl.Trace())
+	r, _, _ = ApiGet(url, z.MgHeaders, nil)
+	ApiErrorCheck("GET", url, utl.Trace(), r)
 	if r["value"] != nil && len(r["value"].([]interface{})) > 0 {
 		fmt.Printf("api_permissions:\n")
 		apiPerms := r["value"].([]interface{}) // Assert as JSON array
@@ -114,11 +114,11 @@ func PrintSp(x map[string]interface{}, z Bundle) {
 			apiName := "Unknown"
 			id := utl.Str(api["resourceId"]) // Get API's SP to get its displayName
 			url2 := ConstMgUrl + "/v1.0/servicePrincipals/" + id
-			r2 := ApiGet(url2, z.MgHeaders, nil)
+			r2, _, _ := ApiGet(url2, z.MgHeaders, nil)
 			if r2["appDisplayName"] != nil {
 				apiName = utl.Str(r2["appDisplayName"])
 			}
-			ApiErrorCheck(r2, utl.Trace())
+			ApiErrorCheck("GET", url2, utl.Trace(), r2)
 
 			// Print each delegated claim for this API
 			scope := strings.TrimSpace(utl.Str(api["scope"]))
@@ -161,8 +161,8 @@ func SpsCountAzure(z Bundle) (native, microsoft int64) {
 	z.MgHeaders["ConsistencyLevel"] = "eventual"
 	baseUrl := ConstMgUrl + "/v1.0/servicePrincipals"
 	url := baseUrl + "/$count"
-	r := ApiGet(url, z.MgHeaders, nil)
-	ApiErrorCheck(r, utl.Trace())
+	r, _, _ := ApiGet(url, z.MgHeaders, nil)
+	ApiErrorCheck("GET", url, utl.Trace(), r)
 	if r["value"] == nil {
 		return 0, 0 // Something went wrong, so return zero for both
 	}
@@ -172,8 +172,8 @@ func SpsCountAzure(z Bundle) (native, microsoft int64) {
 	params := map[string]string{"$filter": "appOwnerOrganizationId eq " + z.TenantId}
 	params["$count"] = "true"
 	url = baseUrl
-	r = ApiGet(url, z.MgHeaders, params)
-	ApiErrorCheck(r, utl.Trace())
+	r, _, _ = ApiGet(url, z.MgHeaders, params)
+	ApiErrorCheck("GET", url, utl.Trace(), r)
 	if r["value"] == nil {
 		return 0, all // Something went wrong with native count, retun all as Microsoft ones
 	}
@@ -269,13 +269,13 @@ func GetAzSpByUuid(uuid string, headers map[string]string) map[string]interface{
 	selection += "appDisplayName,homepage,id,info,logoutUrl,notes,oauth2PermissionScopes,replyUrls,"
 	selection += "resourceSpecificApplicationPermissions,servicePrincipalNames,tags"
 	url := baseUrl + "/" + uuid + selection // First search is for direct Object Id
-	r := ApiGet(url, headers, nil)
+	r, _, _ := ApiGet(url, headers, nil)
 	if r != nil && r["error"] != nil {
 		// Second search is for this SP's application Client Id
 		url = baseUrl + selection
 		params := map[string]string{"$filter": "appId eq '" + uuid + "'"}
-		r := ApiGet(url, headers, params)
-		//ApiErrorCheck(r, utl.Trace()) // Commented out to do this quietly. Use for DEBUGging
+		r, _, _ := ApiGet(url, headers, params)
+		//ApiErrorCheck("GET", url, utl.Trace(), r) // Commented out to do this quietly. Use for DEBUGging
 		if r != nil && r["value"] != nil {
 			list := r["value"].([]interface{})
 			count := len(list)

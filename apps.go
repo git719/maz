@@ -27,7 +27,7 @@ func PrintApp(x map[string]interface{}, z Bundle) {
 
 	// Print owners
 	url := ConstMgUrl + "/beta/applications/" + id + "/owners"
-	r := ApiGet(url, z.MgHeaders, nil)
+	r, _, _ := ApiGet(url, z.MgHeaders, nil)
 	if r["value"] != nil {
 		owners := r["value"].([]interface{})
 		if len(owners) > 0 {
@@ -53,12 +53,12 @@ func PrintApp(x map[string]interface{}, z Bundle) {
 			fmt.Printf("%s: %s\n", "owners", "None")
 		}
 	}
-	ApiErrorCheck(r, utl.Trace())
+	ApiErrorCheck("GET", url, utl.Trace(), r)
 
 	// Print all groups and roles it is a member of
 	url = ConstMgUrl + "/v1.0/applications/" + id + "/transitiveMemberOf"
-	r = ApiGet(url, z.MgHeaders, nil)
-	ApiErrorCheck(r, utl.Trace())
+	r, _, _ = ApiGet(url, z.MgHeaders, nil)
+	ApiErrorCheck("GET", url, utl.Trace(), r)
 	if r != nil && r["value"] != nil {
 		memberOf := r["value"].([]interface{})
 		PrintMemberOfs("g", memberOf)
@@ -86,13 +86,13 @@ func PrintApp(x map[string]interface{}, z Bundle) {
 
 			// Get this API's SP object with all relevant attributes
 			url := ConstMgUrl + "/beta/servicePrincipals?filter=appId+eq+'" + resAppId + "'"
-			r := ApiGet(url, z.MgHeaders, nil)
+			r, _, _ := ApiGet(url, z.MgHeaders, nil)
 			// Unclear why result is a list instead of a single entry
 			if r["value"] == nil {
 				fmt.Printf("  %-50s %s\n", resAppId, "Unable to get Resource App object. Skipping this API.")
 				continue
 			}
-			ApiErrorCheck(r, utl.Trace())
+			ApiErrorCheck("GET", url, utl.Trace(), r)
 
 			SPs := r["value"].([]interface{})
 			if len(SPs) > 1 {
@@ -160,8 +160,8 @@ func AppsCountAzure(z Bundle) int64 {
 	// Return number of entries in Azure tenant
 	z.MgHeaders["ConsistencyLevel"] = "eventual"
 	url := ConstMgUrl + "/v1.0/applications/$count"
-	r := ApiGet(url, z.MgHeaders, nil)
-	ApiErrorCheck(r, utl.Trace())
+	r, _, _ := ApiGet(url, z.MgHeaders, nil)
+	ApiErrorCheck("GET", url, utl.Trace(), r)
 	if r["value"] != nil {
 		return r["value"].(int64) // Expected result is a single int64 value for the count
 	}
@@ -255,13 +255,13 @@ func GetAzAppByUuid(uuid string, headers map[string]string) map[string]interface
 	selection += "publicClient,publisherDomain,requiredResourceAccess,serviceManagementReference,"
 	selection += "signInAudience,spa,tags,tokenEncryptionKeyId,verifiedPublisher,web"
 	url := baseUrl + "/" + uuid + selection // First search is for direct Object Id
-	r := ApiGet(url, headers, nil)
+	r, _, _ := ApiGet(url, headers, nil)
 	if r != nil && r["error"] != nil {
 		// Second search is for this app's application Client Id
 		url = baseUrl + selection
 		params := map[string]string{"$filter": "appId eq '" + uuid + "'"}
-		r := ApiGet(url, headers, params)
-		//ApiErrorCheck(r, utl.Trace()) // Commented out to do this quietly. Use for DEBUGging
+		r, _, _ := ApiGet(url, headers, params)
+		//ApiErrorCheck("GET", url, utl.Trace(), r) // Commented out to do this quietly. Use for DEBUGging
 		if r != nil && r["value"] != nil {
 			list := r["value"].([]interface{})
 			count := len(list)

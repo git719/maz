@@ -173,8 +173,8 @@ func GetAzRbacScopes(z Bundle) (scopes []string) {
 		// // Now get/add all resourceGroups under this subscription
 		// params := map[string]string{"api-version": "2021-04-01"} // resourceGroups
 		// url := ConstAzUrl + utl.Str(x["id"]) + "/resourcegroups"
-		// r := ApiGet(url, z.AzHeaders, params)
-		// ApiErrorCheck(r, utl.Trace())
+		// r, _, _ := ApiGet(url, z.AzHeaders, params)
+		// ApiErrorCheck("GET", url, utl.Trace(), r)
 		// if r != nil && r["value"] != nil {
 		// 	resourceGroups := r["value"].([]interface{})
 		// 	for _, j := range resourceGroups {
@@ -233,8 +233,8 @@ func GetAzObjects(url string, headers map[string]string, verbose bool) (deltaSet
 	// and a deltaLink for running the next future Azure query. Implements the pattern described at
 	// https://docs.microsoft.com/en-us/graph/delta-query-overview
 	k := 1 // Track number of API calls
-	r := ApiGet(url, headers, nil)
-	ApiErrorCheck(r, utl.Trace())
+	r, _, _ := ApiGet(url, headers, nil)
+	ApiErrorCheck("GET", url, utl.Trace(), r)
 	for {
 		// Infinite for-loop until deltalLink appears (meaning we're done getting current delta set)
 		var thisBatch []interface{} = nil // Assume zero entries in this batch
@@ -255,8 +255,8 @@ func GetAzObjects(url string, headers map[string]string, verbose bool) (deltaSet
 			}
 			return deltaSet, deltaLinkMap // Return immediately after deltaLink appears
 		}
-		r = ApiGet(utl.Str(r["@odata.nextLink"]), headers, nil) // Get next batch
-		ApiErrorCheck(r, utl.Trace())
+		r, _, _ = ApiGet(utl.Str(r["@odata.nextLink"]), headers, nil) // Get next batch
+		ApiErrorCheck("GET", url, utl.Trace(), r)
 		k++
 	}
 	if verbose {

@@ -42,8 +42,8 @@ func PrintUser(x map[string]interface{}, z Bundle) {
 
 	// Print all groups and roles it is a member of
 	url := ConstMgUrl + "/v1.0/users/" + id + "/transitiveMemberOf"
-	r := ApiGet(url, z.MgHeaders, nil)
-	ApiErrorCheck(r, utl.Trace())
+	r, _, _ := ApiGet(url, z.MgHeaders, nil)
+	ApiErrorCheck("GET", url, utl.Trace(), r)
 	if r != nil && r["value"] != nil {
 		memberOf := r["value"].([]interface{})
 		PrintMemberOfs("g", memberOf)
@@ -68,8 +68,8 @@ func UsersCountAzure(z Bundle) int64 {
 	// Return number of entries in Azure tenant
 	z.MgHeaders["ConsistencyLevel"] = "eventual"
 	url := ConstMgUrl + "/v1.0/users/$count"
-	r := ApiGet(url, z.MgHeaders, nil)
-	ApiErrorCheck(r, utl.Trace())
+	r, _, _ := ApiGet(url, z.MgHeaders, nil)
+	ApiErrorCheck("GET", url, utl.Trace(), r)
 	if r["value"] != nil {
 		return r["value"].(int64) // Expected result is a single int64 value for the count
 	}
@@ -168,7 +168,7 @@ func GetAzUserByUuid(uuid string, headers map[string]string) map[string]interfac
 	selection += "onPremisesSecurityIdentifier,onPremisesSyncEnabled,onPremisesUserPrincipalName,"
 	selection += "otherMails,securityIdentifier,surname,userPrincipalName"
 	url := baseUrl + "/" + uuid + selection
-	r := ApiGet(url, headers, nil)
-	//ApiErrorCheck(r, utl.Trace()) // Commented out to do this quietly. Use for DEBUGging
+	r, _, _ := ApiGet(url, headers, nil)
+	//ApiErrorCheck("GET", url, utl.Trace(), r) // Commented out to do this quietly. Use for DEBUGging
 	return r
 }

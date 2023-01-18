@@ -15,33 +15,36 @@ import (
 	"time"
 )
 
-func ApiGet(url string, headers, params map[string]string) (result map[string]interface{}) {
+type jsonT map[string]interface{} // Local syntactic sugar, for easier reading
+type strMapT map[string]string
+
+func ApiGet(url string, headers, params strMapT) (result jsonT, rsc int, err error) {
 	return ApiCall("GET", url, nil, headers, params, false) // false = quiet, for normal ops
 }
 
-func ApiGetDebug(url string, headers, params map[string]string) (result map[string]interface{}) {
+func ApiGetDebug(url string, headers, params strMapT) (result jsonT, rsc int, err error) {
 	return ApiCall("GET", url, nil, headers, params, true) // true = verbose, for debugging
 }
 
-func ApiDelete(url string, headers, params map[string]string) (result map[string]interface{}) {
+func ApiDelete(url string, headers, params strMapT) (result jsonT, rsc int, err error) {
 	return ApiCall("DELETE", url, nil, headers, params, false) // false = quiet, for normal ops
 }
 
-func ApiDeleteDebug(url string, headers, params map[string]string) (result map[string]interface{}) {
+func ApiDeleteDebug(url string, headers, params strMapT) (result jsonT, rsc int, err error) {
 	return ApiCall("DELETE", url, nil, headers, params, true) // true = verbose, for debugging
 }
 
-func ApiPut(url string, payload map[string]interface{}, headers, params map[string]string) (result map[string]interface{}) {
+func ApiPut(url string, payload jsonT, headers, params strMapT) (result jsonT, rsc int, err error) {
 	return ApiCall("PUT", url, payload, headers, params, false) // false = quiet, for normal ops
 }
 
-func ApiPutDebug(url string, payload map[string]interface{}, headers, params map[string]string) (result map[string]interface{}) {
+func ApiPutDebug(url string, payload jsonT, headers, params strMapT) (result jsonT, rsc int, err error) {
 	return ApiCall("PUT", url, payload, headers, params, true) // true = verbose, for debugging
 }
 
-func ApiCall(method, url string, payload map[string]interface{}, headers, params map[string]string, verbose bool) (result map[string]interface{}) {
-	// Make API call and return JSON object. See https://eager.io/blog/go-and-json/
-	// for a clear explanation of how to interpret JSON response with GoLang
+func ApiCall(method, url string, payload jsonT, headers, params strMapT, verbose bool) (result jsonT, rsc int, err error) {
+	// Make API call and return JSON object, Response StatusCode, and error. See https://eager.io/blog/go-and-json/
+	// for a clear explanation of how to interpret JSON responses with GoLang
 
 	if !strings.HasPrefix(url, "http") {
 		utl.Die(utl.Trace() + "Error: Bad URL, " + url + "\n")
@@ -50,7 +53,6 @@ func ApiCall(method, url string, payload map[string]interface{}, headers, params
 	// Set up new HTTP client
 	client := &http.Client{Timeout: time.Second * 60} // One minute timeout
 	var req *http.Request = nil
-	var err error = nil
 	switch strings.ToUpper(method) {
 	case "GET":
 		req, err = http.NewRequest("GET", url, nil)
@@ -93,12 +95,13 @@ func ApiCall(method, url string, payload map[string]interface{}, headers, params
 		fmt.Printf(method + " " + url + "\n")
 		fmt.Printf("HEADERS:\n")
 		utl.PrintJson(req.Header)
-		print("\n")
-		print("PARAMS:\n")
+		fmt.Println()
+		fmt.Println("PARAMS:")
 		utl.PrintJson(q)
 		fmt.Println()
-		// print("REQUEST_PAYLOAD:\n")
-		// utl.PrintJson(BODY); print("\n")
+		// fmt.Println("PAYLOAD:")
+		// utl.PrintJson(jsonData)
+		// fmt.Println()
 	}
 	r, err := client.Do(req)
 	if err != nil {
@@ -113,36 +116,42 @@ func ApiCall(method, url string, payload map[string]interface{}, headers, params
 
 	if verbose {
 		fmt.Printf(utl.Cya("==== RESPONSE ================================") + "\n")
-		fmt.Printf("STATUS: %d %s\n", r.StatusCode, http.StatusText(r.StatusCode))
-		fmt.Printf("RESULT:\n")
-		utl.PrintJson(result)
-		fmt.Println()
+		fmt.Printf("%s %d %s\n", utl.Cya("STATUS:"), r.StatusCode, http.StatusText(r.StatusCode))
+		fmt.Printf(utl.Cya("RESULT:") + "\n")
+		utl.PrintJson(body)
+		fmt.Printf("\n")
 		resHeaders, err := httputil.DumpResponse(r, false)
 		if err != nil {
 			panic(err.Error())
 		}
-		fmt.Printf("HEADERS:\n%s\n", string(resHeaders))
+		fmt.Printf("%s\n%s\n", utl.Cya("HEADERS:"), string(resHeaders))
 	}
-	// Note that variable 'body' is of type []uint8 which is essentially a long string
-	// that evidently can be either A) a count integer number, or B) a JSON object string.
-	// This interpretation needs confirmation, and then better handling.
-	if count, err := strconv.ParseInt(string(body), 10, 64); err == nil {
-		// If entire body is a string representing an integer value, create
-		// a JSON object with this count value we just converted to int64
-		result = make(map[string]interface{})
-		result["value"] = count
+
+	// This function caters to Microsoft Azure REST API calls. Note that variable 'body' is of type
+	// []uint8, which is essentially a long string that evidently can be either: 1) a single integer
+	// number, or 2) a JSON object string that needs unmarshalling. Below conditional is based on
+	// this interpretation, but may need confirmation then better handling
+
+	// Create jsonResult variable object to be return
+	var jsonResult jsonT = nil
+	if intValue, err := strconv.ParseInt(string(body), 10, 64); err == nil {
+		// It's an integer an API object count value
+		jsonResult = make(map[string]interface{})
+		jsonResult["value"] = intValue
 	} else {
-		// Alternatively, treat entire body as a JSON object string, and unmarshalled into 'result'
-		if err = json.Unmarshal([]byte(body), &result); err != nil {
+		// It's a regular JSON
+		if err = json.Unmarshal([]byte(body), &jsonResult); err != nil {
 			panic(err.Error())
 		}
 	}
-	return result
+	return jsonResult, r.StatusCode, err
 }
 
-func ApiErrorCheck(r map[string]interface{}, caller string) {
+func ApiErrorCheck(method, url, caller string, r jsonT) {
+	// Print useful error information
 	if r["error"] != nil {
 		e := r["error"].(map[string]interface{})
-		fmt.Printf(caller + "Error: " + e["message"].(string) + "\n")
+		errMsg := method + " " + url + "\n" + caller + "Error: " + e["message"].(string) + "\n"
+		fmt.Printf(utl.Red(errMsg))
 	}
 }

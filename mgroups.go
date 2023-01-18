@@ -92,8 +92,8 @@ func GetAzMgGroups(z Bundle) (list []interface{}) {
 	list = nil                                               // We have to zero it out
 	params := map[string]string{"api-version": "2020-05-01"} // managementGroups
 	url := ConstAzUrl + "/providers/Microsoft.Management/managementGroups"
-	r := ApiGet(url, z.AzHeaders, params)
-	ApiErrorCheck(r, utl.Trace())
+	r, _, _ := ApiGet(url, z.AzHeaders, params)
+	ApiErrorCheck("GET", url, utl.Trace(), r)
 	if r != nil && r["value"] != nil {
 		objects := r["value"].([]interface{})
 		list = append(list, objects...)
@@ -135,8 +135,8 @@ func PrintMgTree(z Bundle) {
 		"$expand":     "children",
 		"$recurse":    "true",
 	}
-	r := ApiGet(url, z.AzHeaders, params)
-	ApiErrorCheck(r, utl.Trace()) // DEBUG: Need to see when this is failing for some users
+	r, _, _ := ApiGet(url, z.AzHeaders, params)
+	ApiErrorCheck("GET", url, utl.Trace(), r) // DEBUG: Need to see when this is failing for some users
 	if r["properties"] != nil {
 		// Print everything under the hierarchy
 		Prop := r["properties"].(map[string]interface{})
