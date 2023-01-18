@@ -158,8 +158,8 @@ func GetAzUsers(cacheFile string, headers map[string]string, verbose bool) (list
 	return list
 }
 
-func GetAzUserById(id string, headers map[string]string) map[string]interface{} {
-	// Get Azure user by UUID, with extended attributes
+func GetAzUserByUuid(uuid string, headers map[string]string) map[string]interface{} {
+	// Get Azure user by Object UUID, with extended attributes
 	baseUrl := ConstMgUrl + "/v1.0/users"
 	selection := "?$select=id,accountEnabled,createdDateTime,creationType,displayName,id,identities,"
 	selection += "lastPasswordChangeDateTime,mail,mailNickname,onPremisesDistinguishedName,"
@@ -167,7 +167,7 @@ func GetAzUserById(id string, headers map[string]string) map[string]interface{} 
 	selection += "onPremisesLastSyncDateTime,onPremisesProvisioningErrors,onPremisesSamAccountName,"
 	selection += "onPremisesSecurityIdentifier,onPremisesSyncEnabled,onPremisesUserPrincipalName,"
 	selection += "otherMails,securityIdentifier,surname,userPrincipalName"
-	url := baseUrl + "/" + id + selection
+	url := baseUrl + "/" + uuid + selection
 	r := ApiGet(url, headers, nil)
 	//ApiErrorCheck(r, utl.Trace()) // Commented out to do this quietly. Use for DEBUGging
 	return r

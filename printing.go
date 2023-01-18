@@ -70,13 +70,13 @@ func PrintTersely(t string, object interface{}) {
 	}
 }
 
-func PrintObjectById(id string, z Bundle) {
+func PrintObjectByUuid(uuid string, z Bundle) {
 	// Search for object with given UUID and print it
-	if !utl.ValidUuid(id) {
+	if !utl.ValidUuid(uuid) {
 		os.Exit(1) // Do nothing if UUID is invalid
 	}
-	// Search for all mazType objects with this UUID
-	list := GetObjectsWithThisUuid(id, z)
+	// Search for this UUID under all maz objects types
+	list := FindAzObjectsByUuid(uuid, z)
 	for _, i := range list {
 		x := i.(map[string]interface{})
 		if x != nil && x["mazType"] != nil {

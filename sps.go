@@ -261,19 +261,19 @@ func GetAzSps(cacheFile string, headers map[string]string, verbose bool) (list [
 	return list
 }
 
-func GetAzSpById(id string, headers map[string]string) map[string]interface{} {
+func GetAzSpByUuid(uuid string, headers map[string]string) map[string]interface{} {
 	// Get Azure AD service principal by its Object UUID or by its appId, with extended attributes
 	baseUrl := ConstMgUrl + "/v1.0/servicePrincipals"
 	selection := "?$select=id,displayName,appId,accountEnabled,servicePrincipalType,appOwnerOrganizationId,"
 	selection += "appRoleAssignmentRequired,appRoles,disabledByMicrosoftStatus,addIns,alternativeNames,"
 	selection += "appDisplayName,homepage,id,info,logoutUrl,notes,oauth2PermissionScopes,replyUrls,"
 	selection += "resourceSpecificApplicationPermissions,servicePrincipalNames,tags"
-	url := baseUrl + "/" + id + selection // First search is for direct Object Id
+	url := baseUrl + "/" + uuid + selection // First search is for direct Object Id
 	r := ApiGet(url, headers, nil)
 	if r != nil && r["error"] != nil {
 		// Second search is for this SP's application Client Id
 		url = baseUrl + selection
-		params := map[string]string{"$filter": "appId eq '" + id + "'"}
+		params := map[string]string{"$filter": "appId eq '" + uuid + "'"}
 		r := ApiGet(url, headers, params)
 		//ApiErrorCheck(r, utl.Trace()) // Commented out to do this quietly. Use for DEBUGging
 		if r != nil && r["value"] != nil {

@@ -136,13 +136,13 @@ func GetAzAdRoles(cacheFile string, headers map[string]string, verbose bool) (li
 	return list
 }
 
-func GetAzAdRoleById(id string, headers map[string]string) map[string]interface{} {
-	// Get Azure AD role definition by UUID, with extended attributes
+func GetAzAdRoleByUuid(uuid string, headers map[string]string) map[string]interface{} {
+	// Get Azure AD role definition by Object UUID, with extended attributes
 	// Note that role definitions are under a different area, until they are activated
 	baseUrl := ConstMgUrl + "/v1.0/roleManagement/directory/roleDefinitions"
 	selection := "?$select=id,displayName,description,isBuiltIn,isEnabled,resourceScopes,"
 	selection += "templateId,version,rolePermissions,inheritsPermissionsFrom"
-	url := baseUrl + "/" + id + selection
+	url := baseUrl + "/" + uuid + selection
 	r := ApiGet(url, headers, nil)
 	//ApiErrorCheck(r, utl.Trace()) // Commented out to do this quietly. Use for DEBUGging
 	return r

@@ -48,20 +48,16 @@ func MgGroupCountAzure(z Bundle) int64 {
 	return int64(len(list))
 }
 
-func GetAzMgGroups(z Bundle) (list []interface{}) {
-	// Get ALL managementGroups in current Azure tenant AND save them to local cache file
-	list = nil                                               // We have to zero it out
-	params := map[string]string{"api-version": "2020-05-01"} // managementGroups
-	url := ConstAzUrl + "/providers/Microsoft.Management/managementGroups"
-	r := ApiGet(url, z.AzHeaders, params)
-	ApiErrorCheck(r, utl.Trace())
-	if r != nil && r["value"] != nil {
-		objects := r["value"].([]interface{})
-		list = append(list, objects...)
+func GetIdMapMgGroups(z Bundle) (nameMap map[string]string) {
+	// Return management groups id:name map
+	nameMap = make(map[string]string)
+	mgGroups := GetMgGroups("", false, z) // false = don't force a call to Azure
+	// By not forcing an Azure call we're opting for cache speed over id:name map accuracy
+	for _, i := range mgGroups {
+		x := i.(map[string]interface{})
+		nameMap[utl.Str(x["id"])] = utl.Str(x["name"])
 	}
-	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_managementGroups.json")
-	utl.SaveFileJson(list, cacheFile) // Update the local cache
-	return list
+	return nameMap
 }
 
 func GetMgGroups(filter string, force bool, z Bundle) (list []interface{}) {
@@ -89,6 +85,22 @@ func GetMgGroups(filter string, force bool, z Bundle) (list []interface{}) {
 		}
 	}
 	return matchingList
+}
+
+func GetAzMgGroups(z Bundle) (list []interface{}) {
+	// Get ALL managementGroups in current Azure tenant AND save them to local cache file
+	list = nil                                               // We have to zero it out
+	params := map[string]string{"api-version": "2020-05-01"} // managementGroups
+	url := ConstAzUrl + "/providers/Microsoft.Management/managementGroups"
+	r := ApiGet(url, z.AzHeaders, params)
+	ApiErrorCheck(r, utl.Trace())
+	if r != nil && r["value"] != nil {
+		objects := r["value"].([]interface{})
+		list = append(list, objects...)
+	}
+	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_managementGroups.json")
+	utl.SaveFileJson(list, cacheFile) // Update the local cache
+	return list
 }
 
 func PrintMgChildren(indent int, children []interface{}) {

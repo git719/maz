@@ -245,7 +245,7 @@ func GetAzApps(cacheFile string, headers map[string]string, verbose bool) (list 
 	return list
 }
 
-func GetAzAppById(id string, headers map[string]string) map[string]interface{} {
+func GetAzAppByUuid(uuid string, headers map[string]string) map[string]interface{} {
 	// Get Azure AD application by its Object UUID or by its appId, with extended attributes
 	baseUrl := ConstMgUrl + "/v1.0/applications"
 	selection := "?$select=id,addIns,api,appId,applicationTemplateId,appRoles,certification,createdDateTime,"
@@ -254,12 +254,12 @@ func GetAzAppById(id string, headers map[string]string) map[string]interface{} {
 	selection += "oauth2RequiredPostResponse,optionalClaims,parentalControlSettings,passwordCredentials,"
 	selection += "publicClient,publisherDomain,requiredResourceAccess,serviceManagementReference,"
 	selection += "signInAudience,spa,tags,tokenEncryptionKeyId,verifiedPublisher,web"
-	url := baseUrl + "/" + id + selection // First search is for direct Object Id
+	url := baseUrl + "/" + uuid + selection // First search is for direct Object Id
 	r := ApiGet(url, headers, nil)
 	if r != nil && r["error"] != nil {
 		// Second search is for this app's application Client Id
 		url = baseUrl + selection
-		params := map[string]string{"$filter": "appId eq '" + id + "'"}
+		params := map[string]string{"$filter": "appId eq '" + uuid + "'"}
 		r := ApiGet(url, headers, params)
 		//ApiErrorCheck(r, utl.Trace()) // Commented out to do this quietly. Use for DEBUGging
 		if r != nil && r["value"] != nil {

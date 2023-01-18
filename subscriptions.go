@@ -116,10 +116,10 @@ func GetAzSubscriptions(z Bundle) (list []interface{}) {
 	return list
 }
 
-func GetAzSubscriptionById(id string, headers map[string]string) map[string]interface{} {
-	// Get Azure subscription by Object Id
+func GetAzSubscriptionByUuid(uuid string, headers map[string]string) map[string]interface{} {
+	// Get Azure subscription by Object UUID
 	params := map[string]string{"api-version": "2022-09-01"} // subscriptions
-	url := ConstAzUrl + "/subscriptions/" + id
+	url := ConstAzUrl + "/subscriptions/" + uuid
 	r := ApiGet(url, headers, params)
 	//ApiErrorCheck(r, utl.Trace()) // Commented out to do this quietly. Use for DEBUGging
 	return r

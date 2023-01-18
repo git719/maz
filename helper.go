@@ -3,6 +3,7 @@
 package maz
 
 import (
+	"bufio"
 	"fmt"
 	"github.com/git719/utl"
 	"os"
@@ -10,13 +11,114 @@ import (
 	"time"
 )
 
-func GetObjectsWithThisUuid(id string, z Bundle) (list []interface{}) {
+func UpsertAzObject(filePath string, z Bundle) {
+	// Create or Update role definition or assignment based on given specfile
+	if utl.FileNotExist(filePath) || utl.FileSize(filePath) < 1 {
+		utl.Die("File does not exist, or it is zero size\n")
+	}
+	formatType, t, x := GetObjectFromFile(filePath)
+	if formatType != "JSON" && formatType != "YAML" {
+		utl.Die("File is not in JSON nor YAML format\n")
+	}
+	if t != "d" && t != "a" {
+		utl.Die("File is not a role definition nor an assignment specfile\n")
+	}
+	switch t {
+	case "d":
+		UpsertAzRoleDefinition(x, z)
+	case "a":
+		CreateAzRoleAssignment(x, z)
+	}
+	os.Exit(0)
+}
+
+func DeleteAzObjectPrompt(t string, fqid string, z Bundle) {
+	// Prompt for Azure object deletion and delete if confirmed
+	fmt.Print(utl.ColYel("DELETE above? y/n "))
+	reader := bufio.NewReader(os.Stdin)
+	confirm, _, err := reader.ReadRune()
+	if err != nil {
+		fmt.Println(err)
+	}
+	if confirm == 'y' {
+		switch t {
+		case "d":
+			DeleteAzRoleDefinitionByFqid(fqid, z)
+		case "a":
+			DeleteAzRoleAssignmentByFqid(fqid, z)
+		}
+		os.Exit(0)
+	}
+	utl.Die("Aborted.\n")
+}
+
+func DeleteAzObject(specifier string, z Bundle) {
+	// Delete object based on string specifier (currently only supports roleDefinitions or Assignments)
+	// String specifier can be either of 3: UUID, specfile, or displaName (only for roleDefinition)
+	// 1) Search Azure by given identifier; 2) Grab object's Fully Qualified Id string;
+	// 3) Print and prompt for confirmation; 4) Delete or abort
+	if utl.ValidUuid(specifier) {
+		list := FindAzObjectsByUuid(specifier, z) // Get all objects that may match this UUID, hopefully just one
+		if len(list) > 1 {
+			utl.Die(utl.ColRed("UUID collision! Run utility with UUID argument to see the list.\n"))
+		}
+		if len(list) < 1 {
+			utl.Die("Object does not exist in current Azure tenant\n")
+		}
+		y := list[0].(map[string]interface{}) // Single out the only object
+		if y != nil && y["mazType"] != nil {
+			t := utl.Str(y["mazType"])
+			fqid := utl.Str(y["id"]) // Grab fully qualified object Id
+			PrintObject(t, y, z)
+			DeleteAzObjectPrompt(t, fqid, z)
+		}
+	} else if utl.FileExist(specifier) {
+		// Delete object defined in specfile
+		formatType, t, x := GetObjectFromFile(specifier) // x is for the object in Specfile
+		if formatType != "JSON" && formatType != "YAML" {
+			utl.Die("File is not in JSON nor YAML format\n")
+		}
+		var y map[string]interface{} = nil
+		switch t {
+		case "d":
+			y = GetAzRoleDefinitionByObject(x, z) // y is for the object from Azure
+			if y == nil {
+				utl.Die("Role definition does not exist in current Azure tenant\n")
+			} else {
+				PrintRoleDefinition(y, z) // Use specific role def print function
+			}
+		case "a":
+			y = GetAzRoleAssignmentByObject(x, z)
+			if y == nil {
+				utl.Die("Role assignment does not exist in current Azure tenant\n")
+			} else {
+				PrintRoleAssignment(y, z) // Use specific role assgmnt print function
+			}
+		default:
+			utl.Die("This " + formatType + " file is not a role definition nor an assignment specfile\n")
+		}
+		fqid := utl.Str(y["id"]) // Grab fully qualified object Id
+		DeleteAzObjectPrompt(t, fqid, z)
+	} else {
+		// Delete role definition by its displayName, if it exists
+		// This only applies to definitions since assignments do not have a displayName attribute.
+		y := GetAzRoleDefinitionByName(specifier, z)
+		if y == nil {
+			utl.Die("Role definition does not exist in current Azure tenant\n")
+		}
+		fqid := utl.Str(y["id"]) // Grab fully qualified object Id
+		PrintRoleDefinition(y, z)
+		DeleteAzObjectPrompt("d", fqid, z)
+	}
+}
+
+func FindAzObjectsByUuid(uuid string, z Bundle) (list []interface{}) {
 	// Returns list of Azure objects with this UUID. We are saying a list because potentially
 	// this could find UUID collisions. Only checks for the maz limited set of Azure object types.
 	list = nil
 	mazTypes := []string{"d", "a", "s", "u", "g", "sp", "ap", "ad"}
 	for _, t := range mazTypes {
-		x := GetObjectById(t, id, z)
+		x := GetAzObjectByUuid(t, uuid, z)
 		if x != nil && x["id"] != nil { // Valid objects have an 'id' attribute
 			// Note, we are extending the object by adding a mazType as an additional FIELD
 			x["mazType"] = t       // Found one of these types with this UUID
@@ -26,34 +128,33 @@ func GetObjectsWithThisUuid(id string, z Bundle) (list []interface{}) {
 	return list
 }
 
-func GetObjectById(t, id string, z Bundle) (x map[string]interface{}) {
-	// Retrieve Azure object by Object Id
+func GetAzObjectByUuid(t, uuid string, z Bundle) (x map[string]interface{}) {
+	// Retrieve Azure object by Object UUID
 	switch t {
 	case "d":
-		return GetAzRoleDefinitionById(id, z)
+		return GetAzRoleDefinitionByUuid(uuid, z)
 	case "a":
-		return GetAzRoleAssignmentById(id, z)
+		return GetAzRoleAssignmentByUuid(uuid, z)
 	case "s":
-		return GetAzSubscriptionById(id, z.AzHeaders)
+		return GetAzSubscriptionByUuid(uuid, z.AzHeaders)
 	case "u":
-		return GetAzUserById(id, z.MgHeaders)
+		return GetAzUserByUuid(uuid, z.MgHeaders)
 	case "g":
-		return GetAzGroupById(id, z.MgHeaders)
+		return GetAzGroupByUuid(uuid, z.MgHeaders)
 	case "sp":
-		return GetAzSpById(id, z.MgHeaders)
+		return GetAzSpByUuid(uuid, z.MgHeaders)
 	case "ap":
-		return GetAzAppById(id, z.MgHeaders)
+		return GetAzAppByUuid(uuid, z.MgHeaders)
 	case "ad":
-		return GetAzAdRoleById(id, z.MgHeaders)
+		return GetAzAdRoleByUuid(uuid, z.MgHeaders)
 	}
 	return nil
 }
 
 func GetAzRbacScopes(z Bundle) (scopes []string) {
-	// NOT USED: LOOKING TO DELETE THIS
-	// Get all scopes from the Azure RBAC hierarchy
+	// Get all scopes in the entire Azure RBAC hierarchy: All MG scopes + All subscription scopes
 	scopes = nil
-	managementGroups := GetAzMgGroups(z) // Let's start with all managementGroups scopes
+	managementGroups := GetAzMgGroups(z) // Start by adding all the managementGroups scopes
 	for _, i := range managementGroups {
 		x := i.(map[string]interface{})
 		scopes = append(scopes, utl.Str(x["id"]))
@@ -66,7 +167,9 @@ func GetAzRbacScopes(z Bundle) (scopes []string) {
 			continue
 		}
 		scopes = append(scopes, utl.Str(x["id"]))
-		// BELOW NOT REALLY NEEDED
+		// SCOPES below subscriptions do not appear to be REALLY NEEDED
+		// Most list search functions pull all objects in lower scopes.
+		// ------------
 		// // Now get/add all resourceGroups under this subscription
 		// params := map[string]string{"api-version": "2021-04-01"} // resourceGroups
 		// url := ConstAzUrl + utl.Str(x["id"]) + "/resourcegroups"
@@ -251,16 +354,16 @@ func CompareSpecfileToAzure(filePath string, z Bundle) {
 	PrintObject(t, x, z) // Use generic print function
 	fmt.Printf("==== AZURE ===============================\n")
 	if t == "d" {
-		y := GetAzRoleDefinition(x, z)
+		y := GetAzRoleDefinitionByObject(x, z)
 		if y == nil {
-			fmt.Printf("Above definition does NOT exist in current Azure tenant\n")
+			fmt.Printf("Role definition does NOT exist in current Azure tenant\n")
 		} else {
 			PrintRoleDefinition(y, z) // Use specific role def print function
 		}
 	} else {
-		y := GetAzRoleAssignment(x, z)
+		y := GetAzRoleAssignmentByObject(x, z)
 		if y == nil {
-			fmt.Printf("Above assignment does NOT exist in current Azure tenant\n")
+			fmt.Printf("Role assignment does NOT exist in current Azure tenant\n")
 		} else {
 			PrintRoleAssignment(y, z) // Use specific role assgmnt print function
 		}

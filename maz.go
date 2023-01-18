@@ -114,7 +114,7 @@ func SetupCredentials(z *Bundle) Bundle {
 	// Read credentials file and set up authentication parameters as global variables
 	filePath := filepath.Join(z.ConfDir, z.CredsFile) // credentials.yaml
 	if utl.FileNotExist(filePath) && utl.FileSize(filePath) < 1 {
-		utl.Die("Missing credentials file: '%s'\n", filePath+
+		utl.Die("Missing credentials file: " + filePath + "\n" +
 			"Please rerun program using '-cr' or '-cri' option to specify credentials.\n")
 	}
 	credsRaw, err := utl.LoadFileYaml(filePath)

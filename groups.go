@@ -183,14 +183,14 @@ func GetAzGroups(cacheFile string, headers map[string]string, verbose bool) (lis
 	return list
 }
 
-func GetAzGroupById(id string, headers map[string]string) map[string]interface{} {
-	// Get Azure AD group by UUID, with extended attributes
+func GetAzGroupByUuid(uuid string, headers map[string]string) map[string]interface{} {
+	// Get Azure AD group by Object UUID, with extended attributes
 	baseUrl := ConstMgUrl + "/v1.0/groups"
 	selection := "?$select=id,createdDateTime,description,displayName,groupTypes,id,isAssignableToRole,"
 	selection += "mail,mailNickname,onPremisesLastSyncDateTime,onPremisesProvisioningErrors,"
 	selection += "onPremisesSecurityIdentifier,onPremisesSyncEnabled,renewedDateTime,securityEnabled,"
 	selection += "securityIdentifier,memberOf,members,owners"
-	url := baseUrl + "/" + id + selection
+	url := baseUrl + "/" + uuid + selection
 	r := ApiGet(url, headers, nil)
 	//ApiErrorCheck(r, utl.Trace()) // Commented out to do this quietly. Use for DEBUGging
 	return r

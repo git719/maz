@@ -114,6 +114,46 @@ func PrintRoleDefinition(x map[string]interface{}, z Bundle) {
 	}
 }
 
+func UpsertAzRoleDefinition(x map[string]interface{}, z Bundle) {
+	// Create or Update Azure role definition as defined by give x object
+	if x == nil {
+		return
+	}
+
+	// $p = $x.properties
+	// $name = $p.roleName
+	// $scope = $p.assignableScopes[0]
+	// if ( ($null -eq $p ) -or ($null -eq $name ) -or ($null -eq $scope ) -or
+	//      ($null -eq $p.type ) -or ($null -eq $p.description ) ) {
+	//     die("Specfile is missing required attributes.`n" +
+	//         "Run script with '-kd[j]' option to create a properly formatted sample skeleton file.")
+	// }
+
+	// $existing = GetAzObjectByName "d" $name
+	// if ( $null -eq $existing.name ) {
+	//     print("Creating NEW role definition '{0}' as per specfile" -f $name)
+	//     $roleId = [guid]::NewGuid()  # Generate a new global UUID
+	// } else {
+	//     print("id: {0}" -f $existing.name)
+	//     PrintAzObject "d" $x  # Print the one we got from specfile
+	//     warning("WARNING: Role already exists in Azure.")
+	//     $Confirm = Read-Host -Prompt "UPDATE existing one with above? y/n "
+	//     if ( $Confirm -ne "y" ) {
+	//         die("Aborted.")
+	//     }
+	//     print("Updating role ...")
+	//     $roleId = $existing.name  # Existing role definition UUID
+	// }
+
+	// # For the scope in the API call we can just use the 1st one
+	// $body = $x | ConvertTo-Json -Depth 10
+	// $url = $az_url + $scope + "/providers/Microsoft.Authorization/roleDefinitions/"
+	// $r = ApiCall "PUT" ( $url + $roleId + "?api-version=2022-04-01") -data $body
+	// PrintJson $r
+
+	return
+}
+
 func GetIdMapRoleDefs(z Bundle) (nameMap map[string]string) {
 	// Return role definition id:name map
 	nameMap = make(map[string]string)
@@ -161,52 +201,51 @@ func GetRoleDefinitions(filter string, force bool, z Bundle) (list []interface{}
 
 func GetAzRoleDefinitions(verbose bool, z Bundle) (list []interface{}) {
 	// Get ALL roleDefinitions in current Azure tenant AND save them to local cache file
-	// Option to be verbose (true) to show progress, since it can take a while.
-	// See https://learn.microsoft.com/en-us/rest/api/authorization/role-definitions/list
-	// 1st, we look for all tenant-level role definitions (this includes all universal BuiltIn ones)
-	list = nil                                               // We have to zero it out
-	var definitionIds []string                               // Keep track of each unique object to eliminate inherited repeats
-	k := 1                                                   // Track number of API calls to provide progress
-	params := map[string]string{"api-version": "2022-04-01"} // roleDefinitions
-	url := ConstAzUrl + "/providers/Microsoft.Authorization/roleDefinitions"
-	r := ApiGet(url, z.AzHeaders, params)
-	ApiErrorCheck(r, utl.Trace())
-	if r != nil && r["value"] != nil {
-		tenantLevelDefinitions := r["value"].([]interface{})
-		for _, i := range tenantLevelDefinitions {
-			x := i.(map[string]interface{})
-			// Append to growing list, keeping track of all definitionIds
-			list = append(list, x)
-			definitionIds = append(definitionIds, utl.Str(x["name"])) // Note, name is the object UUID
-		}
-		if verbose { // Using global var rUp to overwrite last line. Defer newline until done
-			fmt.Printf("%s(API calls = %d) %d unique role definitions under root scope", rUp, k, len(tenantLevelDefinitions))
-		}
-		k++
-	}
-	// 2nd, we look under subscription-level role definitions
-	subscriptionScopes := GetAzSubscriptionsIds(z)
+	// Option to be verbose (true) or quiet (false), since it can take a while.
+	// References:
+	// - https://learn.microsoft.com/en-us/azure/role-based-access-control/role-definitions-list
+	// - https://learn.microsoft.com/en-us/rest/api/authorization/role-definitions/list
+
+	// Important Azure resource RBAC role definitions API note: As of api-version 2022-04-01, the filter
+	// AtScopeAndBelow() does not work as documented at:
+	// https://learn.microsoft.com/en-us/azure/role-based-access-control/role-definitions-list.
+
+	// This means that anyone searching for a comprehensive list of ALL role definitions within an Azure tenant
+	// is forced to do so by having to traverse and search for all role definitions under each MG and subscription
+	// scope. This process grabs all Azure BuiltIn role definitions, as well as als all custom ones.
+
+	list = nil         // We have to zero it out
+	var uuIds []string // Keep track of each unique object to eliminate inherited repeats
+	k := 1             // Track number of API calls to provide progress
+	mgGroupNameMap := GetIdMapMgGroups(z)
 	subNameMap := GetIdMapSubs(z) // Get all subscription id:name pairs
-	for _, scope := range subscriptionScopes {
-		subName := subNameMap[utl.LastElem(scope, "/")] // Get subscription name
-		url = ConstAzUrl + scope + "/providers/Microsoft.Authorization/roleDefinitions"
-		r = ApiGet(url, z.AzHeaders, params)
-		ApiErrorCheck(r, utl.Trace())
+	scopes := GetAzRbacScopes(z) // Get all scopes
+	params := map[string]string{"api-version": "2022-04-01"} // roleDefinitions
+	for _, scope := range scopes {
+		scopeName := scope // Default scope name is the whole scope string
+		if strings.HasPrefix(scope, "/providers") {
+			scopeName = mgGroupNameMap[scope] // If it's an MG, just use its name
+		} else if strings.HasPrefix(scope, "/subscriptions") {
+			scopeName = subNameMap[utl.LastElem(scope, "/")] // If it's a sub, user its name
+		}
+		url := ConstAzUrl + scope + "/providers/Microsoft.Authorization/roleDefinitions"
+		r := ApiGet(url, z.AzHeaders, params)
+		ApiErrorCheck(r, utl.Trace()) // DEBUG. Until ApiGet rewrite with nullable _ err
 		if r != nil && r["value"] != nil {
-			definitionsInThisSubscription := r["value"].([]interface{})
-			u := 0 // Count unique definitions in this subscription
-			for _, i := range definitionsInThisSubscription {
+			definitionsUnderThisScope := r["value"].([]interface{})
+			u := 0 // Keep track of unique definitions in this scope
+			for _, i := range definitionsUnderThisScope {
 				x := i.(map[string]interface{})
-				id := utl.Str(x["name"])
-				if utl.ItemInList(id, definitionIds) {
-					continue // Skip repeats
+				uuid := utl.Str(x["name"]) // Note that 'name' is actually the role assignment UUID
+				if utl.ItemInList(uuid, uuIds) {
+					continue // Role assignments DO repeat! Skip if it's already been added.
 				}
-				list = append(list, x)                    // This one is unique, append to growing list
-				definitionIds = append(definitionIds, id) // Keep track of the Id
+				list = append(list, x)      // This one is unique, append to growing list
+				uuIds = append(uuIds, uuid) // Keep track of the UUIDs we are seeing
 				u++
 			}
-			if verbose {
-				fmt.Printf("%s(API calls = %d) %d unique role definitions under subscription %s", rUp, k, u, subName)
+			if verbose { // Using global var rUp to overwrite last line. Defer newline until done
+				fmt.Printf("%s(API calls = %d) %d unique role definitions under scope %s", rUp, k, u, scopeName)
 			}
 			k++
 		}
@@ -217,25 +256,6 @@ func GetAzRoleDefinitions(verbose bool, z Bundle) (list []interface{}) {
 	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_roleDefinitions.json")
 	utl.SaveFileJson(list, cacheFile) // Update the local cache
 	return list
-
-	// Important Azure resource RBAC role definitions API note: As of api-version 2022-04-01, the filter
-	// AtScopeAndBelow() does not work as documented at:
-	// https://learn.microsoft.com/en-us/azure/role-based-access-control/role-definitions-list.
-
-	// This means that anyone searching for a comprehensive list of ALL role definitions within an Azure tenant
-	// is forced to do so in 2 steps: 1) Getting all role definitions at the tenant level. This grabs
-	// all universal Azure BuiltIn role definitions, as well as any custom ones also defined at that level.
-	// 2) Then getting all the role definitions defined under each subscription scope. These are of course
-	// all custom role definitions.
-
-	// The best practice for teams to follow is to define ALL its custom roles as universally as possible, at
-	// the highest scope, the Tenant Root Group scope. That way they are "visible" and therefore consumable
-	// anywhere within the tenant. That is essentially how Azure BuiltIn roles are defined, but even more universally.
-
-	// Note also that as of 2022-12-30, Microsoft Azure still has a limitation whereby any custom, role having
-	// any DataAction or NotDataAction CANNOT be defined at any MG scope level, and that prevents this
-	// good practice. Microsoft is actively working to lift this restriction, see:
-	// https://learn.microsoft.com/en-us/azure/role-based-access-control/custom-roles
 }
 
 func RoleDefinitionCountLocal(z Bundle) (builtin, custom int64) {
@@ -279,9 +299,45 @@ func RoleDefinitionCountAzure(z Bundle) (builtin, custom int64) {
 	return int64(len(builtinList)), int64(len(customList))
 }
 
-func GetAzRoleDefinition(x map[string]interface{}, z Bundle) (y map[string]interface{}) {
-	// Special function to get RBAC role definition object from Azure if it exists
-	// as defined by given x object, matching displayName and assignableScopes
+func DeleteAzRoleDefinitionByFqid(fqid string, z Bundle) map[string]interface{} {
+	// Delete Azure resource RBAC roleDefinition by fully qualified object Id
+	// Example of a fully qualified Id string:
+	//   "/providers/Microsoft.Authorization/roleDefinitions/50a6ff7c-3ac5-4acc-b4f4-9a43aee0c80f"
+	params := map[string]string{"api-version": "2022-04-01"} // roleDefinitions
+	url := ConstAzUrl + fqid
+	r := ApiDelete(url, z.AzHeaders, params)
+	ApiErrorCheck(r, utl.Trace()) // DEBUG. Comment out to do this quietly
+	return nil
+}
+
+func GetAzRoleDefinitionByName(specifier string, z Bundle) (y map[string]interface{}) {
+	// Get Azure resource roleDefinition by displayName
+	// See https://learn.microsoft.com/en-us/rest/api/authorization/role-definitions/list
+	y = nil
+	scopes := GetAzRbacScopes(z) // Get all scopes
+	params := map[string]string{
+		"api-version": "2022-04-01", // roleDefinitions
+		"$filter":     "roleName eq '" + specifier + "'",
+	}
+	for _, scope := range scopes {
+		url := ConstAzUrl + scope + "/providers/Microsoft.Authorization/roleDefinitions"
+		r := ApiGet(url, z.AzHeaders, params)
+		ApiErrorCheck(r, utl.Trace()) // DEBUG. Until ApiGet rewrite with nullable _ err
+		if r != nil && r["value"] != nil {
+			results := r["value"].([]interface{})
+			if len(results) == 1 {
+				y = results[0].(map[string]interface{}) // Select first, only index entry
+				return y                                // We found it
+			}
+		}
+	}
+	// If above logic ever finds than 1, then we have serious issuses, just nil below
+	return nil
+}
+
+func GetAzRoleDefinitionByObject(x map[string]interface{}, z Bundle) (y map[string]interface{}) {
+	// Get Azure resource RBAC role definition object if it exists exactly as x object.
+	// Looks for matching: displayName and assignableScopes
 
 	// First, make sure x is a searchable role definition object
 	if x == nil { // Don't look for empty objects
@@ -328,29 +384,25 @@ func GetAzRoleDefinition(x map[string]interface{}, z Bundle) (y map[string]inter
 	return nil
 }
 
-func GetAzRoleDefinitionById(id string, z Bundle) map[string]interface{} {
-	// Get Azure resource roleDefinition by Object Id
-	// See https://learn.microsoft.com/en-us/rest/api/authorization/role-definitions/get-by-id
-	// 1st, we look for this "id" under tenant level role definitions
-	params := map[string]string{"api-version": "2022-04-01"} // roleDefinitions
-	url := ConstAzUrl + "/providers/Microsoft.Authorization/roleDefinitions/" + id
-	r := ApiGet(url, z.AzHeaders, params)
-	//ApiErrorCheck(r, utl.Trace()) // Commented out to do this quietly. Use for DEBUGging
-	if r != nil && r["name"] != nil && utl.Str(r["name"]) == id {
-		return r // Return immediately as found
-	}
-	// 2nd, we look under subscription level role definitions
-	scopes := GetAzSubscriptionsIds(z)
+func GetAzRoleDefinitionByUuid(uuid string, z Bundle) (x map[string]interface{}) {
+	// Get Azure resource roleDefinitions by Object Id. Unfortunately we have to traverse
+	// and search the ENTIRE Azure resource scope hierarchy, which can take time.
+	x = nil
+	scopes := GetAzRbacScopes(z) // Get all scopes
+	params := map[string]string{"api-version": "2022-04-01"}  // roleDefinitions
 	for _, scope := range scopes {
-		url = ConstAzUrl + scope + "/providers/Microsoft.Authorization/roleDefinitions/" + id
-		r = ApiGet(url, z.AzHeaders, params)
-		//ApiErrorCheck(r, utl.Trace()) // DEBUG
-		//
-		// NOTE: The more idiomatic thing to do is to return 2 values: object & err!
-		//
-		if r != nil && r["name"] != nil && utl.Str(r["name"]) == id {
-			return r // Return immediately as found
+		url := ConstAzUrl + scope + "/providers/Microsoft.Authorization/roleDefinitions"
+		r := ApiGet(url, z.AzHeaders, params)
+		//ApiErrorCheck(r, utl.Trace()) // DEBUG. Until ApiGet rewrite with nullable _ err
+		if r != nil && r["value"] != nil {
+			definitionsUnderThisScope := r["value"].([]interface{})
+			for _, i := range definitionsUnderThisScope {
+				x := i.(map[string]interface{})
+				if utl.Str(x["name"]) == uuid {
+					return x // Return immediately if found
+				}
+			}
 		}
 	}
-	return nil
+	return x
 }
