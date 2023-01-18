@@ -42,20 +42,35 @@ type Bundle struct {
 
 func DumpVariables(z Bundle) {
 	// Dump essential global variables
-	fmt.Printf("%-16s %s\n", "tenant_id:", z.TenantId)
+	co := utl.Red(":")
+	cConfDir := utl.Cya("config_dir") + co
+	cComment := utl.Blu("# Utility's config and cache directory")
+	fmt.Printf("%s %s  %s\n", cConfDir, z.ConfDir, cComment)
+	cTenant := utl.Cya("tenant_id") + co
+	fmt.Printf("%s %s\n", cTenant, z.TenantId)
 	if z.Interactive {
-		fmt.Printf("%-16s %s\n", "username:", z.Username)
-		fmt.Printf("%-16s %s\n", "interactive:", "true")
+		cUsername := utl.Cya("username") + co
+		fmt.Printf("%s %s\n", cUsername, z.Username)
+		cInterative := utl.Cya("interactive") + co
+		fmt.Printf("%s %s\n", cInterative, "true")
 	} else {
-		fmt.Printf("%-16s %s\n", "client_id:", z.ClientId)
-		fmt.Printf("%-16s %s\n", "client_secret:", z.ClientSecret)
+		cClientId := utl.Cya("client_id") + co
+		fmt.Printf("%s %s\n", cClientId, z.ClientId)
+		cClientSecret := utl.Cya("client_secret") + co
+		fmt.Printf("%s %s\n", cClientSecret, z.ClientSecret)
 	}
-	fmt.Printf("%-16s %s\n%-16s %s\n%-16s %s\n", "authority_url:", z.AuthorityUrl, "mg_url:", ConstMgUrl, "az_url:", ConstAzUrl)
-	fmt.Printf("mg_headers:\n")
+	cAuthorityUrl := utl.Cya("authority_url") + co
+	fmt.Printf("%s %s\n", cAuthorityUrl, z.AuthorityUrl)
+	cMgUrl := utl.Cya("mg_url") + co
+	fmt.Printf("%s %s\n", cMgUrl, ConstMgUrl)
+	cAzUrl := utl.Cya("az_url") + co
+	fmt.Printf("%s %s\n", cAzUrl, ConstAzUrl)
+	
+	fmt.Println(utl.Cya("mg_headers") + co)
 	for k, v := range z.MgHeaders {
 		fmt.Printf("  %-14s %s\n", utl.Str(k)+":", utl.Str(v))
 	}
-	fmt.Printf("az_headers:\n")
+	fmt.Println(utl.Cya("az_headers") + co)
 	for k, v := range z.AzHeaders {
 		fmt.Printf("  %-14s %s\n", utl.Str(k)+":", utl.Str(v))
 	}
