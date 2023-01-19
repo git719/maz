@@ -262,10 +262,10 @@ func DeleteAzRoleAssignmentByFqid(fqid string, z Bundle) map[string]interface{} 
 	//    /providers/Microsoft.Authorization/roleAssignments/5d586a7b-3f4b-4b5c-844a-3fa8efe49ab3"
 	params := map[string]string{"api-version": "2022-04-01"} // roleAssignments
 	url := ConstAzUrl + fqid
-	r, sCode, _ := ApiDeleteDebug(url, z.AzHeaders, params)
-	ApiErrorCheck("DELETE", url, utl.Trace(), r) // DEBUG. Comment out to do this quietly
-	if sCode != 204 {
-		fmt.Printf("Error deleting assignment " + fqid)
+	_, statusCode, _ := ApiDelete(url, z.AzHeaders, params)
+	//ApiErrorCheck("DELETE", url, utl.Trace(), r)
+	if statusCode != 200 {
+		fmt.Printf("Error deleting assignment " + fqid + "\n")
 	}
 	return nil
 }

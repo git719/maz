@@ -17,7 +17,7 @@ func PrintApp(x map[string]interface{}, z Bundle) {
 	id := utl.Str(x["id"])
 
 	// Print the most important attributes first
-	list := []string{"displayName", "appId", "id"}
+	list := []string{"id", "displayName", "appId"}
 	for _, i := range list {
 		v := utl.Str(x[i])
 		if v != "" {

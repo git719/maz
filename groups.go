@@ -17,7 +17,7 @@ func PrintGroup(x map[string]interface{}, z Bundle) {
 	id := utl.Str(x["id"])
 
 	// First, print the most important attributes of this group
-	list := []string{"displayName", "description", "id", "isAssignableRole", "isAssignableToRole", "mailEnabled", "mailNickname"}
+	list := []string{"id", "displayName", "description", "isAssignableRole", "isAssignableToRole", "mailEnabled", "mailNickname"}
 	for _, i := range list {
 		v := utl.Str(x[i])
 		if v != "" {

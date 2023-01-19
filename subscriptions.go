@@ -13,7 +13,7 @@ func PrintSubscription(x map[string]interface{}) {
 	if x == nil {
 		return
 	}
-	list := []string{"displayName", "subscriptionId", "state", "tenantId"}
+	list := []string{"subscriptionId", "displayName", "state", "tenantId"}
 	for _, i := range list {
 		v := utl.Str(x[i])
 		if v != "" {

@@ -18,7 +18,7 @@ func PrintSp(x map[string]interface{}, z Bundle) {
 	id := utl.Str(x["id"])
 
 	// Print the most important attributes
-	list := []string{"displayName", "id", "appId", "accountEnabled", "servicePrincipalType", "appOwnerOrganizationId"}
+	list := []string{"id", "displayName", "appId", "accountEnabled", "servicePrincipalType", "appOwnerOrganizationId"}
 	for _, i := range list {
 		v := utl.Str(x[i])
 		if v != "" {

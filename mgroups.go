@@ -25,8 +25,8 @@ func PrintMgGroup(x map[string]interface{}) {
 		return
 	}
 	xProp := x["properties"].(map[string]interface{})
-	fmt.Printf("%-12s %s\n", "displayName:", utl.Str(xProp["displayName"]))
 	fmt.Printf("%-12s %s\n", "id:", utl.Str(x["name"]))
+	fmt.Printf("%-12s %s\n", "displayName:", utl.Str(xProp["displayName"]))
 	fmt.Printf("%-12s %s\n", "type:", MgType(utl.Str(x["type"])))
 }
 

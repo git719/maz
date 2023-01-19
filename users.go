@@ -17,7 +17,7 @@ func PrintUser(x map[string]interface{}, z Bundle) {
 	id := utl.Str(x["id"])
 
 	// First, print the most important attributes for this user
-	list := []string{"displayName", "id", "userPrincipalName", "mailNickname", "onPremisesSamAccountName",
+	list := []string{"id", "displayName", "userPrincipalName", "mailNickname", "onPremisesSamAccountName",
 		"onPremisesDomainName", "onPremisesUserPrincipalName"}
 	for _, i := range list {
 		v := utl.Str(x[i])

@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -83,50 +84,33 @@ func ApiCall(method, url string, payload jsonT, headers, params strMapT, verbose
 	}
 
 	// Set up the query parameters and encode
-	q := req.URL.Query()
+	reqParams := req.URL.Query()
 	for p, v := range params {
-		q.Add(p, v)
+		reqParams.Add(p, v)
 	}
-	req.URL.RawQuery = q.Encode()
+	req.URL.RawQuery = reqParams.Encode()
 
 	// === MAKE THE CALL ============
+	co := utl.Red(":")
 	if verbose {
-		fmt.Printf(utl.Cya("==== REQUEST =================================") + "\n")
-		fmt.Printf(method + " " + url + "\n")
-		fmt.Printf("HEADERS:\n")
-		utl.PrintJson(req.Header)
-		fmt.Println()
-		fmt.Println("PARAMS:")
-		utl.PrintJson(q)
-		fmt.Println()
-		// fmt.Println("PAYLOAD:")
-		// utl.PrintJson(jsonData)
-		// fmt.Println()
+		fmt.Println(utl.Cya("==== REQUEST ================================="))
+		fmt.Println(method + " " + url)
+		PrintHeaders(req.Header)
+		PrintParams(reqParams)
+		if payload != nil {
+			fmt.Println(utl.Cya("payload") + co)
+			utl.PrintJson(payload)
+		}
 	}
-	r, err := client.Do(req)
+	r, err := client.Do(req) // Make the call
 	if err != nil {
 		panic(err.Error())
 	}
 	defer r.Body.Close()
-
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := ioutil.ReadAll(r.Body) // Read the response body
 	if err != nil {
 		panic(err.Error())
 	}
-
-	if verbose {
-		fmt.Printf(utl.Cya("==== RESPONSE ================================") + "\n")
-		fmt.Printf("%s %d %s\n", utl.Cya("STATUS:"), r.StatusCode, http.StatusText(r.StatusCode))
-		fmt.Printf(utl.Cya("RESULT:") + "\n")
-		utl.PrintJson(body)
-		fmt.Printf("\n")
-		resHeaders, err := httputil.DumpResponse(r, false)
-		if err != nil {
-			panic(err.Error())
-		}
-		fmt.Printf("%s\n%s\n", utl.Cya("HEADERS:"), string(resHeaders))
-	}
-
 	// This function caters to Microsoft Azure REST API calls. Note that variable 'body' is of type
 	// []uint8, which is essentially a long string that evidently can be either: 1) a single integer
 	// number, or 2) a JSON object string that needs unmarshalling. Below conditional is based on
@@ -144,6 +128,18 @@ func ApiCall(method, url string, payload jsonT, headers, params strMapT, verbose
 			panic(err.Error())
 		}
 	}
+	if verbose {
+		fmt.Println(utl.Cya("==== RESPONSE ================================"))
+		fmt.Printf("%s %d %s\n", utl.Cya("status")+co, r.StatusCode, http.StatusText(r.StatusCode))
+		fmt.Println(utl.Cya("result") + co)
+		utl.PrintJson(jsonResult)
+		resHeaders, err := httputil.DumpResponse(r, false)
+		if err != nil {
+			panic(err.Error())
+		}
+		fmt.Println(utl.Cya("headers") + co)
+		fmt.Println(string(resHeaders))
+	}
 	return jsonResult, r.StatusCode, err
 }
 
@@ -153,5 +149,45 @@ func ApiErrorCheck(method, url, caller string, r jsonT) {
 		e := r["error"].(map[string]interface{})
 		errMsg := method + " " + url + "\n" + caller + "Error: " + e["message"].(string) + "\n"
 		fmt.Printf(utl.Red(errMsg))
+	}
+}
+
+func PrintHeaders(headers http.Header) {
+	if headers == nil {
+		return
+	}
+	co := utl.Red(":")
+	fmt.Println(utl.Cya("headers") + co)
+	for k, v := range headers {
+		fmt.Printf("  %s\n", utl.Cya(k)+co)
+		count := len(v) // Array of string
+		if count == 1 {
+			fmt.Printf("    - %s\n", string(v[0])) // In YAML-like output, 1st entry gets the dash
+		}
+		if count > 2 {
+			for _, i := range v[1:] {
+				fmt.Printf("      %s\n", string(i))
+			}
+		}
+	}
+}
+
+func PrintParams(params url.Values) {
+	if params == nil {
+		return
+	}
+	co := utl.Red(":")
+	fmt.Println(utl.Cya("params") + co)
+	for k, v := range params {
+		fmt.Printf("  %s\n", utl.Cya(k)+co)
+		count := len(v) // Array of string
+		if count == 1 {
+			fmt.Printf("    - %s\n", string(v[0])) // In YAML-like output, 1st entry gets the dash
+		}
+		if count > 2 {
+			for _, i := range v[1:] {
+				fmt.Printf("      %s\n", string(i))
+			}
+		}
 	}
 }

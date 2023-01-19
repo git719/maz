@@ -305,10 +305,10 @@ func DeleteAzRoleDefinitionByFqid(fqid string, z Bundle) map[string]interface{} 
 	//   "/providers/Microsoft.Authorization/roleDefinitions/50a6ff7c-3ac5-4acc-b4f4-9a43aee0c80f"
 	params := map[string]string{"api-version": "2022-04-01"} // roleDefinitions
 	url := ConstAzUrl + fqid
-	r, sCode, _ := ApiDelete(url, z.AzHeaders, params)
-	ApiErrorCheck("DELETE", url, utl.Trace(), r) // DEBUG. Comment out to do this quietly
-	if sCode != 204 {
-		fmt.Printf("Error deleting definition " + fqid)
+	_, statusCode, _ := ApiDelete(url, z.AzHeaders, params)
+	//ApiErrorCheck("DELETE", url, utl.Trace(), r)
+	if statusCode != 200 {
+		fmt.Printf("Error deleting definition " + fqid + "\n")
 	}
 	return nil
 }

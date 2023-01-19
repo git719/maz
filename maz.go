@@ -65,7 +65,7 @@ func DumpVariables(z Bundle) {
 	fmt.Printf("%s %s\n", cMgUrl, ConstMgUrl)
 	cAzUrl := utl.Cya("az_url") + co
 	fmt.Printf("%s %s\n", cAzUrl, ConstAzUrl)
-	
+
 	fmt.Println(utl.Cya("mg_headers") + co)
 	for k, v := range z.MgHeaders {
 		fmt.Printf("  %-14s %s\n", utl.Str(k)+":", utl.Str(v))
