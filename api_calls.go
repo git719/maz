@@ -153,6 +153,7 @@ func ApiErrorCheck(method, url, caller string, r jsonT) {
 }
 
 func PrintHeaders(headers http.Header) {
+	// HTTP headers printing fuction specific to API calls. Simplifies ApiCall function
 	if headers == nil {
 		return
 	}
@@ -173,6 +174,7 @@ func PrintHeaders(headers http.Header) {
 }
 
 func PrintParams(params url.Values) {
+	// HTTP paramters printing fuction specific to API calls. Simplifies ApiCall function
 	if params == nil {
 		return
 	}

@@ -125,3 +125,13 @@ func PrintMemberOfs(t string, memberOf []interface{}) {
 		fmt.Printf("%s: %s\n", "memberof", "None")
 	}
 }
+
+func PrintStringMapColor(strMap map[string]string) {
+	// Print string map in YAML-like format, sorted, and in color
+	co := utl.Red(":")
+	sortedMap := utl.SortStringMapByKeys(strMap)
+	for k, v := range sortedMap {
+		cK := utl.Cya(utl.Str(k))
+		fmt.Printf("  %s %s\n", cK+co, utl.Str(v))
+	}
+}

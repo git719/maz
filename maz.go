@@ -46,6 +46,7 @@ func DumpVariables(z Bundle) {
 	cConfDir := utl.Cya("config_dir") + co
 	cComment := utl.Blu("# Utility's config and cache directory")
 	fmt.Printf("%s %s  %s\n", cConfDir, z.ConfDir, cComment)
+
 	cTenant := utl.Cya("tenant_id") + co
 	fmt.Printf("%s %s\n", cTenant, z.TenantId)
 	if z.Interactive {
@@ -59,6 +60,7 @@ func DumpVariables(z Bundle) {
 		cClientSecret := utl.Cya("client_secret") + co
 		fmt.Printf("%s %s\n", cClientSecret, z.ClientSecret)
 	}
+
 	cAuthorityUrl := utl.Cya("authority_url") + co
 	fmt.Printf("%s %s\n", cAuthorityUrl, z.AuthorityUrl)
 	cMgUrl := utl.Cya("mg_url") + co
@@ -67,13 +69,9 @@ func DumpVariables(z Bundle) {
 	fmt.Printf("%s %s\n", cAzUrl, ConstAzUrl)
 
 	fmt.Println(utl.Cya("mg_headers") + co)
-	for k, v := range z.MgHeaders {
-		fmt.Printf("  %-14s %s\n", utl.Str(k)+":", utl.Str(v))
-	}
+	PrintStringMapColor(z.MgHeaders)
 	fmt.Println(utl.Cya("az_headers") + co)
-	for k, v := range z.AzHeaders {
-		fmt.Printf("  %-14s %s\n", utl.Str(k)+":", utl.Str(v))
-	}
+	PrintStringMapColor(z.AzHeaders)
 	os.Exit(0)
 }
 
@@ -85,13 +83,19 @@ func DumpCredentials(z Bundle) {
 		utl.Die("[%s] %s\n", filePath, err)
 	}
 	creds := credsRaw.(map[string]interface{})
-	fmt.Printf("%-14s %s\n", "tenant_id:", utl.Str(creds["tenant_id"]))
+	co := utl.Red(":")
+	cTenant := utl.Cya("tenant_id") + co
+	fmt.Printf("%s %s\n", cTenant, utl.Str(creds["tenant_id"]))
 	if strings.ToLower(utl.Str(creds["interactive"])) == "true" {
-		fmt.Printf("%-14s %s\n", "username:", utl.Str(creds["username"]))
-		fmt.Printf("%-14s %s\n", "interactive:", "true")
+		cUsername := utl.Cya("username") + co
+		fmt.Printf("%s %s\n", cUsername, utl.Str(creds["username"]))
+		cInterative := utl.Cya("interactive") + co
+		fmt.Printf("%s %s\n", cInterative, "true")
 	} else {
-		fmt.Printf("%-14s %s\n", "client_id:", utl.Str(creds["client_id"]))
-		fmt.Printf("%-14s %s\n", "client_secret:", utl.Str(creds["client_secret"]))
+		cClientId := utl.Cya("client_id") + co
+		fmt.Printf("%s %s\n", cClientId, utl.Str(creds["client_id"]))
+		cClientSecret := utl.Cya("client_secret") + co
+		fmt.Printf("%s %s\n", cClientSecret, utl.Str(creds["client_secret"]))
 	}
 	os.Exit(0)
 }

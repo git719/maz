@@ -14,6 +14,8 @@ printf "==> Following below practice:\n"
 printf "    Publishing => https://go.dev/doc/modules/publishing (Not running list cmd to make mod fully available.)\n"
 printf "    Versioning => https://go.dev/doc/modules/version-numbers\n"
 
+printf "==> Running go fmt\n"
+go fmt
 printf "==> Running go mod tidy\n"
 go mod tidy
 printf "==> Running go test ./... (fix any errors that my appear below)\n"
