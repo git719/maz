@@ -154,6 +154,25 @@ func UpsertAzRoleDefinition(x map[string]interface{}, z Bundle) {
 	return
 }
 
+func DeleteAzRoleDefinitionByFqid(fqid string, z Bundle) map[string]interface{} {
+	// Delete Azure resource RBAC roleDefinition by fully qualified object Id
+	// Example of a fully qualified Id string:
+	//   "/providers/Microsoft.Authorization/roleDefinitions/50a6ff7c-3ac5-4acc-b4f4-9a43aee0c80f"
+	params := map[string]string{"api-version": "2022-04-01"} // roleDefinitions
+	url := ConstAzUrl + fqid
+	r, statusCode, _ := ApiDelete(url, z.AzHeaders, params)
+	//ApiErrorCheck("DELETE", url, utl.Trace(), r)
+	if statusCode != 200 {
+		if statusCode == 204 {
+			fmt.Println("Role definition already deleted or does not exist.")
+		} else {
+			e := r["error"].(map[string]interface{})
+			fmt.Println(e["message"].(string))
+		}
+	}
+	return nil
+}
+
 func GetIdMapRoleDefs(z Bundle) (nameMap map[string]string) {
 	// Return role definition id:name map
 	nameMap = make(map[string]string)
@@ -297,20 +316,6 @@ func RoleDefinitionCountAzure(z Bundle) (builtin, custom int64) {
 		}
 	}
 	return int64(len(builtinList)), int64(len(customList))
-}
-
-func DeleteAzRoleDefinitionByFqid(fqid string, z Bundle) map[string]interface{} {
-	// Delete Azure resource RBAC roleDefinition by fully qualified object Id
-	// Example of a fully qualified Id string:
-	//   "/providers/Microsoft.Authorization/roleDefinitions/50a6ff7c-3ac5-4acc-b4f4-9a43aee0c80f"
-	params := map[string]string{"api-version": "2022-04-01"} // roleDefinitions
-	url := ConstAzUrl + fqid
-	_, statusCode, _ := ApiDelete(url, z.AzHeaders, params)
-	//ApiErrorCheck("DELETE", url, utl.Trace(), r)
-	if statusCode != 200 {
-		fmt.Printf("Error deleting definition " + fqid + "\n")
-	}
-	return nil
 }
 
 func GetAzRoleDefinitionByName(specifier string, z Bundle) (y map[string]interface{}) {

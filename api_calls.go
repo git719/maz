@@ -119,14 +119,17 @@ func ApiCall(method, url string, payload jsonT, headers, params strMapT, verbose
 	// Create jsonResult variable object to be return
 	var jsonResult jsonT = nil
 	if intValue, err := strconv.ParseInt(string(body), 10, 64); err == nil {
-		// It's an integer an API object count value
+		// It's an integer, probably an API object count value
 		jsonResult = make(map[string]interface{})
 		jsonResult["value"] = intValue
 	} else {
-		// It's a regular JSON
-		if err = json.Unmarshal([]byte(body), &jsonResult); err != nil {
-			panic(err.Error())
+		// It's a regular JSON result, or null
+		if len(body) > 0 { // Make sure we have something to unmarshal, else guaranteed panic
+			if err = json.Unmarshal([]byte(body), &jsonResult); err != nil {
+				panic(err.Error())
+			}
 		}
+		// If it's null, returning r.StatusCode below will let caller know
 	}
 	if verbose {
 		fmt.Println(utl.Cya("==== RESPONSE ================================"))

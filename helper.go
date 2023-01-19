@@ -60,10 +60,10 @@ func DeleteAzObject(specifier string, z Bundle) {
 	if utl.ValidUuid(specifier) {
 		list := FindAzObjectsByUuid(specifier, z) // Get all objects that may match this UUID, hopefully just one
 		if len(list) > 1 {
-			utl.Die(utl.Red("UUID collision! Run utility with UUID argument to see the list.\n"))
+			utl.Die(utl.Red("UUID collision? Run utility with UUID argument to see the list.\n"))
 		}
 		if len(list) < 1 {
-			utl.Die("Object does not exist in current Azure tenant\n")
+			utl.Die("Object does not exist.\n")
 		}
 		y := list[0].(map[string]interface{}) // Single out the only object
 		if y != nil && y["mazType"] != nil {
@@ -83,19 +83,19 @@ func DeleteAzObject(specifier string, z Bundle) {
 		case "d":
 			y = GetAzRoleDefinitionByObject(x, z) // y is for the object from Azure
 			if y == nil {
-				utl.Die("Role definition does not exist in current Azure tenant\n")
+				utl.Die("Role definition does not exist.\n")
 			} else {
 				PrintRoleDefinition(y, z) // Use specific role def print function
 			}
 		case "a":
 			y = GetAzRoleAssignmentByObject(x, z)
 			if y == nil {
-				utl.Die("Role assignment does not exist in current Azure tenant\n")
+				utl.Die("Role assignment does not exist.\n")
 			} else {
 				PrintRoleAssignment(y, z) // Use specific role assgmnt print function
 			}
 		default:
-			utl.Die("This " + formatType + " file is not a role definition nor an assignment specfile\n")
+			utl.Die("File " + formatType + " is not a role definition or assignment.\n")
 		}
 		fqid := utl.Str(y["id"]) // Grab fully qualified object Id
 		DeleteAzObjectPrompt(t, fqid, z)
@@ -104,7 +104,7 @@ func DeleteAzObject(specifier string, z Bundle) {
 		// This only applies to definitions since assignments do not have a displayName attribute.
 		y := GetAzRoleDefinitionByName(specifier, z)
 		if y == nil {
-			utl.Die("Role definition does not exist in current Azure tenant\n")
+			utl.Die("Role definition does not exist.\n")
 		}
 		fqid := utl.Str(y["id"]) // Grab fully qualified object Id
 		PrintRoleDefinition(y, z)
@@ -347,7 +347,7 @@ func CompareSpecfileToAzure(filePath string, z Bundle) {
 		utl.Die("File is not in JSON nor YAML format\n")
 	}
 	if t != "d" && t != "a" {
-		utl.Die("This " + formatType + " file is not a role definition nor an assignment specfile\n")
+		utl.Die("File " + formatType + " is not a role definition or assignment.\n")
 	}
 
 	fmt.Printf("==== SPECFILE ============================\n")
@@ -356,14 +356,14 @@ func CompareSpecfileToAzure(filePath string, z Bundle) {
 	if t == "d" {
 		y := GetAzRoleDefinitionByObject(x, z)
 		if y == nil {
-			fmt.Printf("Role definition does NOT exist in current Azure tenant\n")
+			fmt.Printf("Role definition does not exist.\n")
 		} else {
 			PrintRoleDefinition(y, z) // Use specific role def print function
 		}
 	} else {
 		y := GetAzRoleAssignmentByObject(x, z)
 		if y == nil {
-			fmt.Printf("Role assignment does NOT exist in current Azure tenant\n")
+			fmt.Printf("Role assignment does not exist.\n")
 		} else {
 			PrintRoleAssignment(y, z) // Use specific role assgmnt print function
 		}

@@ -133,8 +133,8 @@ func CreateAzRoleAssignment(x map[string]interface{}, z Bundle) {
 			"See script '-k*' options to create a properly formatted sample skeleton files.\n")
 	}
 
-	// Note, there is no need to pre-check if assignment exists, since the call will let us know
-	roleAssignmentName := uuid.New() // Generate a new global UUID
+	// Note, there is no need to pre-check if assignment exists, since call will simply let us know
+	newUuid := uuid.New().String() // Generate a new global UUID in string format
 	payload := map[string]interface{}{
 		"properties": map[string]string{
 			"roleDefinitionId": "/providers/Microsoft.Authorization/roleDefinitions/" + roleDefinitionId,
@@ -142,11 +142,36 @@ func CreateAzRoleAssignment(x map[string]interface{}, z Bundle) {
 		},
 	}
 	params := map[string]string{"api-version": "2022-04-01"} // roleAssignments
-	url := ConstAzUrl + scope + "/providers/Microsoft.Authorization/roleAssignments/" + roleAssignmentName.String()
-	r, _, _ := ApiPut(url, payload, z.AzHeaders, params)
-	ApiErrorCheck("PUT", url, utl.Trace(), r)
-	utl.PrintJson(r)
+	url := ConstAzUrl + scope + "/providers/Microsoft.Authorization/roleAssignments/" + newUuid
+	r, statusCode, _ := ApiPut(url, payload, z.AzHeaders, params)
+	//ApiErrorCheck("PUT", url, utl.Trace(), r)
+	if statusCode == 200 || statusCode == 201 {
+		utl.PrintYaml(r)
+	} else {
+		e := r["error"].(map[string]interface{})
+		fmt.Println(e["message"].(string))
+	}
 	return
+}
+
+func DeleteAzRoleAssignmentByFqid(fqid string, z Bundle) map[string]interface{} {
+	// Delete Azure resource RBAC roleAssignments by fully qualified object Id
+	// Example of a fully qualified Id string:
+	//   "/providers/Microsoft.Management/managementGroups/33550b0b-2929-4b4b-adad-cccc66664444 +
+	//    /providers/Microsoft.Authorization/roleAssignments/5d586a7b-3f4b-4b5c-844a-3fa8efe49ab3"
+	params := map[string]string{"api-version": "2022-04-01"} // roleAssignments
+	url := ConstAzUrl + fqid
+	r, statusCode, _ := ApiDelete(url, z.AzHeaders, params)
+	//ApiErrorCheck("DELETE", url, utl.Trace(), r)
+	if statusCode != 200 {
+		if statusCode == 204 {
+			fmt.Println("Role assignment already deleted or does not exist.")
+		} else {
+			e := r["error"].(map[string]interface{})
+			fmt.Println(e["message"].(string))
+		}
+	}
+	return nil
 }
 
 func RoleAssignmentsCountLocal(z Bundle) int64 {
@@ -255,25 +280,9 @@ func GetAzRoleAssignments(verbose bool, z Bundle) (list []interface{}) {
 	return list
 }
 
-func DeleteAzRoleAssignmentByFqid(fqid string, z Bundle) map[string]interface{} {
-	// Delete Azure resource RBAC roleAssignments by fully qualified object Id
-	// Example of a fully qualified Id string:
-	//   "/providers/Microsoft.Management/managementGroups/3f550b9f-29b0-4ba6-ad61-c95f63104213 +
-	//    /providers/Microsoft.Authorization/roleAssignments/5d586a7b-3f4b-4b5c-844a-3fa8efe49ab3"
-	params := map[string]string{"api-version": "2022-04-01"} // roleAssignments
-	url := ConstAzUrl + fqid
-	_, statusCode, _ := ApiDelete(url, z.AzHeaders, params)
-	//ApiErrorCheck("DELETE", url, utl.Trace(), r)
-	if statusCode != 200 {
-		fmt.Printf("Error deleting assignment " + fqid + "\n")
-	}
-	return nil
-}
-
 func GetAzRoleAssignmentByObject(x map[string]interface{}, z Bundle) (y map[string]interface{}) {
-	// Get Azure resource RBAC role assignment object if it exists exactly as x object.
-	// Looks for matching: roleId, principalId, and scope (the 3 parameters which make
-	// a role assignment unique)
+	// Get Azure resource RBAC role assignment object by matching given objects: roleId, principalId,
+	// and scope (the 3 parameters which make a role assignment unique)
 
 	// First, make sure x is a searchable role assignment object
 	if x == nil {

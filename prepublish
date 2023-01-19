@@ -21,8 +21,10 @@ go mod tidy
 printf "==> Running go test ./... (fix any errors that my appear below)\n"
 go test ./...
 
-printf "\n\n==> Last 3 tag versions:\n"
-git tag | tail -3
+printf "\n==> HEAD of go.mod:\n"
+head go.mod 
+printf "\n\n==> Last few tag versions:\n"
+git tag | tail
 CurrentTag=`git tag | tail -1`
 Prg=`head -1 go.mod | awk -F'/' '{print $NF}' | awk '{print $NF}'`
 printf "\n==> Good to go. To publish, do below One-liner or multiple commands, advancing Tag version:\n\n"
