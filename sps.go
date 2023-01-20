@@ -106,7 +106,7 @@ func PrintSp(x map[string]interface{}, z Bundle) {
 	r, _, _ = ApiGet(url, z.MgHeaders, nil)
 	ApiErrorCheck("GET", url, utl.Trace(), r)
 	if r["value"] != nil && len(r["value"].([]interface{})) > 0 {
-		fmt.Printf("api_permissions:\n")
+		fmt.Printf(utl.Cya("api_permissionsi") + co + "\n")
 		apiPerms := r["value"].([]interface{}) // Assert as JSON array
 
 		// Print OAuth 2.0 scopes for each API
