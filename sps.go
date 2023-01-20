@@ -52,7 +52,7 @@ func PrintSp(x map[string]interface{}, z Bundle) {
 				fmt.Printf("  %-50s %s (%s)\n", Name, utl.Str(o["id"]), Type)
 			}
 		} else {
-			fmt.Printf("%s: %s\n", "owners", "None")
+			fmt.Printf("%s %s\n", utl.Cya("owners")+co, "None")
 		}
 	}
 
@@ -88,7 +88,7 @@ func PrintSp(x map[string]interface{}, z Bundle) {
 				fmt.Printf("  %-50s %-20s %s (%s)\n", principalName, roleName, principalId, principalType)
 			}
 		} else {
-			fmt.Printf("%s: %s\n", "members", "None")
+			fmt.Printf("%s %s\n", utl.Cya("members")+co, "None")
 		}
 	}
 
