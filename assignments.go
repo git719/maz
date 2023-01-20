@@ -20,12 +20,12 @@ func PrintRoleAssignment(x map[string]interface{}, z Bundle) {
 		cId := utl.Cya("id") + co // Colorize "id" text to Cyan
 		fmt.Printf("%s %s\n", cId, utl.Str(x["name"]))
 	}
-
-	fmt.Printf(utl.Cya("properties") + co + "\n")
-	if x["properties"] == nil {
-		fmt.Printf("  <Missing??>\n")
-		return
+	if x["properties"] != nil {
+		fmt.Println(utl.Cya("properties") + co)
+	} else {
+		fmt.Println("  < Missing properties? What's going? >")
 	}
+
 	xProp := x["properties"].(map[string]interface{})
 
 	roleNameMap := GetIdMapRoleDefs(z) // Get all role definition id:name pairs
@@ -125,12 +125,12 @@ func CreateAzRoleAssignment(x map[string]interface{}, z Bundle) {
 		scope = utl.Str(xProp["Scope"]) // Account for possibly capitalized key
 	}
 	if roleDefinitionId == "" || principalId == "" || scope == "" {
-		utl.Die("Specfile is missing one or more of the 3 required attributes.\n\n" +
+		utl.Die("Specfile is missing required attributes. Need at least:\n\n" +
 			"properties:\n" +
 			"    roleDefinitionId: <UUID or fully_qualified_roleDefinitionId>\n" +
 			"    principalId: <UUID>\n" +
 			"    scope: <resource_path_scope>\n\n" +
-			"See script '-k*' options to create a properly formatted sample skeleton files.\n")
+			"See script '-k*' options to create properly formatted sample files.\n")
 	}
 
 	// Note, there is no need to pre-check if assignment exists, since call will simply let us know
@@ -165,7 +165,7 @@ func DeleteAzRoleAssignmentByFqid(fqid string, z Bundle) map[string]interface{} 
 	//ApiErrorCheck("DELETE", url, utl.Trace(), r)
 	if statusCode != 200 {
 		if statusCode == 204 {
-			fmt.Println("Role assignment already deleted or does not exist.")
+			fmt.Println("Role assignment already deleted or does not exist. Give Azure a minute to flush it out.")
 		} else {
 			e := r["error"].(map[string]interface{})
 			fmt.Println(e["message"].(string))
@@ -310,20 +310,21 @@ func GetAzRoleAssignmentByObject(x map[string]interface{}, z Bundle) (y map[stri
 	}
 	url := ConstAzUrl + xScope + "/providers/Microsoft.Authorization/roleAssignments"
 	r, _, _ := ApiGet(url, z.AzHeaders, params)
+	//ApiErrorCheck("GET", url, utl.Trace(), r)
 	if r != nil && r["value"] != nil {
 		results := r["value"].([]interface{})
+		fmt.Println(len(results))
 		for _, i := range results {
 			y = i.(map[string]interface{})
 			yProp := y["properties"].(map[string]interface{})
 			yScope := utl.Str(yProp["scope"])
 			yRoleDefinitionId := utl.LastElem(utl.Str(yProp["roleDefinitionId"]), "/")
 			if yScope == xScope && yRoleDefinitionId == xRoleDefinitionId {
-				return y // We found it
+				return y // As soon as we find it
 			}
 		}
 	}
-	ApiErrorCheck("GET", url, utl.Trace(), r)
-	return nil
+	return nil // If we get here, we didn't fine it, so return nil
 }
 
 func GetAzRoleAssignmentByUuid(uuid string, z Bundle) (x map[string]interface{}) {

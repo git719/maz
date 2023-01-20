@@ -18,11 +18,12 @@ func PrintSp(x map[string]interface{}, z Bundle) {
 	id := utl.Str(x["id"])
 
 	// Print the most important attributes
+	co := utl.Red(":") // Colorize ":" text to Red
 	list := []string{"id", "displayName", "appId", "accountEnabled", "servicePrincipalType", "appOwnerOrganizationId"}
 	for _, i := range list {
 		v := utl.Str(x[i])
-		if v != "" {
-			fmt.Printf("%s: %s\n", i, v) // Only print non-null attributes
+		if v != "" { // Only print non-null attributes
+			fmt.Printf("%s %s\n", utl.Cya(i)+co, v)
 		}
 	}
 
@@ -33,7 +34,7 @@ func PrintSp(x map[string]interface{}, z Bundle) {
 	if r["value"] != nil {
 		owners := r["value"].([]interface{}) // JSON array
 		if len(owners) > 0 {
-			fmt.Printf("owners:\n")
+			fmt.Printf(utl.Cya("owners") + co + "\n")
 			for _, i := range owners {
 				o := i.(map[string]interface{}) // JSON object
 				Type, Name := "???", "???"
@@ -62,7 +63,7 @@ func PrintSp(x map[string]interface{}, z Bundle) {
 	if r["value"] != nil {
 		members := r["value"].([]interface{}) // JSON array
 		if len(members) > 0 {
-			fmt.Printf("members:\n")
+			fmt.Printf(utl.Cya("members") + co + "\n")
 
 			// Build roleMap
 			roleMap := make(map[string]string)

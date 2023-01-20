@@ -17,11 +17,12 @@ func PrintApp(x map[string]interface{}, z Bundle) {
 	id := utl.Str(x["id"])
 
 	// Print the most important attributes first
+	co := utl.Red(":") // Colorize ":" text to Red
 	list := []string{"id", "displayName", "appId"}
 	for _, i := range list {
 		v := utl.Str(x[i])
-		if v != "" {
-			fmt.Printf("%s: %s\n", i, v) // Only print non-null attributes
+		if v != "" { // Only print non-null attributes
+			fmt.Printf("%s %s\n", utl.Cya(i)+co, v)
 		}
 	}
 
@@ -31,7 +32,7 @@ func PrintApp(x map[string]interface{}, z Bundle) {
 	if r["value"] != nil {
 		owners := r["value"].([]interface{})
 		if len(owners) > 0 {
-			fmt.Printf("owners:\n")
+			fmt.Printf(utl.Cya("owners") + co + "\n")
 			// PrintJson(groups) // DEBUG
 			for _, i := range owners {
 				o := i.(map[string]interface{})
@@ -50,7 +51,7 @@ func PrintApp(x map[string]interface{}, z Bundle) {
 				fmt.Printf("  %-50s %s (%s)\n", Name, utl.Str(o["id"]), Type)
 			}
 		} else {
-			fmt.Printf("%s: %s\n", "owners", "None")
+			fmt.Printf("%s %s\n", utl.Cya("owners")+co, "None")
 		}
 	}
 	ApiErrorCheck("GET", url, utl.Trace(), r)
@@ -67,7 +68,7 @@ func PrintApp(x map[string]interface{}, z Bundle) {
 	// Print API permissions
 	// Just look under this object's 'requiredResourceAccess' attribute
 	if x["requiredResourceAccess"] != nil && len(x["requiredResourceAccess"].([]interface{})) > 0 {
-		fmt.Printf("api_permissions:\n")
+		fmt.Printf(utl.Cya("api_permissions") + co + "\n")
 		APIs := x["requiredResourceAccess"].([]interface{}) // Assert to JSON array
 		for _, a := range APIs {
 			api := a.(map[string]interface{})

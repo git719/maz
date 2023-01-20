@@ -14,11 +14,12 @@ func PrintAdRole(x map[string]interface{}, z Bundle) {
 		return
 	}
 	// Print the most important attributes first
+	co := utl.Red(":") // Colorize ":" text to Red
 	list := []string{"id", "displayName", "description"}
 	for _, i := range list {
 		v := utl.Str(x[i])
 		if v != "" { // Only print non-null attributes
-			fmt.Printf("%s: %s\n", i, v)
+			fmt.Printf("%s %s\n", utl.Cya(i)+co, v)
 		}
 	}
 
@@ -45,16 +46,16 @@ func PrintAdRole(x map[string]interface{}, z Bundle) {
 	if r["value"] != nil {
 		members := r["value"].([]interface{})
 		if len(members) > 0 {
-			fmt.Printf("members:\n")
+			fmt.Printf(utl.Cya("members") + co + "\n")
 			for _, i := range members {
 				m := i.(map[string]interface{})
 				fmt.Printf("  %s  %-40s   %s\n", utl.Str(m["id"]), utl.Str(m["userPrincipalName"]), utl.Str(m["displayName"]))
 			}
 		} else {
-			fmt.Printf("%s: %s\n", "members", "None")
+			fmt.Printf("%s %s\n", utl.Cya("members")+co, "None")
 		}
 	} else {
-		fmt.Printf("members:\n  No members in this role (templateId = %s). Maybe not yet activated?\n", utl.Str(x["templateId"]))
+		fmt.Printf(utl.Cya("members")+co+"\n  No members in this role (templateId = %s). Maybe not yet activated?\n", utl.Str(x["templateId"]))
 	}
 }
 

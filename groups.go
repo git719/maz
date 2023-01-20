@@ -17,11 +17,12 @@ func PrintGroup(x map[string]interface{}, z Bundle) {
 	id := utl.Str(x["id"])
 
 	// First, print the most important attributes of this group
+	co := utl.Red(":") // Colorize ":" text to Red
 	list := []string{"id", "displayName", "description", "isAssignableRole", "isAssignableToRole", "mailEnabled", "mailNickname"}
 	for _, i := range list {
 		v := utl.Str(x[i])
-		if v != "" {
-			fmt.Printf("%s: %s\n", i, v) // Only print non-null attributes
+		if v != "" { // Only print non-null attributes
+			fmt.Printf("%s %s\n", utl.Cya(i)+co, v)
 		}
 	}
 
@@ -32,13 +33,13 @@ func PrintGroup(x map[string]interface{}, z Bundle) {
 	if r["value"] != nil {
 		owners := r["value"].([]interface{}) // Assert as JSON array type
 		if len(owners) > 0 {
-			fmt.Printf("owners:\n")
+			fmt.Printf(utl.Cya("owners") + co + "\n")
 			for _, i := range owners {
 				o := i.(map[string]interface{}) // Assert as JSON object type
 				fmt.Printf("  %-50s %s\n", utl.Str(o["userPrincipalName"]), utl.Str(o["id"]))
 			}
 		} else {
-			fmt.Printf("%s: %s\n", "owners", "None")
+			fmt.Printf("%s %s\n", utl.Cya("owners")+co, "None")
 		}
 	}
 
@@ -58,7 +59,7 @@ func PrintGroup(x map[string]interface{}, z Bundle) {
 	if r != nil && r["value"] != nil {
 		members := r["value"].([]interface{})
 		if len(members) > 0 {
-			fmt.Printf("members:\n")
+			fmt.Printf(utl.Cya("members") + co + "\n")
 			for _, i := range members {
 				m := i.(map[string]interface{}) // Assert as JSON object type
 				Type, Name := "-", "-"
@@ -72,7 +73,7 @@ func PrintGroup(x map[string]interface{}, z Bundle) {
 				fmt.Printf("  %-50s %s (%s)\n", Name, utl.Str(m["id"]), Type)
 			}
 		} else {
-			fmt.Printf("%s: %s\n", "members", "None")
+			fmt.Printf("%s %s\n", utl.Cya("members")+co, "None")
 		}
 	}
 }

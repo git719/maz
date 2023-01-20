@@ -5,6 +5,7 @@ package maz
 import (
 	"fmt"
 	"github.com/git719/utl"
+	"github.com/google/uuid"
 	"path/filepath"
 	"strings"
 )
@@ -14,23 +15,25 @@ func PrintRoleDefinition(x map[string]interface{}, z Bundle) {
 	if x == nil {
 		return
 	}
+	co := utl.Red(":") // Colorize ":" text to Red
 	if x["name"] != nil {
-		fmt.Printf("id: %s\n", utl.Str(x["name"]))
+		cId := utl.Cya("id") + co // Colorize "id" text to Cyan
+		fmt.Printf("%s %s\n", cId, utl.Str(x["name"]))
+	}
+	if x["properties"] != nil {
+		fmt.Println(utl.Cya("properties") + co)
+	} else {
+		fmt.Println(utl.Red("  <Missing properties??>"))
 	}
 
-	fmt.Printf("properties:\n")
-	if x["properties"] == nil {
-		fmt.Printf("  <Missing??>\n")
-		return
-	}
 	xProp := x["properties"].(map[string]interface{})
 
 	list := []string{"roleName", "description"}
 	for _, i := range list {
-		fmt.Printf("  %s %s\n", i+":", utl.Str(xProp[i]))
+		fmt.Printf("  %s %s\n", utl.Cya(i)+co, utl.Str(xProp[i]))
 	}
 
-	fmt.Printf("  %-18s", "assignableScopes: ")
+	fmt.Printf("  %s ", utl.Cya("assignableScopes")+co)
 	if xProp["assignableScopes"] == nil {
 		fmt.Printf("[]\n")
 	} else {
@@ -42,29 +45,30 @@ func PrintRoleDefinition(x map[string]interface{}, z Bundle) {
 				if strings.HasPrefix(i.(string), "/subscriptions") {
 					// Print subscription name as a comment at end of line
 					subId := utl.LastElem(i.(string), "/")
-					fmt.Printf("    - %s # %s\n", utl.Str(i), subNameMap[subId])
+					cComment := utl.Blu("# " + subNameMap[subId]) // Blue comments
+					fmt.Printf("    - %s  %s\n", utl.Str(i), cComment)
 				} else {
 					fmt.Printf("    - %s\n", utl.Str(i))
 				}
 			}
 		} else {
-			fmt.Printf("    <Not an arrays??>\n")
+			fmt.Printf(utl.Red("    <Not an arrays??>\n"))
 		}
 	}
 
-	fmt.Printf("  %-18s\n", "permissions:")
+	fmt.Printf("  %s\n", utl.Cya("permissions")+co)
 	if xProp["permissions"] == nil {
-		fmt.Printf("    %s\n", "<No permissions??>")
+		fmt.Printf(utl.Red("    < No permissions?? >\n"))
 	} else {
 		permsSet := xProp["permissions"].([]interface{})
 		if len(permsSet) == 1 {
 			perms := permsSet[0].(map[string]interface{}) // Select the 1 expected single permission set
 
-			fmt.Printf("    - actions:\n") // Note that this one is different, as it starts the YAML array with the dash '-'
+			fmt.Printf("    - " + utl.Cya("actions") + co + "\n") // Note that this one is different, as it starts the YAML array with the dash '-'
 			if perms["actions"] != nil {
 				permsA := perms["actions"].([]interface{})
 				if utl.GetType(permsA)[0] != '[' { // Open bracket character means it's an array list
-					fmt.Printf("        <Not an array??>\n")
+					fmt.Printf(utl.Red("        <Not an array??>\n"))
 				} else {
 					for _, i := range permsA {
 						fmt.Printf("        - %s\n", utl.Str(i))
@@ -72,11 +76,11 @@ func PrintRoleDefinition(x map[string]interface{}, z Bundle) {
 				}
 			}
 
-			fmt.Printf("      notActions:\n")
+			fmt.Printf("      " + utl.Cya("notActions") + co + "\n")
 			if perms["notActions"] != nil {
 				permsNA := perms["notActions"].([]interface{})
 				if utl.GetType(permsNA)[0] != '[' {
-					fmt.Printf("        <Not an array??>\n")
+					fmt.Printf(utl.Red("        <Not an array??>\n"))
 				} else {
 					for _, i := range permsNA {
 						fmt.Printf("        - %s\n", utl.Str(i))
@@ -84,11 +88,11 @@ func PrintRoleDefinition(x map[string]interface{}, z Bundle) {
 				}
 			}
 
-			fmt.Printf("      dataActions:\n")
+			fmt.Printf("      " + utl.Cya("dataActions") + co + "\n")
 			if perms["dataActions"] != nil {
 				permsDA := perms["dataActions"].([]interface{})
 				if utl.GetType(permsDA)[0] != '[' {
-					fmt.Printf("        <Not an array??>\n")
+					fmt.Printf(utl.Red("        <Not an array??>\n"))
 				} else {
 					for _, i := range permsDA {
 						fmt.Printf("        - %s\n", utl.Str(i))
@@ -96,11 +100,11 @@ func PrintRoleDefinition(x map[string]interface{}, z Bundle) {
 				}
 			}
 
-			fmt.Printf("      notDataActions:\n")
+			fmt.Printf("      " + utl.Cya("notDataActions") + co + "\n")
 			if perms["notDataActions"] != nil {
 				permsNDA := perms["notDataActions"].([]interface{})
 				if utl.GetType(permsNDA)[0] != '[' {
-					fmt.Printf("        <Not an array??>\n")
+					fmt.Printf(utl.Red("        <Not an array??>\n"))
 				} else {
 					for _, i := range permsNDA {
 						fmt.Printf("        - %s\n", utl.Str(i))
@@ -109,7 +113,7 @@ func PrintRoleDefinition(x map[string]interface{}, z Bundle) {
 			}
 
 		} else {
-			fmt.Printf("    <More than one set??>\n")
+			fmt.Printf(utl.Red("    <More than one set??>\n"))
 		}
 	}
 }
@@ -119,38 +123,50 @@ func UpsertAzRoleDefinition(x map[string]interface{}, z Bundle) {
 	if x == nil {
 		return
 	}
+	xProp := x["properties"].(map[string]interface{})
+	xRoleName := utl.Str(xProp["roleName"])
+	xType := utl.Str(xProp["type"])
+	xDesc := utl.Str(xProp["description"])
+	xScopes := xProp["assignableScopes"].([]interface{})
+	xScope1 := utl.Str(xScopes[0]) // For deployment, we'll use 1st scope
+	if xProp == nil || xScopes == nil || xRoleName == "" || xScope1 == "" ||
+		xDesc == "" || strings.ToLower(xType) != "customrole" {
+		utl.Die("Specfile is missing required attributes. Need at least:\n\n" +
+			"properties:\n" +
+			"  type: CustomRole\n" +
+			"  roleName: \"My Role Name\"\n" +
+			"  description: \"My role's description\"\n" +
+			"  assignableScopes:\n" +
+			"    - \"/subscriptions/UUID\"  # At least one scope\n\n" +
+			"See script '-k*' options to create properly formatted sample files.\n")
+	}
 
-	// $p = $x.properties
-	// $name = $p.roleName
-	// $scope = $p.assignableScopes[0]
-	// if ( ($null -eq $p ) -or ($null -eq $name ) -or ($null -eq $scope ) -or
-	//      ($null -eq $p.type ) -or ($null -eq $p.description ) ) {
-	//     die("Specfile is missing required attributes.`n" +
-	//         "Run script with '-kd[j]' option to create a properly formatted sample skeleton file.")
-	// }
+	roleId := ""
+	existing := GetAzRoleDefinitionByName(xRoleName, z)
+	if existing == nil {
+		// Role definition doesn't exist, so we're creating a new one
+		roleId = uuid.New().String() // Generate a new global UUID in string format
+	} else {
+		// Role exists, we'll prompt for update choice
+		PrintRoleDefinition(existing, z)
+		msg := utl.Yel("Role already exists! UPDATE it? y/n ")
+		if utl.PromptMsg(msg) != 'y' {
+			utl.Die("Aborted.\n")
+		}
+		fmt.Println("Updating role ...")
+		roleId = utl.Str(existing["name"])
+	}
 
-	// $existing = GetAzObjectByName "d" $name
-	// if ( $null -eq $existing.name ) {
-	//     print("Creating NEW role definition '{0}' as per specfile" -f $name)
-	//     $roleId = [guid]::NewGuid()  # Generate a new global UUID
-	// } else {
-	//     print("id: {0}" -f $existing.name)
-	//     PrintAzObject "d" $x  # Print the one we got from specfile
-	//     warning("WARNING: Role already exists in Azure.")
-	//     $Confirm = Read-Host -Prompt "UPDATE existing one with above? y/n "
-	//     if ( $Confirm -ne "y" ) {
-	//         die("Aborted.")
-	//     }
-	//     print("Updating role ...")
-	//     $roleId = $existing.name  # Existing role definition UUID
-	// }
-
-	// # For the scope in the API call we can just use the 1st one
-	// $body = $x | ConvertTo-Json -Depth 10
-	// $url = $az_url + $scope + "/providers/Microsoft.Authorization/roleDefinitions/"
-	// $r = ApiCall "PUT" ( $url + $roleId + "?api-version=2022-04-01") -data $body
-	// PrintJson $r
-
+	payload := x                                             // Obviously using x object as the payload
+	params := map[string]string{"api-version": "2022-04-01"} // roleDefinitions
+	url := ConstAzUrl + xScope1 + "/providers/Microsoft.Authorization/roleDefinitions/" + roleId
+	r, statusCode, _ := ApiPut(url, payload, z.AzHeaders, params)
+	if statusCode == 201 {
+		PrintRoleDefinition(r, z) // Print the newly updated object
+	} else {
+		e := r["error"].(map[string]interface{})
+		fmt.Println(e["message"].(string))
+	}
 	return
 }
 
@@ -164,7 +180,7 @@ func DeleteAzRoleDefinitionByFqid(fqid string, z Bundle) map[string]interface{} 
 	//ApiErrorCheck("DELETE", url, utl.Trace(), r)
 	if statusCode != 200 {
 		if statusCode == 204 {
-			fmt.Println("Role definition already deleted or does not exist.")
+			fmt.Println("Role definition already deleted or does not exist. Give Azure a minute to flush it out.")
 		} else {
 			e := r["error"].(map[string]interface{})
 			fmt.Println(e["message"].(string))
@@ -318,14 +334,14 @@ func RoleDefinitionCountAzure(z Bundle) (builtin, custom int64) {
 	return int64(len(builtinList)), int64(len(customList))
 }
 
-func GetAzRoleDefinitionByName(specifier string, z Bundle) (y map[string]interface{}) {
+func GetAzRoleDefinitionByName(roleName string, z Bundle) (y map[string]interface{}) {
 	// Get Azure resource roleDefinition by displayName
 	// See https://learn.microsoft.com/en-us/rest/api/authorization/role-definitions/list
 	y = nil
 	scopes := GetAzRbacScopes(z) // Get all scopes
 	params := map[string]string{
 		"api-version": "2022-04-01", // roleDefinitions
-		"$filter":     "roleName eq '" + specifier + "'",
+		"$filter":     "roleName eq '" + roleName + "'",
 	}
 	for _, scope := range scopes {
 		url := ConstAzUrl + scope + "/providers/Microsoft.Authorization/roleDefinitions"

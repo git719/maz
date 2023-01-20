@@ -114,15 +114,16 @@ func PrintObject(t string, x map[string]interface{}, z Bundle) {
 
 func PrintMemberOfs(t string, memberOf []interface{}) {
 	// Print all memberOf entries
+	co := utl.Red(":") // Colorize ":" text to Red
 	if len(memberOf) > 0 {
-		fmt.Printf("memberof:\n")
+		fmt.Printf(utl.Cya("memberof") + co + "\n")
 		for _, i := range memberOf {
 			x := i.(map[string]interface{}) // Assert as JSON object type
 			Type := utl.LastElem(utl.Str(x["@odata.type"]), ".")
 			fmt.Printf("  %-50s %s (%s)\n", utl.Str(x["displayName"]), utl.Str(x["id"]), Type)
 		}
 	} else {
-		fmt.Printf("%s: %s\n", "memberof", "None")
+		fmt.Printf("%s %s\n", utl.Cya("memberof")+co, "None")
 	}
 }
 

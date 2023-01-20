@@ -3,7 +3,6 @@
 package maz
 
 import (
-	"bufio"
 	"fmt"
 	"github.com/git719/utl"
 	"os"
@@ -32,26 +31,6 @@ func UpsertAzObject(filePath string, z Bundle) {
 	os.Exit(0)
 }
 
-func DeleteAzObjectPrompt(t string, fqid string, z Bundle) {
-	// Prompt for Azure object deletion and delete if confirmed
-	fmt.Print(utl.Yel("DELETE above? y/n "))
-	reader := bufio.NewReader(os.Stdin)
-	confirm, _, err := reader.ReadRune()
-	if err != nil {
-		fmt.Println(err)
-	}
-	if confirm == 'y' {
-		switch t {
-		case "d":
-			DeleteAzRoleDefinitionByFqid(fqid, z)
-		case "a":
-			DeleteAzRoleAssignmentByFqid(fqid, z)
-		}
-		os.Exit(0)
-	}
-	utl.Die("Aborted.\n")
-}
-
 func DeleteAzObject(specifier string, z Bundle) {
 	// Delete object based on string specifier (currently only supports roleDefinitions or Assignments)
 	// String specifier can be either of 3: UUID, specfile, or displaName (only for roleDefinition)
@@ -70,7 +49,16 @@ func DeleteAzObject(specifier string, z Bundle) {
 			t := utl.Str(y["mazType"])
 			fqid := utl.Str(y["id"]) // Grab fully qualified object Id
 			PrintObject(t, y, z)
-			DeleteAzObjectPrompt(t, fqid, z)
+			if utl.PromptMsg("DELETE above? y/n ") == 'y' {
+				switch t {
+				case "d":
+					DeleteAzRoleDefinitionByFqid(fqid, z)
+				case "a":
+					DeleteAzRoleAssignmentByFqid(fqid, z)
+				}
+			} else {
+				utl.Die("Aborted.\n")
+			}
 		}
 	} else if utl.FileExist(specifier) {
 		// Delete object defined in specfile
@@ -82,33 +70,47 @@ func DeleteAzObject(specifier string, z Bundle) {
 		switch t {
 		case "d":
 			y = GetAzRoleDefinitionByObject(x, z) // y is for the object from Azure
+			fqid := utl.Str(y["id"])              // Grab fully qualified object Id
 			if y == nil {
 				utl.Die("Role definition does not exist.\n")
 			} else {
 				PrintRoleDefinition(y, z) // Use specific role def print function
+				if utl.PromptMsg("DELETE above? y/n ") == 'y' {
+					DeleteAzRoleDefinitionByFqid(fqid, z)
+				} else {
+					utl.Die("Aborted.\n")
+				}
 			}
 		case "a":
 			y = GetAzRoleAssignmentByObject(x, z)
+			fqid := utl.Str(y["id"]) // Grab fully qualified object Id
 			if y == nil {
 				utl.Die("Role assignment does not exist.\n")
 			} else {
 				PrintRoleAssignment(y, z) // Use specific role assgmnt print function
+				if utl.PromptMsg("DELETE above? y/n ") == 'y' {
+					DeleteAzRoleAssignmentByFqid(fqid, z)
+				} else {
+					utl.Die("Aborted.\n")
+				}
 			}
 		default:
 			utl.Die("File " + formatType + " is not a role definition or assignment.\n")
 		}
-		fqid := utl.Str(y["id"]) // Grab fully qualified object Id
-		DeleteAzObjectPrompt(t, fqid, z)
 	} else {
-		// Delete role definition by its displayName, if it exists
-		// This only applies to definitions since assignments do not have a displayName attribute.
+		// Delete role definition by its displayName, if it exists. This only applies to definitions
+		// since assignments do not have a displayName attribute. Also, other objects are not supported.
 		y := GetAzRoleDefinitionByName(specifier, z)
 		if y == nil {
 			utl.Die("Role definition does not exist.\n")
 		}
 		fqid := utl.Str(y["id"]) // Grab fully qualified object Id
 		PrintRoleDefinition(y, z)
-		DeleteAzObjectPrompt("d", fqid, z)
+		if utl.PromptMsg("DELETE above? y/n ") == 'y' {
+			DeleteAzRoleDefinitionByFqid(fqid, z)
+		} else {
+			utl.Die("Aborted.\n")
+		}
 	}
 }
 

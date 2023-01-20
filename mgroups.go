@@ -24,10 +24,11 @@ func PrintMgGroup(x map[string]interface{}) {
 	if x == nil {
 		return
 	}
+	co := utl.Red(":") // Colorize ":" text to Red
 	xProp := x["properties"].(map[string]interface{})
-	fmt.Printf("%-12s %s\n", "id:", utl.Str(x["name"]))
-	fmt.Printf("%-12s %s\n", "displayName:", utl.Str(xProp["displayName"]))
-	fmt.Printf("%-12s %s\n", "type:", MgType(utl.Str(x["type"])))
+	fmt.Printf("%-12s %s\n", utl.Cya("id")+co, utl.Str(x["name"]))
+	fmt.Printf("%-12s %s\n", utl.Cya("displayName")+co, utl.Str(xProp["displayName"]))
+	fmt.Printf("%-12s %s\n", utl.Cya("type")+co, MgType(utl.Str(x["type"])))
 }
 
 func MgGroupCountLocal(z Bundle) int64 {
