@@ -113,7 +113,7 @@ func PrintMgChildren(indent int, children []interface{}) {
 		if Name == "Access to Azure Active Directory" && Type == "Subscription" {
 			continue // Skip legacy subscriptions. We don't care
 		}
-		utl.PadSpaces(indent)
+		fmt.Printf("%*s", indent, " ") // Space padded indent
 		padding := 38 - indent
 		if padding < 12 {
 			padding = 12
