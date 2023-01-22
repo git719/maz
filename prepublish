@@ -23,9 +23,9 @@ go test ./...
 
 printf "\n==> HEAD of go.mod:\n"
 head go.mod 
-printf "\n\n==> Last few tag versions:\n"
-git tag | tail
-CurrentTag=`git tag | tail -1`
+printf "\n\n==> Last 3 tag versions, sorted semantically:\n"
+git tag | sort -t "." -k1,1n -k2,2n -k3,3n | tail -3
+CurrentTag=`git tag | sort -t "." -k1,1n -k2,2n -k3,3n | tail -1`
 Prg=`head -1 go.mod | awk -F'/' '{print $NF}' | awk '{print $NF}'`
 printf "\n==> Good to go. To publish, do below One-liner or multiple commands, advancing Tag version:\n\n"
 printf "Tag=$CurrentTag && Prg=$Prg && git add . && git commit -m \"\$Tag: updates\" && git tag \$Tag && git push origin \$Tag && git push\n\n"
