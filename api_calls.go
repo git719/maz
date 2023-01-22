@@ -51,21 +51,21 @@ func ApiCall(method, url string, payload jsonT, headers, params strMapT, verbose
 		utl.Die(utl.Trace() + "Error: Bad URL, " + url + "\n")
 	}
 
-	// Set up new HTTP client
+	// Set up new HTTP request client
 	client := &http.Client{Timeout: time.Second * 60} // One minute timeout
 	var req *http.Request = nil
 	switch strings.ToUpper(method) {
 	case "GET":
 		req, err = http.NewRequest("GET", url, nil)
 	case "POST":
-		jsonData, ok := json.Marshal(payload)
-		if ok != nil {
+		jsonData, err := json.Marshal(payload)
+		if err != nil {
 			panic(err.Error())
 		}
 		req, err = http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
 	case "PUT":
-		jsonData, ok := json.Marshal(payload)
-		if ok != nil {
+		jsonData, err := json.Marshal(payload)
+		if err != nil {
 			panic(err.Error())
 		}
 		req, err = http.NewRequest("PUT", url, bytes.NewBuffer(jsonData))

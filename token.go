@@ -7,8 +7,12 @@ import (
 	"fmt"
 	"github.com/AzureAD/microsoft-authentication-library-for-go/apps/confidential"
 	"github.com/AzureAD/microsoft-authentication-library-for-go/apps/public"
+	"github.com/git719/utl"
+	"github.com/golang-jwt/jwt/v4"
+	"os"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 func GetTokenInteractively(scopes []string, confDir, tokenFile, authorityUrl, username string) (token string, err error) {
@@ -79,4 +83,91 @@ func GetTokenByCredentials(scopes []string, confDir, tokenFile, authorityUrl, cl
 		}
 	}
 	return result.AccessToken, nil // Return only the AccessToken, which is of type string
+}
+
+func DecodeJwtToken(tokenString string) {
+	// Decode and dump token string, trusting, without verifying/validating
+
+	// Validate as per https://tools.ietf.org/html/rfc7519
+	if !strings.HasPrefix(tokenString, "eyJ") && !strings.Contains(tokenString, ".") &&
+		tokenString != "" {
+		utl.Die("Invalid token: Does not start with 'eyJ', contain any '.', or it's empty.")
+	}
+	// A JSON Web Token consists of three parts which are separated using .(dot):
+	// Header: It indicates the token’s type it is and which signing algorithm has been used.
+	// Payload: It consists of the claims. And claims comprise of application’s data( email id,
+	// username, role), the expiration period of a token (Exp), and so on.
+	// Signature: It is generated using the secret (provided by the user), encoded header, and payload.
+	//
+	// Token struct fields:
+	//   Raw       string                 // The raw token.  Populated when you Parse a token
+	//   Method    SigningMethod          // The signing method used or to be used
+	//   Header    map[string]interface{} // The first segment of the token
+	//   Claims    Claims                 // The second segment of the token
+	//   Signature string                 // The third segment of the token.  Populated when you Parse a token
+	//   Valid     bool                   // Is the token valid?  Populated when you Parse/Verify a token
+
+	// Parse the token without verifying the signature
+	claims := jwt.MapClaims{} // claims are actually a map[string]interface{}
+	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+		return []byte("<YOUR VERIFICATION KEY>"), nil
+	})
+	// // Below no yet needed, since this is only printing claims in an unverified way
+	// if err != nil {
+	// 	fmt.Println(utl.Red("Token is invalid: " + err.Error()))
+	// }
+	if token == nil {
+		fmt.Println(utl.Red("Error parsing token: " + err.Error()))
+	}
+
+	co := utl.Red(":")
+	fmt.Println(utl.Cya("header") + co)
+
+	sortedKeys := utl.SortObjStringKeys(token.Header)
+	for _, k := range sortedKeys {
+		v := token.Header[k]
+		fmt.Printf("  %s%s%s %s\n", utl.Cya(k), co, utl.PadSpaces(20, len(k)), v)
+	}
+
+	fmt.Println(utl.Cya("claims") + co)
+	sortedKeys = utl.SortObjStringKeys(token.Claims.(jwt.MapClaims))
+	for _, k := range sortedKeys {
+		v := token.Claims.(jwt.MapClaims)[k]
+		vType := utl.GetType(v)
+		switch vType {
+		case "string":
+			fmt.Printf("  %s%s%s %s\n", utl.Cya(k), co, utl.PadSpaces(20, len(k)), v)
+		case "float64":
+			vFlt64 := v.(float64)
+			t := time.Unix(int64(vFlt64), 0)
+			vStr := t.Format("2006-01-02 15:04:05")
+			vStr += utl.Blu(fmt.Sprintf("  # %d", int64(vFlt64)))
+			fmt.Printf("  %s%s%s %s\n", utl.Cya(k), co, utl.PadSpaces(20, len(k)), vStr)
+		case "[]interface {}":
+			vList := v.([]interface{})
+			vStr := ""
+			for _, i := range vList {
+				vStr += utl.Str(i) + " "
+			}
+			fmt.Printf("  %s%s%s %s\n", utl.Cya(k), co, utl.PadSpaces(20, len(k)), vStr)
+		}
+	}
+
+	fmt.Println(utl.Cya("signature") + co)
+	if token.Signature != "" {
+		k := "signature"
+		fmt.Printf("  %s%s%s %s\n", utl.Cya(k), co, utl.PadSpaces(20, len(k)), token.Signature)
+	}
+
+	fmt.Println(utl.Cya("status") + co)
+	k := "valid"
+	vStr := ""
+	if token.Valid {
+		vStr = "true"
+	} else {
+		vStr = "false  " + utl.Blu("# Since this parsing isn't verifying it")
+	}
+	fmt.Printf("  %s%s%s %s\n", utl.Cya(k), co, utl.PadSpaces(20, len(k)), vStr)
+
+	os.Exit(0)
 }

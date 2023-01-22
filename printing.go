@@ -130,9 +130,10 @@ func PrintMemberOfs(t string, memberOf []interface{}) {
 func PrintStringMapColor(strMap map[string]string) {
 	// Print string map in YAML-like format, sorted, and in color
 	co := utl.Red(":")
-	sortedMap := utl.SortStringMapByKeys(strMap)
-	for k, v := range sortedMap {
-		cK := utl.Cya(utl.Str(k))
-		fmt.Printf("  %s %s\n", cK+co, utl.Str(v))
+	sortedKeys := utl.SortMapStringKeys(strMap)
+	for _, k := range sortedKeys {
+		v := strMap[k]
+		cK := utl.Cya(utl.Str(k)) + co // Colorized key (Cyan) + colon (Red)
+		fmt.Printf("  %s %s\n", cK, utl.Str(v))
 	}
 }

@@ -324,8 +324,8 @@ func GetObjectFromFile(filePath string) (formatType, t string, obj map[string]in
 	obj = objRaw.(map[string]interface{})
 
 	// Continue unpacking the object to see what it is
-	xProp, ok := obj["properties"].(map[string]interface{})
-	if !ok { // Valid definition/assignments have a properties attribute
+	xProp, err := obj["properties"].(map[string]interface{})
+	if !err { // Valid definition/assignments have a properties attribute
 		return formatType, "", nil // It's not a valid object, return null for type and object
 	}
 	roleName := utl.Str(xProp["roleName"])       // Assert and assume it's a definition
