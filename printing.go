@@ -237,3 +237,40 @@ func PrintStringMapColor(strMap map[string]string) {
 		fmt.Printf("  %s %s\n", cK, utl.Str(v))
 	}
 }
+
+func PrintMatching(printFormat, t, specifier string, z Bundle) {
+	// Print matching object or objecs in JSON format
+	if utl.ValidUuid(specifier) { // Search/print single object, if it's valid UUID
+		x := GetAzObjectByUuid(t, specifier, z)
+		if printFormat == "json" {
+			utl.PrintJson(x)
+		} else if printFormat == "reg" {
+			PrintObject(t, x, z)
+		}
+	} else {
+		matchingObjects := GetObjects(t, specifier, false, z)
+		if len(matchingObjects) == 1 {
+			// If it's only one object, we'll try to get the Azure copy instead of using the local cache
+			x := matchingObjects[0].(map[string]interface{})
+			uuid := utl.Str(x["id"])
+			if utl.ValidUuid(uuid) {
+				x = GetAzObjectByUuid(t, uuid, z)
+			}
+			if printFormat == "json" {
+				utl.PrintJson(x)
+			} else if printFormat == "reg" {
+				PrintObject(t, x, z)
+			}
+		} else if len(matchingObjects) > 1 {
+			if printFormat == "json" {
+				utl.PrintJson(matchingObjects) // Print all matching objects in JSON
+			} else if printFormat == "reg" {
+				for _, i := range matchingObjects { // Print all matching object teresely
+					x := i.(map[string]interface{})
+					PrintTersely(t, x)
+				}
+			}
+		}
+	}
+	return
+}
