@@ -26,35 +26,39 @@ func PrintApp(x map[string]interface{}, z Bundle) {
 		}
 	}
 
-	// Print owners
-	url := ConstMgUrl + "/beta/applications/" + id + "/owners"
+	// Print certificates keys
+	if x["keyCredentials"] != nil {
+		PrintCertificateList(x["keyCredentials"].([]interface{}))
+	}
+
+	// Print secret list & expiry details, not actual secretText (which cannot be retrieve anyway)
+	if x["passwordCredentials"] != nil {
+		PrintSecretList(x["passwordCredentials"].([]interface{}))
+	}
+
+	// Print federated IDs
+	url := ConstMgUrl + "/v1.0/applications/" + id + "/federatedIdentityCredentials"
 	r, _, _ := ApiGet(url, z.MgHeaders, nil)
-	if r["value"] != nil {
-		owners := r["value"].([]interface{})
-		if len(owners) > 0 {
-			fmt.Printf(utl.Cya("owners") + co + "\n")
-			// PrintJson(groups) // DEBUG
-			for _, i := range owners {
-				o := i.(map[string]interface{})
-				Type, Name := "???", "???"
-				Type = utl.LastElem(utl.Str(o["@odata.type"]), ".")
-				switch Type {
-				case "user":
-					Name = utl.Str(o["userPrincipalName"])
-				case "group":
-					Name = utl.Str(o["displayName"])
-				case "servicePrincipal":
-					Name = utl.Str(o["servicePrincipalType"])
-				default:
-					Name = "???"
-				}
-				fmt.Printf("  %-50s %s (%s)\n", Name, utl.Str(o["id"]), Type)
+	ApiErrorCheck("GET", url, utl.Trace(), r)
+	if r != nil && r["value"] != nil {
+		fedCreds := r["value"].([]interface{})
+		if len(fedCreds) > 0 {
+			fmt.Println(utl.Cya("federated_ids") + co)
+			for _, i := range fedCreds {
+				a := i.(map[string]interface{})
+				fmt.Printf("  %-38s  %-24s  %-40s  %s\n", utl.Str(a["id"]), utl.Str(a["name"]),
+					utl.Str(a["subject"]), utl.Str(a["issuer"]))
 			}
-		} else {
-			fmt.Printf("%s %s\n", utl.Cya("owners")+co, "None")
 		}
 	}
+
+	// Print owners
+	url = ConstMgUrl + "/beta/applications/" + id + "/owners"
+	r, _, _ = ApiGet(url, z.MgHeaders, nil)
 	ApiErrorCheck("GET", url, utl.Trace(), r)
+	if r != nil && r["value"] != nil {
+		PrintOwners(r["value"].([]interface{}))
+	}
 
 	// Print all groups and roles it is a member of
 	url = ConstMgUrl + "/v1.0/applications/" + id + "/transitiveMemberOf"

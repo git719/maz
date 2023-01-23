@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/git719/utl"
 	"os"
+	"time"
 )
 
 func PrintCountStatus(z Bundle) {
@@ -122,8 +123,107 @@ func PrintMemberOfs(t string, memberOf []interface{}) {
 			Type := utl.LastElem(utl.Str(x["@odata.type"]), ".")
 			fmt.Printf("  %-50s %s (%s)\n", utl.Str(x["displayName"]), utl.Str(x["id"]), Type)
 		}
-	} else {
-		fmt.Printf("%s %s\n", utl.Cya("memberof")+co, "None")
+	}
+}
+
+func PrintSecretList(pwdCreds []interface{}) {
+	// Print password credentials stanza for Apps and Sps
+	if len(pwdCreds) > 0 {
+		co := utl.Red(":") // Colorize ":" text to Red
+		fmt.Println(utl.Cya("secrets") + co)
+		for _, i := range pwdCreds {
+			a := i.(map[string]interface{})
+			cId := utl.Str(a["keyId"])
+			cName := utl.Str(a["displayName"])
+			cHint := utl.Str(a["hint"]) + "********"
+			// Reformat date strings for better readability
+			cStart, err := utl.ConvertDateFormat(utl.Str(a["startDateTime"]), time.RFC3339Nano, "2006-01-02 15:04")
+			if err != nil {
+				utl.Die(utl.Trace() + err.Error() + "\n")
+			}
+			cExpiry, err := utl.ConvertDateFormat(utl.Str(a["endDateTime"]), time.RFC3339Nano, "2006-01-02 15:04")
+			if err != nil {
+				utl.Die(utl.Trace() + err.Error() + "\n")
+			}
+			// Check if expiring soon
+			now := time.Now().Unix()
+			expiry, err := utl.DateStringToEpocInt64(utl.Str(a["endDateTime"]), time.RFC3339Nano)
+			if err != nil {
+				utl.Die(utl.Trace() + err.Error() + "\n")
+			}
+			daysDiff := (expiry - now) / 86400
+			if daysDiff <= 0 {
+				cExpiry = utl.Red(cExpiry) // If it's expired print in red
+			} else if daysDiff < 7 {
+				cExpiry = utl.Yel(cExpiry) // If expiring within a week print in yellow
+			}
+			fmt.Printf("  %-38s  %-24s  %-40s  %-10s  %s\n", cId, cName, cHint, cStart, cExpiry)
+		}
+	}
+}
+
+func PrintCertificateList(certificates []interface{}) {
+	// Print password credentials stanza for Apps and Sps
+	if len(certificates) > 0 {
+		co := utl.Red(":") // Colorize ":" text to Red
+		fmt.Println(utl.Cya("certificates") + co)
+		for _, i := range certificates {
+			a := i.(map[string]interface{})
+			cId := utl.Str(a["keyId"])
+			cName := utl.Str(a["displayName"])
+			cType := utl.Str(a["type"])
+			// Reformat date strings for better readability
+			cStart, err := utl.ConvertDateFormat(utl.Str(a["startDateTime"]), time.RFC3339Nano, "2006-01-02 15:04")
+			if err != nil {
+				utl.Die(utl.Trace() + err.Error() + "\n")
+			}
+			cExpiry, err := utl.ConvertDateFormat(utl.Str(a["endDateTime"]), time.RFC3339Nano, "2006-01-02 15:04")
+			if err != nil {
+				utl.Die(utl.Trace() + err.Error() + "\n")
+			}
+			// Check if expiring soon
+			now := time.Now().Unix()
+			expiry, err := utl.DateStringToEpocInt64(utl.Str(a["endDateTime"]), time.RFC3339Nano)
+			if err != nil {
+				utl.Die(utl.Trace() + err.Error() + "\n")
+			}
+			daysDiff := (expiry - now) / 86400
+			if daysDiff <= 0 {
+				cExpiry = utl.Red(cExpiry) // If it's expired print in red
+			} else if daysDiff < 7 {
+				cExpiry = utl.Yel(cExpiry) // If expiring within a week print in yellow
+			}
+			// There's also:
+			// 	"customKeyIdentifier": "09228573F93570D8113D90DA69D8DF6E2E396874",
+			// 	"key": "<RSA_KEY>",
+			// 	"usage": "Verify"
+			fmt.Printf("  %-38s  %-24s  %-40s  %-10s  %s\n", cId, cName, cType, cStart, cExpiry)
+		}
+		// https://learn.microsoft.com/en-us/graph/api/application-addkey
+	}
+}
+
+func PrintOwners(owners []interface{}) {
+	// Print owners stanza for Apps and Sps
+	if len(owners) > 0 {
+		co := utl.Red(":")
+		fmt.Printf(utl.Cya("owners") + co + "\n")
+		for _, i := range owners {
+			o := i.(map[string]interface{})
+			Type, Name := "???", "???"
+			Type = utl.LastElem(utl.Str(o["@odata.type"]), ".")
+			switch Type {
+			case "user":
+				Name = utl.Str(o["userPrincipalName"])
+			case "group":
+				Name = utl.Str(o["displayName"])
+			case "servicePrincipal":
+				Name = utl.Str(o["servicePrincipalType"])
+			default:
+				Name = "???"
+			}
+			fmt.Printf("  %-50s %s (%s)\n", Name, utl.Str(o["id"]), Type)
+		}
 	}
 }
 

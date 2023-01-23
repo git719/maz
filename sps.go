@@ -27,33 +27,22 @@ func PrintSp(x map[string]interface{}, z Bundle) {
 		}
 	}
 
+	// Print certificates keys
+	if x["keyCredentials"] != nil {
+		PrintCertificateList(x["keyCredentials"].([]interface{}))
+	}
+
+	// Print secret expiry and other details. Not actual secretText, which cannot be retrieve anyway!
+	if x["passwordCredentials"] != nil {
+		PrintSecretList(x["passwordCredentials"].([]interface{}))
+	}
+
 	// Print owners
 	url := ConstMgUrl + "/beta/servicePrincipals/" + id + "/owners"
 	r, _, _ := ApiGet(url, z.MgHeaders, nil)
 	ApiErrorCheck("GET", url, utl.Trace(), r)
-	if r["value"] != nil {
-		owners := r["value"].([]interface{}) // JSON array
-		if len(owners) > 0 {
-			fmt.Printf(utl.Cya("owners") + co + "\n")
-			for _, i := range owners {
-				o := i.(map[string]interface{}) // JSON object
-				Type, Name := "???", "???"
-				Type = utl.LastElem(utl.Str(o["@odata.type"]), ".")
-				switch Type {
-				case "user":
-					Name = utl.Str(o["userPrincipalName"])
-				case "group":
-					Name = utl.Str(o["displayName"])
-				case "servicePrincipal":
-					Name = utl.Str(o["servicePrincipalType"])
-				default:
-					Name = "???"
-				}
-				fmt.Printf("  %-50s %s (%s)\n", Name, utl.Str(o["id"]), Type)
-			}
-		} else {
-			fmt.Printf("%s %s\n", utl.Cya("owners")+co, "None")
-		}
+	if r != nil && r["value"] != nil {
+		PrintOwners(r["value"].([]interface{}))
 	}
 
 	// Print members and their roles
@@ -87,8 +76,6 @@ func PrintSp(x map[string]interface{}, z Bundle) {
 				principalType := utl.Str(rm["principalType"])
 				fmt.Printf("  %-50s %-20s %s (%s)\n", principalName, roleName, principalId, principalType)
 			}
-		} else {
-			fmt.Printf("%s %s\n", utl.Cya("members")+co, "None")
 		}
 	}
 
