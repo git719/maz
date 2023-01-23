@@ -89,9 +89,8 @@ func DecodeJwtToken(tokenString string) {
 	// Decode and dump token string, trusting, without verifying/validating
 
 	// Validate as per https://tools.ietf.org/html/rfc7519
-	if !strings.HasPrefix(tokenString, "eyJ") && !strings.Contains(tokenString, ".") &&
-		tokenString != "" {
-		utl.Die("Invalid token: Does not start with 'eyJ', contain any '.', or it's empty.")
+	if tokenString == "" || (!strings.HasPrefix(tokenString, "eyJ") && !strings.Contains(tokenString, ".")) {
+		utl.Die("Invalid token: Does not start with 'eyJ', contain any '.', or it's empty.\n")
 	}
 	// A JSON Web Token consists of three parts which are separated using .(dot):
 	// Header: It indicates the token’s type it is and which signing algorithm has been used.
