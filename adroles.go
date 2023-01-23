@@ -42,8 +42,8 @@ func PrintAdRole(x map[string]interface{}, z Bundle) {
 	// Print members of this role
 	// See https://github.com/microsoftgraph/microsoft-graph-docs/blob/main/api-reference/v1.0/api/directoryrole-list-members.md
 	url := ConstMgUrl + "/v1.0/directoryRoles(roleTemplateId='" + utl.Str(x["templateId"]) + "')/members"
-	r, _, _ := ApiGet(url, z.MgHeaders, nil)
-	if r["value"] != nil {
+	r, statusCode, _ := ApiGet(url, z.MgHeaders, nil)
+	if statusCode == 200 && r != nil && r["value"] != nil {
 		members := r["value"].([]interface{})
 		if len(members) > 0 {
 			fmt.Printf(utl.Cya("members") + co + "\n")
@@ -51,8 +51,6 @@ func PrintAdRole(x map[string]interface{}, z Bundle) {
 				m := i.(map[string]interface{})
 				fmt.Printf("  %s  %-40s   %s\n", utl.Str(m["id"]), utl.Str(m["userPrincipalName"]), utl.Str(m["displayName"]))
 			}
-		} else {
-			fmt.Printf("%s %s\n", utl.Cya("members")+co, "None")
 		}
 	} else {
 		fmt.Printf(utl.Cya("members")+co+"\n  No members in this role (templateId = %s). Maybe not yet activated?\n", utl.Str(x["templateId"]))

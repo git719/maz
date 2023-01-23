@@ -38,9 +38,8 @@ func PrintApp(x map[string]interface{}, z Bundle) {
 
 	// Print federated IDs
 	url := ConstMgUrl + "/v1.0/applications/" + id + "/federatedIdentityCredentials"
-	r, _, _ := ApiGet(url, z.MgHeaders, nil)
-	ApiErrorCheck("GET", url, utl.Trace(), r)
-	if r != nil && r["value"] != nil {
+	r, statusCode, _ := ApiGet(url, z.MgHeaders, nil)
+	if statusCode == 200 && r != nil && r["value"] != nil {
 		fedCreds := r["value"].([]interface{})
 		if len(fedCreds) > 0 {
 			fmt.Println(utl.Cya("federated_ids") + co)
@@ -54,19 +53,9 @@ func PrintApp(x map[string]interface{}, z Bundle) {
 
 	// Print owners
 	url = ConstMgUrl + "/beta/applications/" + id + "/owners"
-	r, _, _ = ApiGet(url, z.MgHeaders, nil)
-	ApiErrorCheck("GET", url, utl.Trace(), r)
-	if r != nil && r["value"] != nil {
+	r, statusCode, _ = ApiGet(url, z.MgHeaders, nil)
+	if statusCode == 200 && r != nil && r["value"] != nil {
 		PrintOwners(r["value"].([]interface{}))
-	}
-
-	// Print all groups and roles it is a member of
-	url = ConstMgUrl + "/v1.0/applications/" + id + "/transitiveMemberOf"
-	r, _, _ = ApiGet(url, z.MgHeaders, nil)
-	ApiErrorCheck("GET", url, utl.Trace(), r)
-	if r != nil && r["value"] != nil {
-		memberOf := r["value"].([]interface{})
-		PrintMemberOfs("g", memberOf)
 	}
 
 	// Print API permissions
@@ -226,7 +215,7 @@ func GetAzApps(cacheFile string, headers map[string]string, verbose bool) (list 
 	deltaAge := int64(time.Now().Unix()) - int64(utl.FileModTime(deltaLinkFile))
 	baseUrl := ConstMgUrl + "/v1.0/applications"
 	// Get delta updates only when below selection of attributes are modified
-	selection := "?$select=displayName,appId,requiredResourceAccess"
+	selection := "?$select=id,displayName"
 	url := baseUrl + "/delta" + selection + "&$top=999"
 	headers["Prefer"] = "return=minimal" // This tells API to focus only on specific 'select' attributes
 

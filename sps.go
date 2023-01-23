@@ -39,9 +39,8 @@ func PrintSp(x map[string]interface{}, z Bundle) {
 
 	// Print owners
 	url := ConstMgUrl + "/beta/servicePrincipals/" + id + "/owners"
-	r, _, _ := ApiGet(url, z.MgHeaders, nil)
-	ApiErrorCheck("GET", url, utl.Trace(), r)
-	if r != nil && r["value"] != nil {
+	r, statusCode, _ := ApiGet(url, z.MgHeaders, nil)
+	if statusCode == 200 && r != nil && r["value"] != nil {
 		PrintOwners(r["value"].([]interface{}))
 	}
 
@@ -81,18 +80,16 @@ func PrintSp(x map[string]interface{}, z Bundle) {
 
 	// Print all groups and roles it is a member of
 	url = ConstMgUrl + "/v1.0/servicePrincipals/" + id + "/transitiveMemberOf"
-	r, _, _ = ApiGet(url, z.MgHeaders, nil)
-	ApiErrorCheck("GET", url, utl.Trace(), r)
-	if r != nil && r["value"] != nil {
+	r, statusCode, _ = ApiGet(url, z.MgHeaders, nil)
+	if statusCode == 200 && r != nil && r["value"] != nil {
 		memberOf := r["value"].([]interface{})
 		PrintMemberOfs("g", memberOf)
 	}
 
 	// Print API permissions
 	url = ConstMgUrl + "/v1.0/servicePrincipals/" + id + "/oauth2PermissionGrants"
-	r, _, _ = ApiGet(url, z.MgHeaders, nil)
-	ApiErrorCheck("GET", url, utl.Trace(), r)
-	if r["value"] != nil && len(r["value"].([]interface{})) > 0 {
+	r, statusCode, _ = ApiGet(url, z.MgHeaders, nil)
+	if statusCode == 200 && r != nil && r["value"] != nil && len(r["value"].([]interface{})) > 0 {
 		fmt.Printf(utl.Cya("api_permissionsi") + co + "\n")
 		apiPerms := r["value"].([]interface{}) // Assert as JSON array
 
@@ -225,7 +222,7 @@ func GetAzSps(cacheFile string, headers map[string]string, verbose bool) (list [
 	deltaAge := int64(time.Now().Unix()) - int64(utl.FileModTime(deltaLinkFile))
 	baseUrl := ConstMgUrl + "/v1.0/servicePrincipals"
 	// Get delta updates only when below selection of attributes are modified
-	selection := "?$id,select=displayName,appId,accountEnabled,servicePrincipalType,appOwnerOrganizationId"
+	selection := "?$id,select=id,displayName"
 	url := baseUrl + "/delta" + selection + "&$top=999"
 	headers["Prefer"] = "return=minimal" // This tells API to focus only on specific 'select' attributes
 

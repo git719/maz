@@ -36,16 +36,13 @@ func PrintUser(x map[string]interface{}, z Bundle) {
 				email := i.(string)
 				fmt.Printf("  %s\n", email)
 			}
-		} else {
-			fmt.Printf("  %s %s\n", utl.Cya("otherMails")+co, "None")
 		}
 	}
 
 	// Print all groups and roles it is a member of
 	url := ConstMgUrl + "/v1.0/users/" + id + "/transitiveMemberOf"
-	r, _, _ := ApiGet(url, z.MgHeaders, nil)
-	ApiErrorCheck("GET", url, utl.Trace(), r)
-	if r != nil && r["value"] != nil {
+	r, statusCode, _ := ApiGet(url, z.MgHeaders, nil)
+	if statusCode == 200 && r != nil && r["value"] != nil {
 		memberOf := r["value"].([]interface{})
 		PrintMemberOfs("g", memberOf)
 	}
@@ -134,8 +131,7 @@ func GetAzUsers(cacheFile string, headers map[string]string, verbose bool) (list
 
 	baseUrl := ConstMgUrl + "/v1.0/users"
 	// Get delta updates only when below selection of attributes are modified
-	selection := "?$select=displayName,mailNickname,userPrincipalName,onPremisesSamAccountName,"
-	selection += "onPremisesDomainName,onPremisesUserPrincipalName"
+	selection := "?$select=id,displayName"
 	url := baseUrl + "/delta" + selection + "&$top=999"
 	headers["Prefer"] = "return=minimal" // This tells API to focus only on specific 'select' attributes
 

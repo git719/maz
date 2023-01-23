@@ -28,9 +28,8 @@ func PrintGroup(x map[string]interface{}, z Bundle) {
 
 	// Print owners of this group
 	url := ConstMgUrl + "/beta/groups/" + id + "/owners"
-	r, _, _ := ApiGet(url, z.MgHeaders, nil)
-	ApiErrorCheck("GET", url, utl.Trace(), r)
-	if r["value"] != nil {
+	r, statusCode, _ := ApiGet(url, z.MgHeaders, nil)
+	if statusCode == 200 && r != nil && r["value"] != nil {
 		owners := r["value"].([]interface{}) // Assert as JSON array type
 		if len(owners) > 0 {
 			fmt.Printf(utl.Cya("owners") + co + "\n")
@@ -38,25 +37,21 @@ func PrintGroup(x map[string]interface{}, z Bundle) {
 				o := i.(map[string]interface{}) // Assert as JSON object type
 				fmt.Printf("  %-50s %s\n", utl.Str(o["userPrincipalName"]), utl.Str(o["id"]))
 			}
-		} else {
-			fmt.Printf("%s %s\n", utl.Cya("owners")+co, "None")
 		}
 	}
 
 	// Print all groups and roles it is a member of
 	url = ConstMgUrl + "/v1.0/groups/" + id + "/transitiveMemberOf"
-	r, _, _ = ApiGet(url, z.MgHeaders, nil)
-	ApiErrorCheck("GET", url, utl.Trace(), r)
-	if r != nil && r["value"] != nil {
+	r, statusCode, _ = ApiGet(url, z.MgHeaders, nil)
+	if statusCode == 200 && r != nil && r["value"] != nil {
 		memberOf := r["value"].([]interface{})
 		PrintMemberOfs("g", memberOf)
 	}
 
 	// Print members of this group
 	url = ConstMgUrl + "/beta/groups/" + id + "/members"
-	r, _, _ = ApiGet(url, z.MgHeaders, nil)
-	ApiErrorCheck("GET", url, utl.Trace(), r)
-	if r != nil && r["value"] != nil {
+	r, statusCode, _ = ApiGet(url, z.MgHeaders, nil)
+	if statusCode == 200 && r != nil && r["value"] != nil {
 		members := r["value"].([]interface{})
 		if len(members) > 0 {
 			fmt.Printf(utl.Cya("members") + co + "\n")
@@ -72,8 +67,6 @@ func PrintGroup(x map[string]interface{}, z Bundle) {
 				}
 				fmt.Printf("  %-50s %s (%s)\n", Name, utl.Str(m["id"]), Type)
 			}
-		} else {
-			fmt.Printf("%s %s\n", utl.Cya("members")+co, "None")
 		}
 	}
 }
@@ -160,7 +153,7 @@ func GetAzGroups(cacheFile string, headers map[string]string, verbose bool) (lis
 	deltaAge := int64(time.Now().Unix()) - int64(utl.FileModTime(deltaLinkFile))
 	baseUrl := ConstMgUrl + "/v1.0/groups"
 	// Get delta updates only when below selection of attributes are modified
-	selection := "?$select=displayName,mailNickname,description,mailEnabled,isAssignableToRole"
+	selection := "?$select=id,displayName"
 	url := baseUrl + "/delta" + selection + "&$top=999"
 	headers["Prefer"] = "return=minimal" // This tells API to focus only on specific 'select' attributes
 
