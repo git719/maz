@@ -18,7 +18,8 @@ func PrintGroup(x map[string]interface{}, z Bundle) {
 
 	// First, print the most important attributes of this group
 	co := utl.Red(":") // Colorize ":" text to Red
-	list := []string{"id", "displayName", "description", "isAssignableRole", "isAssignableToRole", "mailEnabled", "mailNickname"}
+	list := []string{"id", "displayName", "description", "isAssignableToRole",
+		"mailEnabled", "mailNickname"}
 	for _, i := range list {
 		v := utl.Str(x[i])
 		if v != "" { // Only print non-null attributes
@@ -151,9 +152,10 @@ func GetAzGroups(cacheFile string, headers map[string]string, verbose bool) (lis
 	var deltaLinkMap map[string]string = nil
 	deltaLinkFile := cacheFile[:len(cacheFile)-len(filepath.Ext(cacheFile))] + "_deltaLink.json"
 	deltaAge := int64(time.Now().Unix()) - int64(utl.FileModTime(deltaLinkFile))
+
 	baseUrl := ConstMgUrl + "/v1.0/groups"
-	// Get delta updates only when below selection of attributes are modified
-	selection := "?$select=id,displayName"
+	// Get delta updates only if/when below attributes in $select are modified
+	selection := "?$select=displayName,mailNickname,description,mailEnabled,isAssignableToRole"
 	url := baseUrl + "/delta" + selection + "&$top=999"
 	headers["Prefer"] = "return=minimal" // This tells API to focus only on specific 'select' attributes
 
@@ -163,7 +165,8 @@ func GetAzGroups(cacheFile string, headers map[string]string, verbose bool) (lis
 		// Note that deltaLink file age has to be within 30 days (we do 27)
 		tmpVal, _ := utl.LoadFileJson(deltaLinkFile)
 		deltaLinkMap = tmpVal.(map[string]string)
-		url = utl.Str(deltaLinkMap["@odata.deltaLink"]) // Base URL is now the cached Delta Link
+		url = utl.Str(deltaLinkMap["@odata.deltaLink"] + "?$deltaToken=latest")
+		// Base URL is now the cached Delta Link
 	}
 
 	// Now go get azure objects using the updated URL (either a full query or a deltaLink query)

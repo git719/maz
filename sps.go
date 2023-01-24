@@ -19,7 +19,8 @@ func PrintSp(x map[string]interface{}, z Bundle) {
 
 	// Print the most important attributes
 	co := utl.Red(":") // Colorize ":" text to Red
-	list := []string{"id", "displayName", "appId", "accountEnabled", "servicePrincipalType", "appOwnerOrganizationId"}
+	list := []string{"id", "displayName", "appId", "accountEnabled", "servicePrincipalType",
+		"appOwnerOrganizationId"}
 	for _, i := range list {
 		v := utl.Str(x[i])
 		if v != "" { // Only print non-null attributes
@@ -220,9 +221,10 @@ func GetAzSps(cacheFile string, headers map[string]string, verbose bool) (list [
 	var deltaLinkMap map[string]string = nil
 	deltaLinkFile := cacheFile[:len(cacheFile)-len(filepath.Ext(cacheFile))] + "_deltaLink.json"
 	deltaAge := int64(time.Now().Unix()) - int64(utl.FileModTime(deltaLinkFile))
+
 	baseUrl := ConstMgUrl + "/v1.0/servicePrincipals"
-	// Get delta updates only when below selection of attributes are modified
-	selection := "?$id,select=id,displayName"
+	// Get delta updates only if/when below attributes in $select are modified
+	selection := "?$select=displayName,appId,accountEnabled,servicePrincipalType,appOwnerOrganizationId"
 	url := baseUrl + "/delta" + selection + "&$top=999"
 	headers["Prefer"] = "return=minimal" // This tells API to focus only on specific 'select' attributes
 
@@ -232,7 +234,8 @@ func GetAzSps(cacheFile string, headers map[string]string, verbose bool) (list [
 		// Note that deltaLink file age has to be within 30 days (we do 27)
 		tmpVal, _ := utl.LoadFileJson(deltaLinkFile)
 		deltaLinkMap = tmpVal.(map[string]string)
-		url = utl.Str(deltaLinkMap["@odata.deltaLink"]) // Base URL is now the cached Delta Link
+		url = utl.Str(deltaLinkMap["@odata.deltaLink"] + "?$deltaToken=latest")
+		// Base URL is now the cached Delta Link
 	}
 
 	// Now go get azure objects using the updated URL (either a full query or a deltaLink query)

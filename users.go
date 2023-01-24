@@ -104,8 +104,8 @@ func GetUsers(filter string, force bool, z Bundle) (list []interface{}) {
 	}
 	var matchingList []interface{} = nil
 	searchAttributes := []string{
-		"id", "displayName", "userPrincipalName", "onPremisesSamAccountName",
-		"onPremisesUserPrincipalName", "onPremisesDomainName",
+		"id", "displayName", "mailNickname", "onPremisesDomainName", "onPremisesSamAccountName",
+		"onPremisesUserPrincipalName", "userPrincipalName",
 	}
 	var ids []string // Keep track of each unique objects to eliminate repeats
 	for _, i := range list {
@@ -130,21 +130,23 @@ func GetAzUsers(cacheFile string, headers map[string]string, verbose bool) (list
 	deltaAge := int64(time.Now().Unix()) - int64(utl.FileModTime(deltaLinkFile))
 
 	baseUrl := ConstMgUrl + "/v1.0/users"
-	// Get delta updates only when below selection of attributes are modified
-	selection := "?$select=id,displayName"
+	// Get delta updates only if/when below attributes in $select are modified
+	selection := "?$select=displayName,mailNickname,onPremisesDomainName,"
+	selection += "onPremisesSamAccountName,onPremisesUserPrincipalName,userPrincipalName"
 	url := baseUrl + "/delta" + selection + "&$top=999"
-	headers["Prefer"] = "return=minimal" // This tells API to focus only on specific 'select' attributes
+	headers["Prefer"] = "return=minimal" // Tells API to focus only on $select attributes
 
 	// But first, double-check the base set again to avoid running a delta query on an empty set
 	listIsEmpty, list := CheckLocalCache(cacheFile, 86400) // cachePeriod = 1 day in seconds
 	if utl.FileUsable(deltaLinkFile) && deltaAge < (3660*24*27) && listIsEmpty == false {
-		// Note that deltaLink file age has to be within 30 days (we do 27)
+		// Note that deltaLink file age has to be within 30 days (we use 27)
 		tmpVal, _ := utl.LoadFileJson(deltaLinkFile)
 		deltaLinkMap = tmpVal.(map[string]string)
-		url = utl.Str(deltaLinkMap["@odata.deltaLink"]) // Base URL is now the cached Delta Link URL
+		url = utl.Str(deltaLinkMap["@odata.deltaLink"] + "?$deltaToken=latest")
+		// Base URL is now the cached Delta Link URL
 	}
 
-	// Now go get azure objects using the updated URL (either a full query or a deltaLink query)
+	// Now go get Azure objects using the updated URL (either a full or a deltaLink query)
 	var deltaSet []interface{} = nil
 	deltaSet, deltaLinkMap = GetAzObjects(url, headers, verbose) // Run generic deltaSet retriever function
 
@@ -158,7 +160,7 @@ func GetAzUsers(cacheFile string, headers map[string]string, verbose bool) (list
 func GetAzUserByUuid(uuid string, headers map[string]string) map[string]interface{} {
 	// Get Azure user by Object UUID, with extended attributes
 	baseUrl := ConstMgUrl + "/v1.0/users"
-	selection := "?$select=id,accountEnabled,createdDateTime,creationType,displayName,id,identities,"
+	selection := "?$select=accountEnabled,createdDateTime,creationType,displayName,identities,"
 	selection += "lastPasswordChangeDateTime,mail,mailNickname,onPremisesDistinguishedName,"
 	selection += "onPremisesDomainName,onPremisesExtensionAttributes,onPremisesImmutableId,"
 	selection += "onPremisesLastSyncDateTime,onPremisesProvisioningErrors,onPremisesSamAccountName,"
