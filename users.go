@@ -160,7 +160,7 @@ func GetAzUsers(cacheFile string, headers map[string]string, verbose bool) (list
 func GetAzUserByUuid(uuid string, headers map[string]string) map[string]interface{} {
 	// Get Azure user by Object UUID, with extended attributes
 	baseUrl := ConstMgUrl + "/v1.0/users"
-	selection := "?$select=accountEnabled,createdDateTime,creationType,displayName,identities,"
+	selection := "?$select=id,accountEnabled,createdDateTime,creationType,displayName,identities,"
 	selection += "lastPasswordChangeDateTime,mail,mailNickname,onPremisesDistinguishedName,"
 	selection += "onPremisesDomainName,onPremisesExtensionAttributes,onPremisesImmutableId,"
 	selection += "onPremisesLastSyncDateTime,onPremisesProvisioningErrors,onPremisesSamAccountName,"
