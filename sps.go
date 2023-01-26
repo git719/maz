@@ -45,36 +45,41 @@ func PrintSp(x map[string]interface{}, z Bundle) {
 		PrintOwners(r["value"].([]interface{}))
 	}
 
-	// Print members and their roles
-	url = ConstMgUrl + "/beta/servicePrincipals/" + id + "/appRoleAssignedTo"
-	r, _, _ = ApiGet(url, z.MgHeaders, nil)
-	ApiErrorCheck("GET", url, utl.Trace(), r)
-	if r["value"] != nil {
-		members := r["value"].([]interface{}) // JSON array
-		if len(members) > 0 {
-			fmt.Printf(utl.Cya("members") + co + "\n")
-
-			// Build roleMap
-			roleMap := make(map[string]string)
-			if x["appRoles"] != nil {
-				objAppRoles := x["appRoles"].([]interface{})
-				if len(objAppRoles) > 0 {
-					for _, i := range objAppRoles {
-						ar := i.(map[string]interface{})
-						roleMap[utl.Str(ar["id"])] = utl.Str(ar["displayName"])
-					}
-				}
+	// Print App Roles this resource SP allows
+	roleNameMap := make(map[string]string)                                 // Used later when printing members and their roles
+	roleNameMap["00000000-0000-0000-0000-000000000000"] = "Default Access" // Add Default Access role
+	appRoles := x["appRoles"].([]interface{})
+	if len(appRoles) > 0 {
+		fmt.Printf(utl.Cya("app_roles") + co + "\n")
+		for _, i := range appRoles {
+			a := i.(map[string]interface{})
+			rId := utl.Str(a["id"])
+			displayName := utl.Str(a["displayName"])
+			roleNameMap[rId] = displayName
+			if len(displayName) >= 60 {
+				displayName = utl.FirstN(displayName, 57) + "..."
 			}
-			// Add Default Access role
-			roleMap["00000000-0000-0000-0000-000000000000"] = "Default Access"
+			fmt.Printf("  %s  %-50s  %-60s\n", rId, utl.Str(a["value"]), displayName)
+		}
+	}
 
-			for _, i := range members {
-				rm := i.(map[string]interface{}) // JSON object
-				principalName := utl.Str(rm["principalDisplayName"])
-				roleName := roleMap[utl.Str(rm["appRoleId"])] // Reference role name
-				principalId := utl.Str(rm["principalId"])
-				principalType := utl.Str(rm["principalType"])
-				fmt.Printf("  %-50s %-20s %s (%s)\n", principalName, roleName, principalId, principalType)
+	// Print app role assignment members and the specific role assigned
+	url = ConstMgUrl + "/beta/servicePrincipals/" + id + "/appRoleAssignedTo"
+	r, statusCode, _ = ApiGet(url, z.MgHeaders, nil)
+	if statusCode == 200 && r != nil && r["value"] != nil && len(r["value"].([]interface{})) > 0 {
+		appRoleAssignments := r["value"].([]interface{}) // Assert as JSON array
+		if len(appRoleAssignments) > 0 {
+			fmt.Printf(utl.Cya("appRoleAssignments") + co + "\n")
+			for _, i := range appRoleAssignments {
+				ara := i.(map[string]interface{}) // JSON object
+				principalId := utl.Str(ara["principalId"])
+				principalType := utl.Str(ara["principalType"])
+				principalName := utl.Str(ara["principalDisplayName"])
+				roleName := roleNameMap[utl.Str(ara["appRoleId"])] // Reference roleNameMap now
+				if len(roleName) >= 40 {
+					roleName = utl.FirstN(roleName, 37) + "..."
+				}
+				fmt.Printf("  %-50s %-40s %s (%s)\n", principalName, roleName, principalId, principalType)
 			}
 		}
 	}
@@ -91,7 +96,7 @@ func PrintSp(x map[string]interface{}, z Bundle) {
 	url = ConstMgUrl + "/v1.0/servicePrincipals/" + id + "/oauth2PermissionGrants"
 	r, statusCode, _ = ApiGet(url, z.MgHeaders, nil)
 	if statusCode == 200 && r != nil && r["value"] != nil && len(r["value"].([]interface{})) > 0 {
-		fmt.Printf(utl.Cya("api_permissionsi") + co + "\n")
+		fmt.Printf(utl.Cya("api_permissions") + co + "\n")
 		apiPerms := r["value"].([]interface{}) // Assert as JSON array
 
 		// Print OAuth 2.0 scopes for each API

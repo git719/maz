@@ -165,7 +165,7 @@ func GetAzUserByUuid(uuid string, headers map[string]string) map[string]interfac
 	selection += "onPremisesDomainName,onPremisesExtensionAttributes,onPremisesImmutableId,"
 	selection += "onPremisesLastSyncDateTime,onPremisesProvisioningErrors,onPremisesSamAccountName,"
 	selection += "onPremisesSecurityIdentifier,onPremisesSyncEnabled,onPremisesUserPrincipalName,"
-	selection += "otherMails,securityIdentifier,surname,userPrincipalName"
+	selection += "otherMails,securityIdentifier,surname,userPrincipalName,tags"
 	url := baseUrl + "/" + uuid + selection
 	r, _, _ := ApiGet(url, headers, nil)
 	//ApiErrorCheck("GET", url, utl.Trace(), r) // Commented out to do this quietly. Use for DEBUGging

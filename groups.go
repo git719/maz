@@ -186,7 +186,7 @@ func GetAzGroupByUuid(uuid string, headers map[string]string) map[string]interfa
 	selection := "?$select=id,createdDateTime,description,displayName,groupTypes,id,isAssignableToRole,"
 	selection += "mail,mailNickname,onPremisesLastSyncDateTime,onPremisesProvisioningErrors,"
 	selection += "onPremisesSecurityIdentifier,onPremisesSyncEnabled,renewedDateTime,securityEnabled,"
-	selection += "securityIdentifier,memberOf,members,owners"
+	selection += "securityIdentifier,memberOf,members,owners,tags"
 	url := baseUrl + "/" + uuid + selection
 	r, _, _ := ApiGet(url, headers, nil)
 	//ApiErrorCheck("GET", url, utl.Trace(), r) // Commented out to do this quietly. Use for DEBUGging

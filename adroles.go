@@ -140,7 +140,7 @@ func GetAzAdRoleByUuid(uuid string, headers map[string]string) map[string]interf
 	// Note that role definitions are under a different area, until they are activated
 	baseUrl := ConstMgUrl + "/v1.0/roleManagement/directory/roleDefinitions"
 	selection := "?$select=id,displayName,description,isBuiltIn,isEnabled,resourceScopes,"
-	selection += "templateId,version,rolePermissions,inheritsPermissionsFrom"
+	selection += "templateId,version,rolePermissions,inheritsPermissionsFrom,tags"
 	url := baseUrl + "/" + uuid + selection
 	r, _, _ := ApiGet(url, headers, nil)
 	//ApiErrorCheck("GET", url, utl.Trace(), r) // Commented out to do this quietly. Use for DEBUGging
