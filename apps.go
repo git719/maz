@@ -221,7 +221,7 @@ func GetAzApps(cacheFile string, headers map[string]string, verbose bool) (list 
 	headers["Prefer"] = "return=minimal" // This tells API to focus only on specific 'select' attributes
 
 	// But first, double-check the base set again to avoid running a delta query on an empty set
-	listIsEmpty, list := CheckLocalCache(cacheFile, 86400) // cachePeriod = 1 day in seconds
+	listIsEmpty, list := CheckLocalCache(cacheFile, 604800) // cachePeriod = 1 week in seconds
 	if utl.FileUsable(deltaLinkFile) && deltaAge < (3660*24*27) && listIsEmpty == false {
 		// Note that deltaLink file age has to be within 30 days (we do 27)
 		tmpVal, _ := utl.LoadFileJson(deltaLinkFile)

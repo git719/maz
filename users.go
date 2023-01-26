@@ -93,7 +93,7 @@ func GetUsers(filter string, force bool, z Bundle) (list []interface{}) {
 	// Uses local cache if it's less than cachePeriod old. The 'force' option forces calling Azure query.
 	list = nil
 	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_users.json")
-	cacheNoGood, list := CheckLocalCache(cacheFile, 86400) // cachePeriod = 1 day in seconds
+	cacheNoGood, list := CheckLocalCache(cacheFile, 604800) // cachePeriod = 1 week in seconds
 	if cacheNoGood || force {
 		list = GetAzUsers(cacheFile, z.MgHeaders, true) // Get all from Azure and show progress (verbose = true)
 	}
