@@ -261,10 +261,6 @@ func GetAzObjects(url string, headers map[string]string, verbose bool) (deltaSet
 		ApiErrorCheck("GET", url, utl.Trace(), r)
 		k++
 	}
-	if verbose {
-		fmt.Printf("\n")
-	}
-	return nil, nil
 }
 
 func RemoveCacheFile(t string, z Bundle) {
