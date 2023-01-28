@@ -230,7 +230,7 @@ func GetObjects(t, filter string, force bool, z Bundle) (list []interface{}) {
 	return nil
 }
 
-func GetAzObjects(url string, headers map[string]string, verbose bool) (deltaSet []interface{}, deltaLinkMap map[string]string) {
+func GetAzObjects(url string, headers map[string]string, verbose bool) (deltaSet []interface{}, deltaLinkMap map[string]interface{}) {
 	// Generic Azure object deltaSet retriever function. Returns the set of changed or new items,
 	// and a deltaLink for running the next future Azure query. Implements the pattern described at
 	// https://docs.microsoft.com/en-us/graph/delta-query-overview
@@ -251,7 +251,7 @@ func GetAzObjects(url string, headers map[string]string, verbose bool) (deltaSet
 			fmt.Printf("%s(API calls = %d) %d objects in set %d", rUp, k, len(thisBatch), k)
 		}
 		if r["@odata.deltaLink"] != nil {
-			deltaLinkMap := map[string]string{"@odata.deltaLink": utl.Str(r["@odata.deltaLink"])}
+			deltaLinkMap := map[string]interface{}{"@odata.deltaLink": utl.Str(r["@odata.deltaLink"])}
 			if verbose {
 				fmt.Printf("\n")
 			}

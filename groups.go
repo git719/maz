@@ -149,7 +149,7 @@ func GetAzGroups(cacheFile string, headers map[string]string, verbose bool) (lis
 	// Get all Azure AD groups in current tenant AND save them to local cache file. Show progress if verbose = true.
 
 	// We will first try doing a delta query. See https://docs.microsoft.com/en-us/graph/delta-query-overview
-	var deltaLinkMap map[string]string = nil
+	var deltaLinkMap map[string]interface{} = nil
 	deltaLinkFile := cacheFile[:len(cacheFile)-len(filepath.Ext(cacheFile))] + "_deltaLink.json"
 	deltaAge := int64(time.Now().Unix()) - int64(utl.FileModTime(deltaLinkFile))
 
@@ -164,8 +164,8 @@ func GetAzGroups(cacheFile string, headers map[string]string, verbose bool) (lis
 	if utl.FileUsable(deltaLinkFile) && deltaAge < (3660*24*27) && listIsEmpty == false {
 		// Note that deltaLink file age has to be within 30 days (we do 27)
 		tmpVal, _ := utl.LoadFileJson(deltaLinkFile)
-		deltaLinkMap = tmpVal.(map[string]string)
-		url = utl.Str(deltaLinkMap["@odata.deltaLink"] + "?$deltaToken=latest")
+		deltaLinkMap = tmpVal.(map[string]interface{})
+		url = utl.Str(utl.Str(deltaLinkMap["@odata.deltaLink"]))
 		// Base URL is now the cached Delta Link
 	}
 
