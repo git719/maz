@@ -27,12 +27,13 @@ func ApiGetDebug(url string, headers, params strMapT) (result jsonT, rsc int, er
 	return ApiCall("GET", url, nil, headers, params, true) // true = verbose, for debugging
 }
 
-func ApiDelete(url string, headers, params strMapT) (result jsonT, rsc int, err error) {
-	return ApiCall("DELETE", url, nil, headers, params, false) // false = quiet, for normal ops
+func ApiPost(url string, payload jsonT, headers, params strMapT) (result jsonT, rsc int, err error) {
+	return ApiCall("POST", url, payload, headers, params, false) // false = quiet, for normal ops
 }
 
-func ApiDeleteDebug(url string, headers, params strMapT) (result jsonT, rsc int, err error) {
-	return ApiCall("DELETE", url, nil, headers, params, true) // true = verbose, for debugging
+// ApiPostDebug(url, payload, z.MgHeaders, nil)
+func ApiPostDebug(url string, payload jsonT, headers, params strMapT) (result jsonT, rsc int, err error) {
+	return ApiCall("POST", url, payload, headers, params, true) // true = verbose, for debugging
 }
 
 func ApiPut(url string, payload jsonT, headers, params strMapT) (result jsonT, rsc int, err error) {
@@ -41,6 +42,14 @@ func ApiPut(url string, payload jsonT, headers, params strMapT) (result jsonT, r
 
 func ApiPutDebug(url string, payload jsonT, headers, params strMapT) (result jsonT, rsc int, err error) {
 	return ApiCall("PUT", url, payload, headers, params, true) // true = verbose, for debugging
+}
+
+func ApiDelete(url string, headers, params strMapT) (result jsonT, rsc int, err error) {
+	return ApiCall("DELETE", url, nil, headers, params, false) // false = quiet, for normal ops
+}
+
+func ApiDeleteDebug(url string, headers, params strMapT) (result jsonT, rsc int, err error) {
+	return ApiCall("DELETE", url, nil, headers, params, true) // true = verbose, for debugging
 }
 
 func ApiCall(method, url string, payload jsonT, headers, params strMapT, verbose bool) (result jsonT, rsc int, err error) {

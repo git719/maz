@@ -136,6 +136,99 @@ func PrintApp(x map[string]interface{}, z Bundle) {
 	}
 }
 
+func AddAppSecret(uuid, expiry, displayName string, z Bundle) {
+	if !utl.ValidUuid(uuid) {
+		utl.Die("Invalid App UUID.\n")
+	}
+	if !utl.ValidDate(expiry, "2006-01-02") {
+		utl.Die("Expiry '" + expiry + "' is not in 'YYYY-MM-DD' format.\n")
+	}
+	endDateTime, err := utl.ConvertDateFormat(expiry, "2006-01-02", time.RFC3339Nano)
+	if err != nil {
+		utl.Die("Error converting Expiry to RFC3339Nano/ISO8601 format.\n")
+	}
+
+	payload := map[string]interface{}{
+		"passwordCredential": map[string]string{
+			"displayName": displayName,
+			"endDateTime": endDateTime,
+		},
+	}
+	url := ConstMgUrl + "/v1.0/applications/" + uuid + "/addPassword"
+	r, statusCode, _ := ApiPost(url, payload, z.MgHeaders, nil)
+	if statusCode == 200 {
+		co := utl.Red(":")
+		fmt.Printf("%s %s\n", utl.Cya("app_object_id")+co, uuid)
+		fmt.Printf("%s %s\n", utl.Cya("new_secret_id")+co, utl.Str(r["keyId"]))
+		fmt.Printf("%s %s\n", utl.Cya("new_secret_text")+co, utl.Str(r["secretText"]))
+	} else {
+		e := r["error"].(map[string]interface{})
+		utl.Die(e["message"].(string) + "\n")
+	}
+}
+
+func RemoveAppSecret(uuid, keyId string, z Bundle) {
+	if !utl.ValidUuid(uuid) {
+		utl.Die("App UUID is not a valid UUID.\n")
+	}
+	if !utl.ValidUuid(keyId) {
+		utl.Die("Secret ID is not a valid UUID.\n")
+	}
+
+	// Get app, display details and secret, and prompt for delete confirmation
+	x := GetAzAppByUuid(uuid, z.MgHeaders)
+	if x == nil || x["id"] == nil {
+		utl.Die("There's no App with this UUID.\n")
+	}
+	pwdCreds := x["passwordCredentials"].([]interface{})
+	if pwdCreds == nil || len(pwdCreds) < 1 {
+		utl.Die("App object has no secrets.\n")
+	}
+	var a map[string]interface{} = nil // Target keyId, Secret ID to be deleted
+	for _, i := range pwdCreds {
+		targetKeyId := i.(map[string]interface{})
+		if utl.Str(targetKeyId["keyId"]) == keyId {
+			a = targetKeyId
+			break
+		}
+	}
+	if a == nil {
+		utl.Die("App object does not have this Secret ID.\n")
+	}
+	cId := utl.Str(a["keyId"])
+	cName := utl.Str(a["displayName"])
+	cHint := utl.Str(a["hint"]) + "********"
+	cStart, err := utl.ConvertDateFormat(utl.Str(a["startDateTime"]), time.RFC3339Nano, "2006-01-02")
+	if err != nil {
+		utl.Die(utl.Trace() + err.Error() + "\n")
+	}
+	cExpiry, err := utl.ConvertDateFormat(utl.Str(a["endDateTime"]), time.RFC3339Nano, "2006-01-02")
+	if err != nil {
+		utl.Die(utl.Trace() + err.Error() + "\n")
+	}
+
+	// Prompt
+	co := utl.Red(":")
+	fmt.Printf("%s %s\n", utl.Cya("id")+co, utl.Str(x["id"]))
+	fmt.Printf("%s %s\n", utl.Cya("appId")+co, utl.Str(x["appId"]))
+	fmt.Printf("%s %s\n", utl.Cya("displayName")+co, utl.Str(x["displayName"]))
+	fmt.Printf("%s\n", utl.Cya("secret_to_be_deleted")+co)
+	fmt.Printf("  %-36s  %-30s  %-16s  %-16s  %s\n", utl.Cya2(cId), cName, cHint, cStart, cExpiry)
+	if utl.PromptMsg("DELETE above? y/n ") == 'y' {
+		payload := map[string]interface{}{"keyId": keyId}
+		url := ConstMgUrl + "/v1.0/applications/" + uuid + "/removePassword"
+		r, statusCode, _ := ApiPost(url, payload, z.MgHeaders, nil)
+		if statusCode == 204 {
+			utl.Die("Successfully deleted secret.\n")
+		} else {
+			e := r["error"].(map[string]interface{})
+			utl.Die(e["message"].(string) + "\n")
+		}
+	} else {
+		utl.Die("Aborted.\n")
+	}
+}
+
 func AppsCountLocal(z Bundle) int64 {
 	// Return number of entries in local cache file
 	var cachedList []interface{} = nil

@@ -157,7 +157,7 @@ func PrintSecretList(pwdCreds []interface{}) {
 			} else if daysDiff < 7 {
 				cExpiry = utl.Yel(cExpiry) // If expiring within a week print in yellow
 			}
-			fmt.Printf("  %-38s  %-24s  %-40s  %-10s  %s\n", cId, cName, cHint, cStart, cExpiry)
+			fmt.Printf("  %-36s  %-30s  %-16s  %-16s  %s\n", cId, cName, cHint, cStart, cExpiry)
 		}
 	}
 }
