@@ -52,7 +52,7 @@ func PrintApp(x map[string]interface{}, z Bundle) {
 	}
 
 	// Print owners
-	url = ConstMgUrl + "/beta/applications/" + id + "/owners"
+	url = ConstMgUrl + "/v1.0/applications/" + id + "/owners"
 	r, statusCode, _ = ApiGet(url, z.MgHeaders, nil)
 	if statusCode == 200 && r != nil && r["value"] != nil {
 		PrintOwners(r["value"].([]interface{}))
@@ -77,7 +77,7 @@ func PrintApp(x map[string]interface{}, z Bundle) {
 			resAppId := utl.Str(api["resourceAppId"])
 
 			// Get this API's SP object with all relevant attributes
-			url := ConstMgUrl + "/beta/servicePrincipals?filter=appId+eq+'" + resAppId + "'"
+			url := ConstMgUrl + "/v1.0/servicePrincipals?filter=appId+eq+'" + resAppId + "'"
 			r, _, _ := ApiGet(url, z.MgHeaders, nil)
 			ApiErrorCheck("GET", url, utl.Trace(), r) // TODO: Get rid of this by using StatuCode checks, etc
 			// Result is a list because this could be a multi-tenant app, having multiple SPs

@@ -28,7 +28,7 @@ func PrintGroup(x map[string]interface{}, z Bundle) {
 	}
 
 	// Print owners of this group
-	url := ConstMgUrl + "/beta/groups/" + id + "/owners"
+	url := ConstMgUrl + "/v1.0/groups/" + id + "/owners"
 	r, statusCode, _ := ApiGet(url, z.MgHeaders, nil)
 	if statusCode == 200 && r != nil && r["value"] != nil {
 		owners := r["value"].([]interface{}) // Assert as JSON array type
@@ -50,7 +50,7 @@ func PrintGroup(x map[string]interface{}, z Bundle) {
 	}
 
 	// Print members of this group
-	url = ConstMgUrl + "/beta/groups/" + id + "/members"
+	url = ConstMgUrl + "/v1.0/groups/" + id + "/members"
 	r, statusCode, _ = ApiGet(url, z.MgHeaders, nil)
 	if statusCode == 200 && r != nil && r["value"] != nil {
 		members := r["value"].([]interface{})

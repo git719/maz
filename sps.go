@@ -39,7 +39,7 @@ func PrintSp(x map[string]interface{}, z Bundle) {
 	}
 
 	// Print owners
-	url := ConstMgUrl + "/beta/servicePrincipals/" + id + "/owners"
+	url := ConstMgUrl + "/v1.0/servicePrincipals/" + id + "/owners"
 	r, statusCode, _ := ApiGet(url, z.MgHeaders, nil)
 	if statusCode == 200 && r != nil && r["value"] != nil {
 		PrintOwners(r["value"].([]interface{}))
@@ -64,7 +64,7 @@ func PrintSp(x map[string]interface{}, z Bundle) {
 	}
 
 	// Print app role assignment members and the specific role assigned
-	url = ConstMgUrl + "/beta/servicePrincipals/" + id + "/appRoleAssignedTo"
+	url = ConstMgUrl + "/v1.0/servicePrincipals/" + id + "/appRoleAssignedTo"
 	r, statusCode, _ = ApiGet(url, z.MgHeaders, nil)
 	if statusCode == 200 && r != nil && r["value"] != nil && len(r["value"].([]interface{})) > 0 {
 		appRoleAssignments := r["value"].([]interface{}) // Assert as JSON array
