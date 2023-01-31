@@ -106,10 +106,10 @@ func PrintSp(x map[string]interface{}, z Bundle) {
 			id := utl.Str(api["resourceId"]) // Get API's SP to get its displayName
 			url2 := ConstMgUrl + "/v1.0/servicePrincipals/" + id
 			r2, _, _ := ApiGet(url2, z.MgHeaders, nil)
+			ApiErrorCheck("GET", url2, utl.Trace(), r2)
 			if r2["appDisplayName"] != nil {
 				apiName = utl.Str(r2["appDisplayName"])
 			}
-			ApiErrorCheck("GET", url2, utl.Trace(), r2)
 
 			// Print each delegated claim for this API
 			scope := strings.TrimSpace(utl.Str(api["scope"]))

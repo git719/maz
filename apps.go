@@ -45,7 +45,7 @@ func PrintApp(x map[string]interface{}, z Bundle) {
 			fmt.Println(utl.Cya("federated_ids") + co)
 			for _, i := range fedCreds {
 				a := i.(map[string]interface{})
-				fmt.Printf("  %-38s  %-24s  %-40s  %s\n", utl.Str(a["id"]), utl.Str(a["name"]),
+				fmt.Printf("  %-36s  %-30s  %-40s  %s\n", utl.Str(a["id"]), utl.Str(a["name"]),
 					utl.Str(a["subject"]), utl.Str(a["issuer"]))
 			}
 		}
@@ -74,42 +74,40 @@ func PrintApp(x map[string]interface{}, z Bundle) {
 				fmt.Printf("  %-50s %s\n", "Unknown API", "Missing resourceAppId")
 				continue // Skip this API, move on to next one
 			}
-
-			// Let's drill down into the permissions for this API
 			resAppId := utl.Str(api["resourceAppId"])
 
 			// Get this API's SP object with all relevant attributes
 			url := ConstMgUrl + "/beta/servicePrincipals?filter=appId+eq+'" + resAppId + "'"
 			r, _, _ := ApiGet(url, z.MgHeaders, nil)
-			// Unclear why result is a list instead of a single entry
+			ApiErrorCheck("GET", url, utl.Trace(), r) // TODO: Get rid of this by using StatuCode checks, etc
+			// Result is a list because this could be a multi-tenant app, having multiple SPs
 			if r["value"] == nil {
 				fmt.Printf("  %-50s %s\n", resAppId, "Unable to get Resource App object. Skipping this API.")
 				continue
 			}
-			ApiErrorCheck("GET", url, utl.Trace(), r)
+			// TODO: Handle multiple SPs
 
 			SPs := r["value"].([]interface{})
 			if len(SPs) > 1 {
 				utl.Die("  %-50s %s\n", resAppId, "Error. Multiple SPs for this AppId. Aborting.")
 			}
-
-			sp := SPs[0].(map[string]interface{}) // The only expected entry
+			sp := SPs[0].(map[string]interface{}) // Currently only handling the expected single-tenant entry
 
 			// 1. Put all API role id:name pairs into roleMap list
 			roleMap := make(map[string]string)
-			if sp["appRoles"] != nil {
+			if sp["appRoles"] != nil { // These are for Application types
 				for _, i := range sp["appRoles"].([]interface{}) { // Iterate through all roles
-					// These are for Application types
 					role := i.(map[string]interface{})
+					//utl.PrintJson(role) // DEBUG
 					if role["id"] != nil && role["value"] != nil {
 						roleMap[utl.Str(role["id"])] = utl.Str(role["value"]) // Add entry to map
 					}
 				}
 			}
-			if sp["publishedPermissionScopes"] != nil {
+			if sp["publishedPermissionScopes"] != nil { // These are for Delegated types
 				for _, i := range sp["publishedPermissionScopes"].([]interface{}) {
-					// These are for Delegated types
 					role := i.(map[string]interface{})
+					//utl.PrintJson(role) // DEBUG
 					if role["id"] != nil && role["value"] != nil {
 						roleMap[utl.Str(role["id"])] = utl.Str(role["value"])
 					}
@@ -127,7 +125,13 @@ func PrintApp(x map[string]interface{}, z Bundle) {
 				for _, i := range Perms {             // Iterate through perms
 					perm := i.(map[string]interface{})
 					pid := utl.Str(perm["id"]) // JSON string
-					fmt.Printf("  %-50s %s\n", apiName, roleMap[pid])
+					var pType string = "?"
+					if utl.Str(perm["type"]) == "Role" {
+						pType = "Application"
+					} else {
+						pType = "Delegated"
+					}
+					fmt.Printf("  %-50s %-40s %s\n", apiName, roleMap[pid], pType)
 				}
 			} else {
 				fmt.Printf("  %-50s %s\n", resAppId, "Error getting list of appRoles.")

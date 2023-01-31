@@ -197,7 +197,7 @@ func PrintCertificateList(certificates []interface{}) {
 			// 	"customKeyIdentifier": "09228573F93570D8113D90DA69D8DF6E2E396874",
 			// 	"key": "<RSA_KEY>",
 			// 	"usage": "Verify"
-			fmt.Printf("  %-38s  %-24s  %-40s  %-10s  %s\n", cId, cName, cType, cStart, cExpiry)
+			fmt.Printf("  %-36s  %-30s  %-40s  %-10s  %s\n", cId, cName, cType, cStart, cExpiry)
 		}
 		// https://learn.microsoft.com/en-us/graph/api/application-addkey
 	}
