@@ -13,6 +13,7 @@ func PrintAdRole(x map[string]interface{}, z Bundle) {
 	if x == nil {
 		return
 	}
+
 	// Print the most important attributes first
 	co := utl.Red(":") // Colorize ":" text to Red
 	list := []string{"id", "displayName", "description"}
@@ -23,7 +24,7 @@ func PrintAdRole(x map[string]interface{}, z Bundle) {
 		}
 	}
 
-	// Commenting this out for now. Too chatty. User can just run -adj JSON to get the full list of perms.
+	// Commenting this out for now. Too chatty. User can just run -adj to see full list of perms.
 	// // List permissions
 	// if x["rolePermissions"] != nil {
 	// 	rolePerms := x["rolePermissions"].([]interface{})
@@ -39,10 +40,37 @@ func PrintAdRole(x map[string]interface{}, z Bundle) {
 	// 	}
 	// }
 
+	// Print assignments
+	// https://learn.microsoft.com/en-us/azure/active-directory/roles/view-assignments
+	params := map[string]string{
+		"$filter": "roleDefinitionId eq '" + utl.Str(x["templateId"]) + "'",
+		"$expand": "principal",
+	}
+	url := ConstMgUrl + "/v1.0/roleManagement/directory/roleAssignments"
+	r, statusCode, _ := ApiGet(url, z.MgHeaders, params)
+	if statusCode == 200 && r != nil && r["value"] != nil {
+		assignments := r["value"].([]interface{})
+		if len(assignments) > 0 {
+			fmt.Printf(utl.Cya("assignments") + co + "\n")
+			//utl.PrintJson(assignments)
+			for _, i := range assignments {
+				m := i.(map[string]interface{})
+				scope := utl.Str(m["directoryScopeId"])
+				// TODO: Find out how to get/print the scope displayName?
+				mPrinc := m["principal"].(map[string]interface{})
+				pName := utl.Str(mPrinc["displayName"])
+				pType := utl.LastElem(utl.Str(mPrinc["@odata.type"]), ".")
+				fmt.Printf("  %-50s  %-10s  %s\n", pName, pType, scope)
+			}
+		}
+	}
+
 	// Print members of this role
 	// See https://github.com/microsoftgraph/microsoft-graph-docs/blob/main/api-reference/v1.0/api/directoryrole-list-members.md
-	url := ConstMgUrl + "/v1.0/directoryRoles(roleTemplateId='" + utl.Str(x["templateId"]) + "')/members"
-	r, statusCode, _ := ApiGet(url, z.MgHeaders, nil)
+	// TODO: Fix 404 below for custom groups
+	//   Resource '<custom role UUID>' does not exist or one of its queried reference-property objects are not present.
+	url = ConstMgUrl + "/v1.0/directoryRoles(roleTemplateId='" + utl.Str(x["templateId"]) + "')/members"
+	r, statusCode, _ = ApiGet(url, z.MgHeaders, nil)
 	if statusCode == 200 && r != nil && r["value"] != nil {
 		members := r["value"].([]interface{})
 		if len(members) > 0 {
@@ -52,8 +80,6 @@ func PrintAdRole(x map[string]interface{}, z Bundle) {
 				fmt.Printf("  %s  %-40s   %s\n", utl.Str(m["id"]), utl.Str(m["userPrincipalName"]), utl.Str(m["displayName"]))
 			}
 		}
-	} else {
-		fmt.Printf(utl.Cya("members")+co+"\n  No members in this role (templateId = %s). Maybe not yet activated?\n", utl.Str(x["templateId"]))
 	}
 }
 
