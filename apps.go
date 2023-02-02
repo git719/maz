@@ -77,8 +77,9 @@ func PrintApp(x map[string]interface{}, z Bundle) {
 			resAppId := utl.Str(api["resourceAppId"])
 
 			// Get this API's SP object with all relevant attributes
-			url := ConstMgUrl + "/v1.0/servicePrincipals?filter=appId+eq+'" + resAppId + "'"
-			r, _, _ := ApiGet(url, z.MgHeaders, nil)
+			params := map[string]string{"$filter": "appId eq '" + resAppId + "'"}
+			url := ConstMgUrl + "/v1.0/servicePrincipals"
+			r, _, _ := ApiGet(url, z.MgHeaders, params)
 			ApiErrorCheck("GET", url, utl.Trace(), r) // TODO: Get rid of this by using StatuCode checks, etc
 			// Result is a list because this could be a multi-tenant app, having multiple SPs
 			if r["value"] == nil {
