@@ -158,6 +158,7 @@ func GetAzGroups(cacheFile string, headers map[string]string, verbose bool) (lis
 	selection := "?$select=displayName,mailNickname,description,mailEnabled,isAssignableToRole"
 	url := baseUrl + "/delta" + selection + "&$top=999"
 	headers["Prefer"] = "return=minimal" // This tells API to focus only on specific 'select' attributes
+	headers["deltaToken"] = "latest"
 
 	// But first, double-check the base set again to avoid running a delta query on an empty set
 	listIsEmpty, list := CheckLocalCache(cacheFile, 86400) // cachePeriod = 1 day in seconds

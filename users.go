@@ -135,6 +135,7 @@ func GetAzUsers(cacheFile string, headers map[string]string, verbose bool) (list
 	selection += "onPremisesSamAccountName,onPremisesUserPrincipalName,userPrincipalName"
 	url := baseUrl + "/delta" + selection + "&$top=999"
 	headers["Prefer"] = "return=minimal" // Tells API to focus only on $select attributes
+	headers["deltaToken"] = "latest"
 
 	// But first, double-check the base set again to avoid running a delta query on an empty set
 	listIsEmpty, list := CheckLocalCache(cacheFile, 86400) // cachePeriod = 1 day in seconds
