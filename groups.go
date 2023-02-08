@@ -50,7 +50,8 @@ func PrintGroup(x map[string]interface{}, z Bundle) {
 	}
 
 	// Print members of this group
-	url = ConstMgUrl + "/v1.0/groups/" + id + "/members"
+	//url = ConstMgUrl + "/v1.0/groups/" + id + "/members"  // Get nothing with this, so evidently still in beta
+	url = ConstMgUrl + "/beta/groups/" + id + "/members" // beta works
 	r, statusCode, _ = ApiGet(url, z.MgHeaders, nil)
 	if statusCode == 200 && r != nil && r["value"] != nil {
 		members := r["value"].([]interface{})
