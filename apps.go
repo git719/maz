@@ -37,7 +37,8 @@ func PrintApp(x map[string]interface{}, z Bundle) {
 	}
 
 	// Print federated IDs
-	url := ConstMgUrl + "/v1.0/applications/" + id + "/federatedIdentityCredentials"
+	//url := ConstMgUrl + "/v1.0/applications/" + id + "/federatedIdentityCredentials"
+	url := ConstMgUrl + "/beta/applications/" + id + "/federatedIdentityCredentials"
 	r, statusCode, _ := ApiGet(url, z.MgHeaders, nil)
 	if statusCode == 200 && r != nil && r["value"] != nil {
 		fedCreds := r["value"].([]interface{})
@@ -52,7 +53,8 @@ func PrintApp(x map[string]interface{}, z Bundle) {
 	}
 
 	// Print owners
-	url = ConstMgUrl + "/v1.0/applications/" + id + "/owners"
+	//url = ConstMgUrl + "/v1.0/applications/" + id + "/owners"
+	url = ConstMgUrl + "/beta/applications/" + id + "/owners"
 	r, statusCode, _ = ApiGet(url, z.MgHeaders, nil)
 	if statusCode == 200 && r != nil && r["value"] != nil {
 		PrintOwners(r["value"].([]interface{}))
@@ -78,7 +80,8 @@ func PrintApp(x map[string]interface{}, z Bundle) {
 
 			// Get this API's SP object with all relevant attributes
 			params := map[string]string{"$filter": "appId eq '" + resAppId + "'"}
-			url := ConstMgUrl + "/v1.0/servicePrincipals"
+			//url := ConstMgUrl + "/v1.0/servicePrincipals"
+			url := ConstMgUrl + "/beta/servicePrincipals"
 			r, _, _ := ApiGet(url, z.MgHeaders, params)
 			ApiErrorCheck("GET", url, utl.Trace(), r) // TODO: Get rid of this by using StatuCode checks, etc
 			// Result is a list because this could be a multi-tenant app, having multiple SPs
@@ -251,7 +254,8 @@ func AppsCountLocal(z Bundle) int64 {
 func AppsCountAzure(z Bundle) int64 {
 	// Return number of entries in Azure tenant
 	z.MgHeaders["ConsistencyLevel"] = "eventual"
-	url := ConstMgUrl + "/v1.0/applications/$count"
+	//url := ConstMgUrl + "/v1.0/applications/$count"
+	url := ConstMgUrl + "/beta/applications/$count"
 	r, _, _ := ApiGet(url, z.MgHeaders, nil)
 	ApiErrorCheck("GET", url, utl.Trace(), r)
 	if r["value"] != nil {
@@ -312,7 +316,8 @@ func GetAzApps(cacheFile string, headers map[string]string, verbose bool) (list 
 	deltaLinkFile := cacheFile[:len(cacheFile)-len(filepath.Ext(cacheFile))] + "_deltaLink.json"
 	deltaAge := int64(time.Now().Unix()) - int64(utl.FileModTime(deltaLinkFile))
 
-	baseUrl := ConstMgUrl + "/v1.0/applications"
+	//baseUrl := ConstMgUrl + "/v1.0/applications"
+	baseUrl := ConstMgUrl + "/beta/applications"
 	// Get delta updates only if/when below attributes in $select are modified
 	selection := "?$select=displayName,appId,requiredResourceAccess"
 	url := baseUrl + "/delta" + selection + "&$top=999"
@@ -342,7 +347,8 @@ func GetAzApps(cacheFile string, headers map[string]string, verbose bool) (list 
 
 func GetAzAppByUuid(uuid string, headers map[string]string) map[string]interface{} {
 	// Get Azure AD application by its Object UUID or by its appId, with extended attributes
-	baseUrl := ConstMgUrl + "/v1.0/applications"
+	//baseUrl := ConstMgUrl + "/v1.0/applications"
+	baseUrl := ConstMgUrl + "/beta/applications"
 	selection := "?$select=id,addIns,api,appId,applicationTemplateId,appRoles,certification,createdDateTime,"
 	selection += "deletedDateTime,disabledByMicrosoftStatus,displayName,groupMembershipClaims,id,identifierUris,"
 	selection += "info,isDeviceOnlyAuthSupported,isFallbackPublicClient,keyCredentials,logo,notes,"

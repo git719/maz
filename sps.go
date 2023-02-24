@@ -39,7 +39,8 @@ func PrintSp(x map[string]interface{}, z Bundle) {
 	}
 
 	// Print owners
-	url := ConstMgUrl + "/v1.0/servicePrincipals/" + id + "/owners"
+	//url := ConstMgUrl + "/v1.0/servicePrincipals/" + id + "/owners"
+	url := ConstMgUrl + "/beta/servicePrincipals/" + id + "/owners"
 	r, statusCode, _ := ApiGet(url, z.MgHeaders, nil)
 	if statusCode == 200 && r != nil && r["value"] != nil {
 		PrintOwners(r["value"].([]interface{}))
@@ -64,7 +65,8 @@ func PrintSp(x map[string]interface{}, z Bundle) {
 	}
 
 	// Print app role assignment members and the specific role assigned
-	url = ConstMgUrl + "/v1.0/servicePrincipals/" + id + "/appRoleAssignedTo"
+	//url = ConstMgUrl + "/v1.0/servicePrincipals/" + id + "/appRoleAssignedTo"
+	url = ConstMgUrl + "/beta/servicePrincipals/" + id + "/appRoleAssignedTo"
 	r, statusCode, _ = ApiGet(url, z.MgHeaders, nil)
 	if statusCode == 200 && r != nil && r["value"] != nil && len(r["value"].([]interface{})) > 0 {
 		appRoleAssignments := r["value"].([]interface{}) // Assert as JSON array
@@ -85,7 +87,8 @@ func PrintSp(x map[string]interface{}, z Bundle) {
 	}
 
 	// Print all groups and roles it is a member of
-	url = ConstMgUrl + "/v1.0/servicePrincipals/" + id + "/transitiveMemberOf"
+	//url = ConstMgUrl + "/v1.0/servicePrincipals/" + id + "/transitiveMemberOf"
+	url = ConstMgUrl + "/beta/servicePrincipals/" + id + "/transitiveMemberOf"
 	r, statusCode, _ = ApiGet(url, z.MgHeaders, nil)
 	if statusCode == 200 && r != nil && r["value"] != nil {
 		memberOf := r["value"].([]interface{})
@@ -104,7 +107,8 @@ func PrintSp(x map[string]interface{}, z Bundle) {
 			api := i.(map[string]interface{}) // Assert as JSON object
 			apiName := "Unknown"
 			id := utl.Str(api["resourceId"]) // Get API's SP to get its displayName
-			url2 := ConstMgUrl + "/v1.0/servicePrincipals/" + id
+			//url2 := ConstMgUrl + "/v1.0/servicePrincipals/" + id
+			url2 := ConstMgUrl + "/beta/servicePrincipals/" + id
 			r2, _, _ := ApiGet(url2, z.MgHeaders, nil)
 			ApiErrorCheck("GET", url2, utl.Trace(), r2)
 			if r2["appDisplayName"] != nil {
@@ -243,7 +247,8 @@ func SpsCountAzure(z Bundle) (native, microsoft int64) {
 	// First, get total number of SPs in tenant
 	var all int64 = 0
 	z.MgHeaders["ConsistencyLevel"] = "eventual"
-	baseUrl := ConstMgUrl + "/v1.0/servicePrincipals"
+	//baseUrl := ConstMgUrl + "/v1.0/servicePrincipals"
+	baseUrl := ConstMgUrl + "/beta/servicePrincipals"
 	url := baseUrl + "/$count"
 	r, _, _ := ApiGet(url, z.MgHeaders, nil)
 	ApiErrorCheck("GET", url, utl.Trace(), r)
@@ -320,7 +325,8 @@ func GetAzSps(cacheFile string, headers map[string]string, verbose bool) (list [
 	deltaLinkFile := cacheFile[:len(cacheFile)-len(filepath.Ext(cacheFile))] + "_deltaLink.json"
 	deltaAge := int64(time.Now().Unix()) - int64(utl.FileModTime(deltaLinkFile))
 
-	baseUrl := ConstMgUrl + "/v1.0/servicePrincipals"
+	//baseUrl := ConstMgUrl + "/v1.0/servicePrincipals"
+	baseUrl := ConstMgUrl + "/beta/servicePrincipals"
 	// Get delta updates only if/when below attributes in $select are modified
 	selection := "?$select=displayName,appId,accountEnabled,servicePrincipalType,appOwnerOrganizationId"
 	url := baseUrl + "/delta" + selection + "&$top=999"
@@ -350,7 +356,8 @@ func GetAzSps(cacheFile string, headers map[string]string, verbose bool) (list [
 
 func GetAzSpByUuid(uuid string, headers map[string]string) map[string]interface{} {
 	// Get Azure AD service principal by its Object UUID or by its appId, with extended attributes
-	baseUrl := ConstMgUrl + "/v1.0/servicePrincipals"
+	//baseUrl := ConstMgUrl + "/v1.0/servicePrincipals"
+	baseUrl := ConstMgUrl + "/beta/servicePrincipals"
 	selection := "?$select=id,displayName,appId,accountEnabled,servicePrincipalType,appOwnerOrganizationId,"
 	selection += "appRoleAssignmentRequired,appRoles,disabledByMicrosoftStatus,addIns,alternativeNames,"
 	selection += "appDisplayName,homepage,id,info,logoutUrl,notes,oauth2PermissionScopes,replyUrls,"
