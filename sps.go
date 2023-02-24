@@ -361,7 +361,7 @@ func GetAzSpByUuid(uuid string, headers map[string]string) map[string]interface{
 	selection := "?$select=id,displayName,appId,accountEnabled,servicePrincipalType,appOwnerOrganizationId,"
 	selection += "appRoleAssignmentRequired,appRoles,disabledByMicrosoftStatus,addIns,alternativeNames,"
 	selection += "appDisplayName,homepage,id,info,logoutUrl,notes,oauth2PermissionScopes,replyUrls,"
-	selection += "resourceSpecificApplicationPermissions,servicePrincipalNames,tags"
+	selection += "resourceSpecificApplicationPermissions,servicePrincipalNames,tags,customSecurityAttributes"
 	url := baseUrl + "/" + uuid + selection // First search is for direct Object Id
 	r, _, _ := ApiGet(url, headers, nil)
 	if r != nil && r["error"] != nil {
