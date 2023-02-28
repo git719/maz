@@ -313,7 +313,7 @@ func GetAzRoleAssignmentByObject(x map[string]interface{}, z Bundle) (y map[stri
 	//ApiErrorCheck("GET", url, utl.Trace(), r)
 	if r != nil && r["value"] != nil {
 		results := r["value"].([]interface{})
-		fmt.Println(len(results))
+		//fmt.Println(len(results))
 		for _, i := range results {
 			y = i.(map[string]interface{})
 			yProp := y["properties"].(map[string]interface{})
