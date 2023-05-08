@@ -144,16 +144,30 @@ func PrintApp(x map[string]interface{}, z Bundle) {
 	}
 }
 
-func AddAppSecret(uuid, expiry, displayName string, z Bundle) {
+func AddAppSecret(uuid, displayName, expiry string, z Bundle) {
 	if !utl.ValidUuid(uuid) {
 		utl.Die("Invalid App UUID.\n")
 	}
-	if !utl.ValidDate(expiry, "2006-01-02") {
-		utl.Die("Expiry '" + expiry + "' is not in 'YYYY-MM-DD' format.\n")
-	}
-	endDateTime, err := utl.ConvertDateFormat(expiry, "2006-01-02", time.RFC3339Nano)
-	if err != nil {
-		utl.Die("Error converting Expiry to RFC3339Nano/ISO8601 format.\n")
+	var endDateTime string
+	if utl.ValidDate(expiry, "2006-01-02") {
+		var err error
+		endDateTime, err = utl.ConvertDateFormat(expiry, "2006-01-02", time.RFC3339Nano)
+		if err != nil {
+			utl.Die("Error converting Expiry date format to RFC3339Nano/ISO8601 format.\n")
+		}
+	} else {
+		// If expiry not a valid date, see if it's a valid integer number
+		days, err := utl.StringToInt64(expiry)
+		if err != nil {
+			utl.Die("Error converting Expiry to valid integer number.\n")
+		}
+		maxDays := utl.GetDaysSinceOrTo("9999-12-31") // Maximum supported date
+		if days > maxDays {
+			days = maxDays
+		}
+		expiryTime := utl.GetDateInDays(utl.Int64ToString(days)) // Set expiryTime to 'days' from now
+		expiry = expiryTime.Format("2006-01-02")                 // Convert it to yyyy-mm-dd format
+		endDateTime = expiryTime.Format(time.RFC3339Nano)        // Convert to RFC3339Nano/ISO8601 format
 	}
 
 	payload := map[string]interface{}{
@@ -165,10 +179,11 @@ func AddAppSecret(uuid, expiry, displayName string, z Bundle) {
 	url := ConstMgUrl + "/v1.0/applications/" + uuid + "/addPassword"
 	r, statusCode, _ := ApiPost(url, payload, z.MgHeaders, nil)
 	if statusCode == 200 {
-		co := utl.Red(":")
-		fmt.Printf("%s %s\n", utl.Cya("app_object_id")+co, uuid)
-		fmt.Printf("%s %s\n", utl.Cya("new_secret_id")+co, utl.Str(r["keyId"]))
-		fmt.Printf("%s %s\n", utl.Cya("new_secret_text")+co, utl.Str(r["secretText"]))
+		fmt.Printf("%s: %s\n", utl.Blu("App_Object_Id"), utl.Gre(uuid))
+		fmt.Printf("%s: %s\n", utl.Blu("New_Secret_Id"), utl.Gre(utl.Str(r["keyId"])))
+		fmt.Printf("%s: %s\n", utl.Blu("New_Secret_Name"), utl.Gre(displayName))
+		fmt.Printf("%s: %s\n", utl.Blu("New_Secret_Expiry"), utl.Gre(expiry))
+		fmt.Printf("%s: %s\n", utl.Blu("New_Secret_Text"), utl.Gre(utl.Str(r["secretText"])))
 	} else {
 		e := r["error"].(map[string]interface{})
 		utl.Die(e["message"].(string) + "\n")

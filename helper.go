@@ -240,15 +240,17 @@ func GetAzObjects(url string, headers map[string]string, verbose bool) (deltaSet
 	for {
 		// Infinite for-loop until deltalLink appears (meaning we're done getting current delta set)
 		var thisBatch []interface{} = nil // Assume zero entries in this batch
+		var objCount int = 0
 		if r["value"] != nil {
 			thisBatch = r["value"].([]interface{})
-			if len(thisBatch) > 0 {
+			objCount = len(thisBatch)
+			if objCount > 0 {
 				deltaSet = append(deltaSet, thisBatch...) // Continue growing deltaSet
 			}
 		}
 		if verbose {
 			// Progress count indicator. Using global var rUp to overwrite last line. Defer newline until done
-			fmt.Printf("%s(API calls = %d) %d objects in set %d", rUp, k, len(thisBatch), k)
+			fmt.Printf("%sAPI call %d: %d objects", rUp, k, objCount)
 		}
 		if r["@odata.deltaLink"] != nil {
 			deltaLinkMap := map[string]interface{}{"@odata.deltaLink": utl.Str(r["@odata.deltaLink"])}
