@@ -100,15 +100,14 @@ func ApiCall(method, url string, payload jsonT, headers, params strMapT, verbose
 	req.URL.RawQuery = reqParams.Encode()
 
 	// === MAKE THE CALL ============
-	co := utl.Red(":")
 	if verbose {
-		fmt.Println(utl.Cya("==== REQUEST ================================="))
+		fmt.Println(utl.Blu("==== REQUEST ================================="))
 		fmt.Println(method + " " + url)
 		PrintHeaders(req.Header)
 		PrintParams(reqParams)
 		if payload != nil {
-			fmt.Println(utl.Cya("payload") + co)
-			utl.PrintJson(payload)
+			fmt.Println(utl.Blu("payload") + ":")
+			utl.PrintJsonColor(payload)
 		}
 	}
 	r, err := client.Do(req) // Make the call
@@ -141,15 +140,15 @@ func ApiCall(method, url string, payload jsonT, headers, params strMapT, verbose
 		// If it's null, returning r.StatusCode below will let caller know
 	}
 	if verbose {
-		fmt.Println(utl.Cya("==== RESPONSE ================================"))
-		fmt.Printf("%s %d %s\n", utl.Cya("status")+co, r.StatusCode, http.StatusText(r.StatusCode))
-		fmt.Println(utl.Cya("result") + co)
-		utl.PrintJson(jsonResult)
+		fmt.Println(utl.Blu("==== RESPONSE ================================"))
+		fmt.Printf("%s: %d %s\n", utl.Blu("status"), r.StatusCode, http.StatusText(r.StatusCode))
+		fmt.Println(utl.Blu("result") + ":")
+		utl.PrintJsonColor(jsonResult)
 		resHeaders, err := httputil.DumpResponse(r, false)
 		if err != nil {
 			panic(err.Error())
 		}
-		fmt.Println(utl.Cya("headers") + co)
+		fmt.Println(utl.Blu("headers") + ":")
 		fmt.Println(string(resHeaders))
 	}
 	return jsonResult, r.StatusCode, err
@@ -169,17 +168,16 @@ func PrintHeaders(headers http.Header) {
 	if headers == nil {
 		return
 	}
-	co := utl.Red(":")
-	fmt.Println(utl.Cya("headers") + co)
+	fmt.Println(utl.Blu("headers") + ":")
 	for k, v := range headers {
-		fmt.Printf("  %s\n", utl.Cya(k)+co)
+		fmt.Printf("  %s:\n", utl.Blu(k))
 		count := len(v) // Array of string
 		if count == 1 {
-			fmt.Printf("    - %s\n", string(v[0])) // In YAML-like output, 1st entry gets the dash
+			fmt.Printf("    - %s\n", utl.Gre(string(v[0]))) // In YAML-like output, 1st entry gets the dash
 		}
 		if count > 2 {
 			for _, i := range v[1:] {
-				fmt.Printf("      %s\n", string(i))
+				fmt.Printf("      %s\n", utl.Gre(string(i)))
 			}
 		}
 	}
@@ -190,17 +188,16 @@ func PrintParams(params url.Values) {
 	if params == nil {
 		return
 	}
-	co := utl.Red(":")
-	fmt.Println(utl.Cya("params") + co)
+	fmt.Println(utl.Blu("params") + ":")
 	for k, v := range params {
-		fmt.Printf("  %s\n", utl.Cya(k)+co)
+		fmt.Printf("  %s:\n", utl.Blu(k))
 		count := len(v) // Array of string
 		if count == 1 {
-			fmt.Printf("    - %s\n", string(v[0])) // In YAML-like output, 1st entry gets the dash
+			fmt.Printf("    - %s\n", utl.Gre(string(v[0]))) // In YAML-like output, 1st entry gets the dash
 		}
 		if count > 2 {
 			for _, i := range v[1:] {
-				fmt.Printf("      %s\n", string(i))
+				fmt.Printf("      %s\n", utl.Gre(string(i)))
 			}
 		}
 	}

@@ -13,12 +13,11 @@ func PrintSubscription(x map[string]interface{}) {
 	if x == nil {
 		return
 	}
-	co := utl.Red(":") // Colorize ":" text to Red
 	list := []string{"subscriptionId", "displayName", "state", "tenantId"}
 	for _, i := range list {
 		v := utl.Str(x[i])
 		if v != "" { // Only print non-null attributes
-			fmt.Printf("%s %s\n", utl.Cya(i)+co, v)
+			fmt.Printf("%s: %s\n", utl.Blu(i), utl.Gre(v))
 		}
 	}
 }

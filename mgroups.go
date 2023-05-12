@@ -24,11 +24,10 @@ func PrintMgGroup(x map[string]interface{}) {
 	if x == nil {
 		return
 	}
-	co := utl.Red(":") // Colorize ":" text to Red
 	xProp := x["properties"].(map[string]interface{})
-	fmt.Printf("%-12s %s\n", utl.Cya("id")+co, utl.Str(x["name"]))
-	fmt.Printf("%-12s %s\n", utl.Cya("displayName")+co, utl.Str(xProp["displayName"]))
-	fmt.Printf("%-12s %s\n", utl.Cya("type")+co, MgType(utl.Str(x["type"])))
+	fmt.Printf("%-12s: %s\n", utl.Blu("id"), utl.Gre(utl.Str(x["name"])))
+	fmt.Printf("%-12s: %s\n", utl.Blu("displayName"), utl.Gre(utl.Str(xProp["displayName"])))
+	fmt.Printf("%-12s: %s\n", utl.Blu("type"), utl.Gre(MgType(utl.Str(x["type"]))))
 }
 
 func MgGroupCountLocal(z Bundle) int64 {
@@ -118,7 +117,9 @@ func PrintMgChildren(indent int, children []interface{}) {
 		if padding < 12 {
 			padding = 12
 		}
-		fmt.Printf("%-*s  %-38s  %s\n", padding, Name, utl.Str(child["name"]), Type)
+		colorName := utl.Blu(utl.PostSpc(Name, padding))
+		childName := utl.Gre(utl.PostSpc(utl.Str(child["name"]), 38))
+		fmt.Printf("%s%s%s\n", colorName, childName, utl.Gre(Type))
 		if child["children"] != nil {
 			descendants := child["children"].([]interface{})
 			PrintMgChildren(indent+4, descendants)
@@ -141,7 +142,9 @@ func PrintMgTree(z Bundle) {
 	if r["properties"] != nil {
 		// Print everything under the hierarchy
 		Prop := r["properties"].(map[string]interface{})
-		fmt.Printf("%-38s  %-38s  TENANT\n", utl.Str(Prop["displayName"]), utl.Str(Prop["tenantId"]))
+		name := utl.Blu(utl.PostSpc(utl.Str(Prop["displayName"]), 38))
+		tenantId := utl.Blu(utl.PostSpc(utl.Str(Prop["tenantId"]), 38))
+		fmt.Printf("%s%s%s\n", name, tenantId, utl.Blu("TENANT"))
 		if Prop["children"] != nil {
 			children := Prop["children"].([]interface{})
 			PrintMgChildren(4, children)

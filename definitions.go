@@ -15,13 +15,11 @@ func PrintRoleDefinition(x map[string]interface{}, z Bundle) {
 	if x == nil {
 		return
 	}
-	co := utl.Red(":") // Colorize ":" text to Red
 	if x["name"] != nil {
-		cId := utl.Cya("id") + co // Colorize "id" text to Cyan
-		fmt.Printf("%s %s\n", cId, utl.Str(x["name"]))
+		fmt.Printf("%s: %s\n", utl.Blu("id"), utl.Gre(utl.Str(x["name"])))
 	}
 	if x["properties"] != nil {
-		fmt.Println(utl.Cya("properties") + co)
+		fmt.Println(utl.Blu("properties") + ":")
 	} else {
 		fmt.Println(utl.Red("  <Missing properties??>"))
 	}
@@ -30,10 +28,10 @@ func PrintRoleDefinition(x map[string]interface{}, z Bundle) {
 
 	list := []string{"roleName", "description"}
 	for _, i := range list {
-		fmt.Printf("  %s %s\n", utl.Cya(i)+co, utl.Str(xProp[i]))
+		fmt.Printf("  %s: %s\n", utl.Blu(i), utl.Gre(utl.Str(xProp[i])))
 	}
 
-	fmt.Printf("  %s ", utl.Cya("assignableScopes")+co)
+	fmt.Printf("  %s: ", utl.Blu("assignableScopes"))
 	if xProp["assignableScopes"] == nil {
 		fmt.Printf("[]\n")
 	} else {
@@ -45,10 +43,10 @@ func PrintRoleDefinition(x map[string]interface{}, z Bundle) {
 				if strings.HasPrefix(i.(string), "/subscriptions") {
 					// Print subscription name as a comment at end of line
 					subId := utl.LastElem(i.(string), "/")
-					cComment := utl.Blu("# " + subNameMap[subId]) // Blue comments
-					fmt.Printf("    - %s  %s\n", utl.Str(i), cComment)
+					comment := "# " + subNameMap[subId]
+					fmt.Printf("    - %s  %s\n", utl.Gre(utl.Str(i)), comment)
 				} else {
-					fmt.Printf("    - %s\n", utl.Str(i))
+					fmt.Printf("    - %s\n", utl.Gre(utl.Str(i)))
 				}
 			}
 		} else {
@@ -56,7 +54,7 @@ func PrintRoleDefinition(x map[string]interface{}, z Bundle) {
 		}
 	}
 
-	fmt.Printf("  %s\n", utl.Cya("permissions")+co)
+	fmt.Printf("  %s:\n", utl.Blu("permissions"))
 	if xProp["permissions"] == nil {
 		fmt.Printf(utl.Red("    < No permissions?? >\n"))
 	} else {
@@ -64,50 +62,50 @@ func PrintRoleDefinition(x map[string]interface{}, z Bundle) {
 		if len(permsSet) == 1 {
 			perms := permsSet[0].(map[string]interface{}) // Select the 1 expected single permission set
 
-			fmt.Printf("    - " + utl.Cya("actions") + co + "\n") // Note that this one is different, as it starts the YAML array with the dash '-'
+			fmt.Printf("    - " + utl.Blu("actions") + ":\n") // Note that this one is different, as it starts the YAML array with the dash '-'
 			if perms["actions"] != nil {
 				permsA := perms["actions"].([]interface{})
 				if utl.GetType(permsA)[0] != '[' { // Open bracket character means it's an array list
 					fmt.Printf(utl.Red("        <Not an array??>\n"))
 				} else {
 					for _, i := range permsA {
-						fmt.Printf("        - %s\n", utl.Str(i))
+						fmt.Printf("        - %s\n", utl.Gre(utl.Str(i)))
 					}
 				}
 			}
 
-			fmt.Printf("      " + utl.Cya("notActions") + co + "\n")
+			fmt.Printf("      " + utl.Blu("notActions") + ":\n")
 			if perms["notActions"] != nil {
 				permsNA := perms["notActions"].([]interface{})
 				if utl.GetType(permsNA)[0] != '[' {
 					fmt.Printf(utl.Red("        <Not an array??>\n"))
 				} else {
 					for _, i := range permsNA {
-						fmt.Printf("        - %s\n", utl.Str(i))
+						fmt.Printf("        - %s\n", utl.Gre(utl.Str(i)))
 					}
 				}
 			}
 
-			fmt.Printf("      " + utl.Cya("dataActions") + co + "\n")
+			fmt.Printf("      " + utl.Blu("dataActions") + ":\n")
 			if perms["dataActions"] != nil {
 				permsDA := perms["dataActions"].([]interface{})
 				if utl.GetType(permsDA)[0] != '[' {
 					fmt.Printf(utl.Red("        <Not an array??>\n"))
 				} else {
 					for _, i := range permsDA {
-						fmt.Printf("        - %s\n", utl.Str(i))
+						fmt.Printf("        - %s\n", utl.Gre(utl.Str(i)))
 					}
 				}
 			}
 
-			fmt.Printf("      " + utl.Cya("notDataActions") + co + "\n")
+			fmt.Printf("      " + utl.Blu("notDataActions") + ":\n")
 			if perms["notDataActions"] != nil {
 				permsNDA := perms["notDataActions"].([]interface{})
 				if utl.GetType(permsNDA)[0] != '[' {
 					fmt.Printf(utl.Red("        <Not an array??>\n"))
 				} else {
 					for _, i := range permsNDA {
-						fmt.Printf("        - %s\n", utl.Str(i))
+						fmt.Printf("        - %s\n", utl.Gre(utl.Str(i)))
 					}
 				}
 			}

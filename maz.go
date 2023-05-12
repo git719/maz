@@ -42,35 +42,33 @@ type Bundle struct {
 
 func DumpVariables(z Bundle) {
 	// Dump essential global variables
-	co := utl.Red(":")
-	cConfDir := utl.Cya("config_dir") + co
-	cComment := utl.Blu("# Utility's config and cache directory")
-	fmt.Printf("%s %s  %s\n", cConfDir, z.ConfDir, cComment)
+	cConfDir := utl.Blu("config_dir")
+	fmt.Printf("%s: %s  # Utility's config and cache directory\n", cConfDir, utl.Gre(z.ConfDir))
 
-	cTenant := utl.Cya("tenant_id") + co
-	fmt.Printf("%s %s\n", cTenant, z.TenantId)
+	cTenant := utl.Blu("tenant_id")
+	fmt.Printf("%s: %s\n", cTenant, utl.Gre(z.TenantId))
 	if z.Interactive {
-		cUsername := utl.Cya("username") + co
-		fmt.Printf("%s %s\n", cUsername, z.Username)
-		cInterative := utl.Cya("interactive") + co
-		fmt.Printf("%s %s\n", cInterative, "true")
+		cUsername := utl.Blu("username")
+		fmt.Printf("%s: %s\n", cUsername, utl.Gre(z.Username))
+		cInterative := utl.Blu("interactive")
+		fmt.Printf("%s: %s\n", cInterative, utl.Mag("true"))
 	} else {
-		cClientId := utl.Cya("client_id") + co
-		fmt.Printf("%s %s\n", cClientId, z.ClientId)
-		cClientSecret := utl.Cya("client_secret") + co
-		fmt.Printf("%s %s\n", cClientSecret, z.ClientSecret)
+		cClientId := utl.Blu("client_id")
+		fmt.Printf("%s: %s\n", cClientId, utl.Gre(z.ClientId))
+		cClientSecret := utl.Blu("client_secret")
+		fmt.Printf("%s: %s\n", cClientSecret, utl.Gre(z.ClientSecret))
 	}
 
-	cAuthorityUrl := utl.Cya("authority_url") + co
-	fmt.Printf("%s %s\n", cAuthorityUrl, z.AuthorityUrl)
-	cMgUrl := utl.Cya("mg_url") + co
-	fmt.Printf("%s %s\n", cMgUrl, ConstMgUrl)
-	cAzUrl := utl.Cya("az_url") + co
-	fmt.Printf("%s %s\n", cAzUrl, ConstAzUrl)
+	cAuthorityUrl := utl.Blu("authority_url")
+	fmt.Printf("%s: %s\n", cAuthorityUrl, utl.Gre(z.AuthorityUrl))
+	cMgUrl := utl.Blu("mg_url")
+	fmt.Printf("%s: %s\n", cMgUrl, utl.Gre(ConstMgUrl))
+	cAzUrl := utl.Blu("az_url")
+	fmt.Printf("%s: %s\n", cAzUrl, utl.Gre(ConstAzUrl))
 
-	fmt.Println(utl.Cya("mg_headers") + co)
+	fmt.Println(utl.Blu("mg_headers") + ":")
 	PrintStringMapColor(z.MgHeaders)
-	fmt.Println(utl.Cya("az_headers") + co)
+	fmt.Println(utl.Blu("az_headers") + ":")
 	PrintStringMapColor(z.AzHeaders)
 	os.Exit(0)
 }
@@ -84,17 +82,17 @@ func DumpCredentials(z Bundle) {
 	}
 	creds := credsRaw.(map[string]interface{})
 	co := utl.Red(":")
-	cTenant := utl.Cya("tenant_id") + co
+	cTenant := utl.Blu("tenant_id") + co
 	fmt.Printf("%s %s\n", cTenant, utl.Str(creds["tenant_id"]))
 	if strings.ToLower(utl.Str(creds["interactive"])) == "true" {
-		cUsername := utl.Cya("username") + co
+		cUsername := utl.Blu("username") + co
 		fmt.Printf("%s %s\n", cUsername, utl.Str(creds["username"]))
-		cInterative := utl.Cya("interactive") + co
+		cInterative := utl.Blu("interactive") + co
 		fmt.Printf("%s %s\n", cInterative, "true")
 	} else {
-		cClientId := utl.Cya("client_id") + co
+		cClientId := utl.Blu("client_id") + co
 		fmt.Printf("%s %s\n", cClientId, utl.Str(creds["client_id"]))
-		cClientSecret := utl.Cya("client_secret") + co
+		cClientSecret := utl.Blu("client_secret") + co
 		fmt.Printf("%s %s\n", cClientSecret, utl.Str(creds["client_secret"]))
 	}
 	os.Exit(0)

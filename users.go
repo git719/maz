@@ -17,13 +17,12 @@ func PrintUser(x map[string]interface{}, z Bundle) {
 	id := utl.Str(x["id"])
 
 	// First, print the most important attributes for this user
-	co := utl.Red(":") // Colorize ":" text to Red
 	list := []string{"id", "displayName", "userPrincipalName", "mailNickname", "onPremisesSamAccountName",
 		"onPremisesDomainName", "onPremisesUserPrincipalName"}
 	for _, i := range list {
 		v := utl.Str(x[i])
 		if v != "" { // Only print non-null attributes
-			fmt.Printf("%s %s\n", utl.Cya(i)+co, v)
+			fmt.Printf("%s: %s\n", utl.Blu(i), utl.Gre(v))
 		}
 	}
 
@@ -31,10 +30,10 @@ func PrintUser(x map[string]interface{}, z Bundle) {
 	if x["otherMails"] != nil {
 		otherMails := x["otherMails"].([]interface{})
 		if len(otherMails) > 0 {
-			fmt.Printf(utl.Cya("otherMails") + co + "\n")
+			fmt.Printf(utl.Blu("otherMails") + ":\n")
 			for _, i := range otherMails {
 				email := i.(string)
-				fmt.Printf("  %s\n", email)
+				fmt.Printf("  %s\n", utl.Gre(email))
 			}
 		}
 	}

@@ -11,22 +11,45 @@ import (
 
 func PrintCountStatus(z Bundle) {
 	fmt.Printf("Note: Counting some Azure resources can take a long time.\n")
-	fmt.Printf("%-36s %10s %10s\n", "OBJECTS", "LOCAL", "AZURE")
-	fmt.Printf("%-36s %10d %10d\n", "Azure AD Users", UsersCountLocal(z), UsersCountAzure(z))
-	fmt.Printf("%-36s %10d %10d\n", "Azure AD Groups", GroupsCountLocal(z), GroupsCountAzure(z))
-	fmt.Printf("%-36s %10d %10d\n", "Azure App Registrations", AppsCountLocal(z), AppsCountAzure(z))
+	fmt.Printf("%-36s%10s%10s\n", "OBJECTS", "LOCAL", "AZURE")
+	status := utl.Blu(utl.PostSpc("Azure AD Users", 36))
+	status += utl.Gre(utl.PreSpc(UsersCountLocal(z), 10))
+	status += utl.Gre(utl.PreSpc(UsersCountAzure(z), 10)) + "\n"
+	status += utl.Blu(utl.PostSpc("Azure AD Groups", 36))
+	status += utl.Gre(utl.PreSpc(GroupsCountLocal(z), 10))
+	status += utl.Gre(utl.PreSpc(GroupsCountAzure(z), 10)) + "\n"
+	status += utl.Blu(utl.PostSpc("Azure App Registrations", 36))
+	status += utl.Gre(utl.PreSpc(AppsCountLocal(z), 10))
+	status += utl.Gre(utl.PreSpc(AppsCountAzure(z), 10)) + "\n"
 	nativeSpsLocal, msSpsLocal := SpsCountLocal(z)
 	nativeSpsAzure, msSpsAzure := SpsCountAzure(z)
-	fmt.Printf("%-36s %10d %10d\n", "Azure SPs (multi-tenant)", msSpsLocal, msSpsAzure)
-	fmt.Printf("%-36s %10d %10d\n", "Azure SPs (native to tenant)", nativeSpsLocal, nativeSpsAzure)
-	fmt.Printf("%-36s %10d %10d\n", "Azure AD Roles", AdRolesCountLocal(z), AdRolesCountAzure(z))
-	fmt.Printf("%-36s %10d %10d\n", "Azure Management Groups", MgGroupCountLocal(z), MgGroupCountAzure(z))
-	fmt.Printf("%-36s %10d %10d\n", "Azure Subscriptions", SubsCountLocal(z), SubsCountAzure(z))
+	status += utl.Blu(utl.PostSpc("Azure SPs (multi-tenant)", 36))
+	status += utl.Gre(utl.PreSpc(msSpsLocal, 10))
+	status += utl.Gre(utl.PreSpc(msSpsAzure, 10)) + "\n"
+	status += utl.Blu(utl.PostSpc("Azure SPs (native to tenant)", 36))
+	status += utl.Gre(utl.PreSpc(nativeSpsLocal, 10))
+	status += utl.Gre(utl.PreSpc(nativeSpsAzure, 10)) + "\n"
+	status += utl.Blu(utl.PostSpc("Azure AD Roles", 36))
+	status += utl.Gre(utl.PreSpc(AdRolesCountLocal(z), 10))
+	status += utl.Gre(utl.PreSpc(AdRolesCountAzure(z), 10)) + "\n"
+	status += utl.Blu(utl.PostSpc("Azure Management Groups", 36))
+	status += utl.Gre(utl.PreSpc(MgGroupCountLocal(z), 10))
+	status += utl.Gre(utl.PreSpc(MgGroupCountAzure(z), 10)) + "\n"
+	status += utl.Blu(utl.PostSpc("Azure Subscriptions", 36))
+	status += utl.Gre(utl.PreSpc(SubsCountLocal(z), 10))
+	status += utl.Gre(utl.PreSpc(SubsCountAzure(z), 10)) + "\n"
 	builtinLocal, customLocal := RoleDefinitionCountLocal(z)
 	builtinAzure, customAzure := RoleDefinitionCountAzure(z)
-	fmt.Printf("%-36s %10d %10d\n", "Resource Role Definitions BuiltIn", builtinLocal, builtinAzure)
-	fmt.Printf("%-36s %10d %10d\n", "Resource Role Definitions Custom", customLocal, customAzure)
-	fmt.Printf("%-36s %10d %10d\n", "Resource Role Assignments", RoleAssignmentsCountLocal(z), RoleAssignmentsCountAzure(z))
+	status += utl.Blu(utl.PostSpc("Resource Role Definitions BuiltIn", 36))
+	status += utl.Gre(utl.PreSpc(builtinLocal, 10))
+	status += utl.Gre(utl.PreSpc(builtinAzure, 10)) + "\n"
+	status += utl.Blu(utl.PostSpc("Resource Role Definitions Custom", 36))
+	status += utl.Gre(utl.PreSpc(customLocal, 10))
+	status += utl.Gre(utl.PreSpc(customAzure, 10)) + "\n"
+	status += utl.Blu(utl.PostSpc("Resource Role Assignments", 36))
+	status += utl.Gre(utl.PreSpc(RoleAssignmentsCountLocal(z), 10))
+	status += utl.Gre(utl.PreSpc(RoleAssignmentsCountAzure(z), 10)) + "\n"
+	fmt.Print(status)
 }
 
 func PrintTersely(t string, object interface{}) {
@@ -115,13 +138,15 @@ func PrintObject(t string, x map[string]interface{}, z Bundle) {
 
 func PrintMemberOfs(t string, memberOf []interface{}) {
 	// Print all memberOf entries
-	co := utl.Red(":") // Colorize ":" text to Red
 	if len(memberOf) > 0 {
-		fmt.Printf(utl.Cya("memberof") + co + "\n")
+		fmt.Printf(utl.Blu("memberof") + ":\n")
 		for _, i := range memberOf {
 			x := i.(map[string]interface{}) // Assert as JSON object type
 			Type := utl.LastElem(utl.Str(x["@odata.type"]), ".")
-			fmt.Printf("  %-50s %s (%s)\n", utl.Str(x["displayName"]), utl.Str(x["id"]), Type)
+			Type = utl.Gre(Type)
+			iId := utl.Gre(utl.Str(x["id"]))
+			name := utl.Gre(utl.Str(x["displayName"]))
+			fmt.Printf("  %-50s %s (%s)\n", name, iId, Type)
 		}
 	}
 }
@@ -129,8 +154,7 @@ func PrintMemberOfs(t string, memberOf []interface{}) {
 func PrintSecretList(pwdCreds []interface{}) {
 	// Print password credentials stanza for Apps and Sps
 	if len(pwdCreds) > 0 {
-		co := utl.Red(":") // Colorize ":" text to Red
-		fmt.Println(utl.Cya("secrets") + co)
+		fmt.Println(utl.Blu("secrets") + ":")
 		for _, i := range pwdCreds {
 			a := i.(map[string]interface{})
 			cId := utl.Str(a["keyId"])
@@ -156,8 +180,11 @@ func PrintSecretList(pwdCreds []interface{}) {
 				cExpiry = utl.Red(cExpiry) // If it's expired print in red
 			} else if daysDiff < 7 {
 				cExpiry = utl.Yel(cExpiry) // If expiring within a week print in yellow
+			} else {
+				cExpiry = utl.Gre(cExpiry)
 			}
-			fmt.Printf("  %-36s  %-30s  %-16s  %-16s  %s\n", cId, cName, cHint, cStart, cExpiry)
+			fmt.Printf("  %-36s  %-30s  %-16s  %-16s  %s\n", utl.Gre(cId), utl.Gre(cName),
+				utl.Gre(cHint), utl.Gre(cStart), cExpiry)
 		}
 	}
 }
@@ -165,8 +192,7 @@ func PrintSecretList(pwdCreds []interface{}) {
 func PrintCertificateList(certificates []interface{}) {
 	// Print password credentials stanza for Apps and Sps
 	if len(certificates) > 0 {
-		co := utl.Red(":") // Colorize ":" text to Red
-		fmt.Println(utl.Cya("certificates") + co)
+		fmt.Println(utl.Blu("certificates") + ":")
 		for _, i := range certificates {
 			a := i.(map[string]interface{})
 			cId := utl.Str(a["keyId"])
@@ -192,12 +218,15 @@ func PrintCertificateList(certificates []interface{}) {
 				cExpiry = utl.Red(cExpiry) // If it's expired print in red
 			} else if daysDiff < 7 {
 				cExpiry = utl.Yel(cExpiry) // If expiring within a week print in yellow
+			} else {
+				cExpiry = utl.Gre(cExpiry)
 			}
 			// There's also:
 			// 	"customKeyIdentifier": "09228573F93570D8113D90DA69D8DF6E2E396874",
 			// 	"key": "<RSA_KEY>",
 			// 	"usage": "Verify"
-			fmt.Printf("  %-36s  %-30s  %-40s  %-10s  %s\n", cId, cName, cType, cStart, cExpiry)
+			fmt.Printf("  %-36s  %-30s  %-40s  %-10s  %s\n", utl.Gre(cId), utl.Gre(cName),
+				utl.Gre(cType), utl.Gre(cStart), cExpiry)
 		}
 		// https://learn.microsoft.com/en-us/graph/api/application-addkey
 	}
@@ -206,8 +235,7 @@ func PrintCertificateList(certificates []interface{}) {
 func PrintOwners(owners []interface{}) {
 	// Print owners stanza for Apps and Sps
 	if len(owners) > 0 {
-		co := utl.Red(":")
-		fmt.Printf(utl.Cya("owners") + co + "\n")
+		fmt.Printf(utl.Blu("owners") + ":\n")
 		for _, i := range owners {
 			o := i.(map[string]interface{})
 			Type, Name := "???", "???"
@@ -222,19 +250,18 @@ func PrintOwners(owners []interface{}) {
 			default:
 				Name = "???"
 			}
-			fmt.Printf("  %-50s %s (%s)\n", Name, utl.Str(o["id"]), Type)
+			fmt.Printf("  %-50s %s (%s)\n", utl.Gre(Name), utl.Gre(utl.Str(o["id"])), utl.Gre(Type))
 		}
 	}
 }
 
 func PrintStringMapColor(strMap map[string]string) {
 	// Print string map in YAML-like format, sorted, and in color
-	co := utl.Red(":")
 	sortedKeys := utl.SortMapStringKeys(strMap)
 	for _, k := range sortedKeys {
 		v := strMap[k]
-		cK := utl.Cya(utl.Str(k)) + co // Colorized key (Cyan) + colon (Red)
-		fmt.Printf("  %s %s\n", cK, utl.Str(v))
+		cK := utl.Blu(utl.Str(k))                         // Key in blue
+		fmt.Printf("  %s: %s\n", cK, utl.Gre(utl.Str(v))) // Value in green
 	}
 }
 
@@ -243,7 +270,7 @@ func PrintMatching(printFormat, t, specifier string, z Bundle) {
 	if utl.ValidUuid(specifier) { // Search/print single object, if it's valid UUID
 		x := GetAzObjectByUuid(t, specifier, z)
 		if printFormat == "json" {
-			utl.PrintJson(x)
+			utl.PrintJsonColor(x)
 		} else if printFormat == "reg" {
 			PrintObject(t, x, z)
 		}
@@ -257,13 +284,13 @@ func PrintMatching(printFormat, t, specifier string, z Bundle) {
 				x = GetAzObjectByUuid(t, uuid, z)
 			}
 			if printFormat == "json" {
-				utl.PrintJson(x)
+				utl.PrintJsonColor(x)
 			} else if printFormat == "reg" {
 				PrintObject(t, x, z)
 			}
 		} else if len(matchingObjects) > 1 {
 			if printFormat == "json" {
-				utl.PrintJson(matchingObjects) // Print all matching objects in JSON
+				utl.PrintJsonColor(matchingObjects) // Print all matching objects in JSON
 			} else if printFormat == "reg" {
 				for _, i := range matchingObjects { // Print all matching object teresely
 					x := i.(map[string]interface{})

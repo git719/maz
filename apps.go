@@ -17,12 +17,11 @@ func PrintApp(x map[string]interface{}, z Bundle) {
 	id := utl.Str(x["id"])
 
 	// Print the most important attributes first
-	co := utl.Red(":") // Colorize ":" text to Red
 	list := []string{"id", "displayName", "appId"}
 	for _, i := range list {
 		v := utl.Str(x[i])
 		if v != "" { // Only print non-null attributes
-			fmt.Printf("%s %s\n", utl.Cya(i)+co, v)
+			fmt.Printf("%s: %s\n", utl.Blu(i), utl.Gre(v))
 		}
 	}
 
@@ -43,11 +42,14 @@ func PrintApp(x map[string]interface{}, z Bundle) {
 	if statusCode == 200 && r != nil && r["value"] != nil {
 		fedCreds := r["value"].([]interface{})
 		if len(fedCreds) > 0 {
-			fmt.Println(utl.Cya("federated_ids") + co)
+			fmt.Println(utl.Blu("federated_ids") + ":")
 			for _, i := range fedCreds {
 				a := i.(map[string]interface{})
-				fmt.Printf("  %-36s  %-30s  %-40s  %s\n", utl.Str(a["id"]), utl.Str(a["name"]),
-					utl.Str(a["subject"]), utl.Str(a["issuer"]))
+				iId := utl.Gre(utl.Str(a["id"]))
+				name := utl.Gre(utl.Str(a["name"]))
+				subject := utl.Gre(utl.Str(a["subject"]))
+				issuer := utl.Gre(utl.Str(a["issuer"]))
+				fmt.Printf("  %-36s  %-30s  %-40s  %s\n", iId, name, subject, issuer)
 			}
 		}
 	}
@@ -63,7 +65,7 @@ func PrintApp(x map[string]interface{}, z Bundle) {
 	// Print API permissions
 	// Just look under this object's 'requiredResourceAccess' attribute
 	if x["requiredResourceAccess"] != nil && len(x["requiredResourceAccess"].([]interface{})) > 0 {
-		fmt.Printf(utl.Cya("api_permissions") + co + "\n")
+		fmt.Printf(utl.Blu("api_permissions") + ":\n")
 		APIs := x["requiredResourceAccess"].([]interface{}) // Assert to JSON array
 		for _, a := range APIs {
 			api := a.(map[string]interface{})
@@ -102,7 +104,7 @@ func PrintApp(x map[string]interface{}, z Bundle) {
 			if sp["appRoles"] != nil { // These are for Application types
 				for _, i := range sp["appRoles"].([]interface{}) { // Iterate through all roles
 					role := i.(map[string]interface{})
-					//utl.PrintJson(role) // DEBUG
+					//utl.PrintJsonColor(role) // DEBUG
 					if role["id"] != nil && role["value"] != nil {
 						roleMap[utl.Str(role["id"])] = utl.Str(role["value"]) // Add entry to map
 					}
@@ -111,7 +113,7 @@ func PrintApp(x map[string]interface{}, z Bundle) {
 			if sp["publishedPermissionScopes"] != nil { // These are for Delegated types
 				for _, i := range sp["publishedPermissionScopes"].([]interface{}) {
 					role := i.(map[string]interface{})
-					//utl.PrintJson(role) // DEBUG
+					//utl.PrintJsonColor(role) // DEBUG
 					if role["id"] != nil && role["value"] != nil {
 						roleMap[utl.Str(role["id"])] = utl.Str(role["value"])
 					}
@@ -135,7 +137,7 @@ func PrintApp(x map[string]interface{}, z Bundle) {
 					} else {
 						pType = "Delegated"
 					}
-					fmt.Printf("  %-50s %-40s %s\n", apiName, roleMap[pid], pType)
+					fmt.Printf("  %-50s %-40s %s\n", utl.Gre(apiName), utl.Gre(roleMap[pid]), utl.Gre(pType))
 				}
 			} else {
 				fmt.Printf("  %-50s %s\n", resAppId, "Error getting list of appRoles.")
@@ -231,12 +233,12 @@ func RemoveAppSecret(uuid, keyId string, z Bundle) {
 	}
 
 	// Prompt
-	co := utl.Red(":")
-	fmt.Printf("%s %s\n", utl.Cya("id")+co, utl.Str(x["id"]))
-	fmt.Printf("%s %s\n", utl.Cya("appId")+co, utl.Str(x["appId"]))
-	fmt.Printf("%s %s\n", utl.Cya("displayName")+co, utl.Str(x["displayName"]))
-	fmt.Printf("%s\n", utl.Cya("secret_to_be_deleted")+co)
-	fmt.Printf("  %-36s  %-30s  %-16s  %-16s  %s\n", utl.Cya2(cId), cName, cHint, cStart, cExpiry)
+	fmt.Printf("%s: %s\n", utl.Blu("id"), utl.Gre(utl.Str(x["id"])))
+	fmt.Printf("%s: %s\n", utl.Blu("appId"), utl.Gre(utl.Str(x["appId"])))
+	fmt.Printf("%s: %s\n", utl.Blu("displayName"), utl.Gre(utl.Str(x["displayName"])))
+	fmt.Printf("%s:\n", utl.Blu("secret_to_be_deleted"))
+	fmt.Printf("  %-36s  %-30s  %-16s  %-16s  %s\n", utl.Gre(cId), utl.Gre(cName),
+		utl.Gre(cHint), utl.Gre(cStart), utl.Gre(cExpiry))
 	if utl.PromptMsg("DELETE above? y/n ") == 'y' {
 		payload := map[string]interface{}{"keyId": keyId}
 		url := ConstMgUrl + "/v1.0/applications/" + uuid + "/removePassword"

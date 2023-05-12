@@ -15,16 +15,15 @@ func PrintAdRole(x map[string]interface{}, z Bundle) {
 	}
 
 	// Print the most important attributes first
-	co := utl.Red(":") // Colorize ":" text to Red
 	list := []string{"id", "displayName", "description"}
 	for _, i := range list {
 		v := utl.Str(x[i])
 		if v != "" { // Only print non-null attributes
-			fmt.Printf("%s %s\n", utl.Cya(i)+co, v)
+			fmt.Printf("%s: %s\n", utl.Blu(i), utl.Gre(v))
 		}
 	}
 
-	// Commenting this out for now. Too chatty. User can just run -adj to see full list of perms.
+	// Commenting this out for now. Too chatty. User can just run '-adj' to see full list of perms.
 	// // List permissions
 	// if x["rolePermissions"] != nil {
 	// 	rolePerms := x["rolePermissions"].([]interface{})
@@ -51,8 +50,8 @@ func PrintAdRole(x map[string]interface{}, z Bundle) {
 	if statusCode == 200 && r != nil && r["value"] != nil {
 		assignments := r["value"].([]interface{})
 		if len(assignments) > 0 {
-			fmt.Printf(utl.Cya("assignments") + co + "\n")
-			//utl.PrintJson(assignments)
+			fmt.Printf(utl.Blu("assignments") + ":\n")
+			//utl.PrintJsonColor(assignments)
 			for _, i := range assignments {
 				m := i.(map[string]interface{})
 				scope := utl.Str(m["directoryScopeId"])
@@ -60,7 +59,7 @@ func PrintAdRole(x map[string]interface{}, z Bundle) {
 				mPrinc := m["principal"].(map[string]interface{})
 				pName := utl.Str(mPrinc["displayName"])
 				pType := utl.LastElem(utl.Str(mPrinc["@odata.type"]), ".")
-				fmt.Printf("  %-50s  %-10s  %s\n", pName, pType, scope)
+				fmt.Printf("  %-50s  %-10s  %s\n", utl.Gre(pName), utl.Gre(pType), utl.Gre(scope))
 			}
 		}
 	}
@@ -74,10 +73,13 @@ func PrintAdRole(x map[string]interface{}, z Bundle) {
 	if statusCode == 200 && r != nil && r["value"] != nil {
 		members := r["value"].([]interface{})
 		if len(members) > 0 {
-			fmt.Printf(utl.Cya("members") + co + "\n")
+			fmt.Printf(utl.Blu("members") + ":\n")
 			for _, i := range members {
 				m := i.(map[string]interface{})
-				fmt.Printf("  %s  %-40s   %s\n", utl.Str(m["id"]), utl.Str(m["userPrincipalName"]), utl.Str(m["displayName"]))
+				id := utl.Gre(utl.Str(m["id"]))
+				upn := utl.Gre(utl.Str(m["userPrincipalName"]))
+				name := utl.Gre(utl.Str(m["displayName"]))
+				fmt.Printf("  %s  %-40s   %s\n", id, upn, name)
 			}
 		}
 	}
