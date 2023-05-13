@@ -97,19 +97,27 @@ func PrintTersely(t string, object interface{}) {
 func PrintObjectByUuid(uuid string, z Bundle) {
 	// Search for object with given UUID and print it
 	if !utl.ValidUuid(uuid) {
-		os.Exit(1) // Do nothing if UUID is invalid
+		os.Exit(1)
 	}
-	// Search for this UUID under all maz objects types
-	list := FindAzObjectsByUuid(uuid, z)
-	for _, i := range list {
-		x := i.(map[string]interface{})
-		if x != nil && x["mazType"] != nil {
-			PrintObject(utl.Str(x["mazType"]), x, z)
+
+	list := FindAzObjectsByUuid(uuid, z) // Search for this UUID under all maz objects types
+	for i, obj := range list {
+		x := obj.(map[string]interface{})
+		mazType := utl.Str(x["mazType"])
+		if mazType != "" {
+			fmt.Printf("Object %d type = %s:\n", i, utl.Red(mazType))
+			PrintObject(mazType, x, z)
 		}
 	}
-	// Hopefully below is ever rarely seen
+
 	if len(list) > 1 {
-		fmt.Println(utl.Red("WARNING! Multiple Azure object types share this UUID!"))
+		x0 := list[0].(map[string]interface{})
+		appId := utl.Str(x0["appId"])
+		if appId == uuid {
+			fmt.Println(utl.Yel("Above objects share this appId UUID"))
+		} else {
+			fmt.Println(utl.Red("Object ID UUID collision")) // Should be rare
+		}
 	}
 }
 

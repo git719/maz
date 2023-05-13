@@ -115,8 +115,10 @@ func DeleteAzObject(specifier string, z Bundle) {
 }
 
 func FindAzObjectsByUuid(uuid string, z Bundle) (list []interface{}) {
-	// Returns list of Azure objects with this UUID. We are saying a list because potentially
-	// this could find UUID collisions. Only checks for the maz limited set of Azure object types.
+	// Returns list of Azure objects with this UUID. We are saying a list because 1)
+	// the UUID could be an appId shared by an app and an SP, and 2) the UUID could
+	// potentially be an object UUID collisions. Only checks for the maz limited set
+	// of Azure object types.
 	list = nil
 	mazTypes := []string{"d", "a", "s", "u", "g", "sp", "ap", "ad"}
 	for _, t := range mazTypes {
