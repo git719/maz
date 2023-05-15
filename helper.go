@@ -116,17 +116,16 @@ func DeleteAzObject(specifier string, z Bundle) {
 
 func FindAzObjectsByUuid(uuid string, z Bundle) (list []interface{}) {
 	// Returns list of Azure objects with this UUID. We are saying a list because 1)
-	// the UUID could be an appId shared by an app and an SP, and 2) the UUID could
-	// potentially be an object UUID collisions. Only checks for the maz limited set
-	// of Azure object types.
+	// the UUID could be an appId shared by an app and an SP, or 2) the UUID could
+	// potentially be a UUID collision, shared by 2 diff objects. Only checks for
+	// the maz limited set of Azure object types.
 	list = nil
-	mazTypes := []string{"d", "a", "s", "u", "g", "sp", "ap", "ad"}
 	for _, t := range mazTypes {
 		x := GetAzObjectByUuid(t, uuid, z)
 		if x != nil && x["id"] != nil { // Valid objects have an 'id' attribute
-			// Note, we are extending the object by adding a mazType as an additional FIELD
-			x["mazType"] = t       // Found one of these types with this UUID
-			list = append(list, x) // Add it to the list
+			// Found one of these types with this UUID
+			x["mazType"] = t // Extend object with mazType as an ADDITIONAL field
+			list = append(list, x)
 		}
 	}
 	return list
@@ -140,17 +139,17 @@ func GetAzObjectByUuid(t, uuid string, z Bundle) (x map[string]interface{}) {
 	case "a":
 		return GetAzRoleAssignmentByUuid(uuid, z)
 	case "s":
-		return GetAzSubscriptionByUuid(uuid, z.AzHeaders)
+		return GetAzSubscriptionByUuid(uuid, z)
 	case "u":
-		return GetAzUserByUuid(uuid, z.MgHeaders)
+		return GetAzUserByUuid(uuid, z)
 	case "g":
-		return GetAzGroupByUuid(uuid, z.MgHeaders)
+		return GetAzGroupByUuid(uuid, z)
 	case "sp":
-		return GetAzSpByUuid(uuid, z.MgHeaders)
+		return GetAzSpByUuid(uuid, z)
 	case "ap":
-		return GetAzAppByUuid(uuid, z.MgHeaders)
+		return GetAzAppByUuid(uuid, z)
 	case "ad":
-		return GetAzAdRoleByUuid(uuid, z.MgHeaders)
+		return GetAzAdRoleByUuid(uuid, z)
 	}
 	return nil
 }
@@ -232,11 +231,12 @@ func GetObjects(t, filter string, force bool, z Bundle) (list []interface{}) {
 	return nil
 }
 
-func GetAzObjects(url string, headers map[string]string, verbose bool) (deltaSet []interface{}, deltaLinkMap map[string]interface{}) {
+func GetAzObjects(url string, z Bundle, verbose bool) (deltaSet []interface{}, deltaLinkMap map[string]interface{}) {
 	// Generic Azure object deltaSet retriever function. Returns the set of changed or new items,
 	// and a deltaLink for running the next future Azure query. Implements the pattern described at
 	// https://docs.microsoft.com/en-us/graph/delta-query-overview
 	k := 1 // Track number of API calls
+	headers := z.MgHeaders
 	r, _, _ := ApiGet(url, headers, nil)
 	ApiErrorCheck("GET", url, utl.Trace(), r)
 	for {

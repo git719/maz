@@ -23,6 +23,20 @@ const (
 	// See https://stackoverflow.com/questions/1508490/erase-the-current-printed-console-line
 )
 
+var (
+	mazTypes     = []string{"d", "a", "s", "u", "g", "sp", "ap", "ad"}
+	mazTypesLong = map[string]string{
+		"d":  "RBAC Role Definition",
+		"a":  "RBAC Role Assignment",
+		"s":  "Azure Subscription",
+		"u":  "Azure AD User",
+		"g":  "Azure AD Group",
+		"sp": "Service Principal",
+		"ap": "Registered Application",
+		"ad": "Azure AD Role",
+	}
+)
+
 type Bundle struct {
 	ConfDir      string // Directory where utility will store all its file
 	CredsFile    string

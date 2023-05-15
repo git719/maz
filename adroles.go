@@ -123,7 +123,7 @@ func GetAdRoles(filter string, force bool, z Bundle) (list []interface{}) {
 	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_directoryRoles.json")
 	cacheNoGood, list := CheckLocalCache(cacheFile, 86400) // cachePeriod = 1 day in seconds
 	if cacheNoGood || force {
-		list = GetAzAdRoles(cacheFile, z.MgHeaders, true) // Get all from Azure and show progress (verbose = true)
+		list = GetAzAdRoles(cacheFile, z, true) // Get all from Azure and show progress (verbose = true)
 	}
 
 	// Do filter matching
@@ -146,14 +146,14 @@ func GetAdRoles(filter string, force bool, z Bundle) (list []interface{}) {
 	return matchingList
 }
 
-func GetAzAdRoles(cacheFile string, headers map[string]string, verbose bool) (list []interface{}) {
+func GetAzAdRoles(cacheFile string, z Bundle, verbose bool) (list []interface{}) {
 	// Get all Azure AD role definitions in current tenant AND save them to local cache file.
 	// Usually a short list, so verbose is ignored, and not used.
 	// See https://learn.microsoft.com/en-us/graph/api/rbacapplication-list-roledefinitions
 
 	// There's no API delta options for this object (too short a list?), so just one call
 	url := ConstMgUrl + "/v1.0/roleManagement/directory/roleDefinitions"
-	r, _, _ := ApiGet(url, headers, nil)
+	r, _, _ := ApiGet(url, z.MgHeaders, nil)
 	ApiErrorCheck("GET", url, utl.Trace(), r)
 	if r["value"] == nil {
 		return nil
@@ -163,14 +163,14 @@ func GetAzAdRoles(cacheFile string, headers map[string]string, verbose bool) (li
 	return list
 }
 
-func GetAzAdRoleByUuid(uuid string, headers map[string]string) map[string]interface{} {
+func GetAzAdRoleByUuid(uuid string, z Bundle) map[string]interface{} {
 	// Get Azure AD role definition by Object UUID, with extended attributes
 	// Note that role definitions are under a different area, until they are activated
 	baseUrl := ConstMgUrl + "/v1.0/roleManagement/directory/roleDefinitions"
-	selection := "?$select=id,displayName,description,isBuiltIn,isEnabled,resourceScopes,"
-	selection += "templateId,version,rolePermissions,inheritsPermissionsFrom"
+	selection := "?$select=id,displayName,description,isBuiltIn,isEnabled,resourceScopes," +
+		"templateId,version,rolePermissions,inheritsPermissionsFrom"
 	url := baseUrl + "/" + uuid + selection
-	r, _, _ := ApiGet(url, headers, nil)
+	r, _, _ := ApiGet(url, z.MgHeaders, nil)
 	//ApiErrorCheck("GET", url, utl.Trace(), r) // Commented out to do this quietly. Use for DEBUGging
 	return r
 }

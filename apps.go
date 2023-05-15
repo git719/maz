@@ -201,7 +201,7 @@ func RemoveAppSecret(uuid, keyId string, z Bundle) {
 	}
 
 	// Get app, display details and secret, and prompt for delete confirmation
-	x := GetAzAppByUuid(uuid, z.MgHeaders)
+	x := GetAzAppByUuid(uuid, z)
 	if x == nil || x["id"] == nil {
 		utl.Die("There's no App with this UUID.\n")
 	}
@@ -302,7 +302,7 @@ func GetApps(filter string, force bool, z Bundle) (list []interface{}) {
 	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_applications.json")
 	cacheNoGood, list := CheckLocalCache(cacheFile, 86400) // cachePeriod = 1 day in seconds
 	if cacheNoGood || force {
-		list = GetAzApps(cacheFile, z.MgHeaders, true) // Get all from Azure and show progress (verbose = true)
+		list = GetAzApps(cacheFile, z, true) // Get all from Azure and show progress (verbose = true)
 	}
 
 	// Do filter matching
@@ -325,10 +325,10 @@ func GetApps(filter string, force bool, z Bundle) (list []interface{}) {
 	return matchingList
 }
 
-func GetAzApps(cacheFile string, headers map[string]string, verbose bool) (list []interface{}) {
-	// Get all Azure AD service principal in current tenant AND save them to local cache file. Show progress if verbose = true.
-
-	// We will first try doing a delta query. See https://docs.microsoft.com/en-us/graph/delta-query-overview
+func GetAzApps(cacheFile string, z Bundle, verbose bool) (list []interface{}) {
+	// Get all Azure AD service principal in current tenant AND save them to local cache file
+	// Show progress if verbose = true
+	// Rirst try a delta query. See https://docs.microsoft.com/en-us/graph/delta-query-overview
 	var deltaLinkMap map[string]interface{} = nil
 	deltaLinkFile := cacheFile[:len(cacheFile)-len(filepath.Ext(cacheFile))] + "_deltaLink.json"
 	deltaAge := int64(time.Now().Unix()) - int64(utl.FileModTime(deltaLinkFile))
@@ -338,6 +338,7 @@ func GetAzApps(cacheFile string, headers map[string]string, verbose bool) (list 
 	// Get delta updates only if/when below attributes in $select are modified
 	selection := "?$select=displayName,appId,requiredResourceAccess"
 	url := baseUrl + "/delta" + selection + "&$top=999"
+	headers := z.MgHeaders
 	headers["Prefer"] = "return=minimal" // This tells API to focus only on specific 'select' attributes
 	headers["deltaToken"] = "latest"
 
@@ -353,7 +354,7 @@ func GetAzApps(cacheFile string, headers map[string]string, verbose bool) (list 
 
 	// Now go get azure objects using the updated URL (either a full query or a deltaLink query)
 	var deltaSet []interface{} = nil
-	deltaSet, deltaLinkMap = GetAzObjects(url, headers, verbose) // Run generic deltaSet retriever function
+	deltaSet, deltaLinkMap = GetAzObjects(url, z, verbose) // Run generic deltaSet retriever function
 
 	// Save new deltaLink for future call, and merge newly acquired delta set with existing list
 	utl.SaveFileJson(deltaLinkMap, deltaLinkFile)
@@ -362,23 +363,23 @@ func GetAzApps(cacheFile string, headers map[string]string, verbose bool) (list 
 	return list
 }
 
-func GetAzAppByUuid(uuid string, headers map[string]string) map[string]interface{} {
+func GetAzAppByUuid(uuid string, z Bundle) map[string]interface{} {
 	// Get Azure AD application by its Object UUID or by its appId, with extended attributes
 	//baseUrl := ConstMgUrl + "/v1.0/applications"
 	baseUrl := ConstMgUrl + "/beta/applications"
-	selection := "?$select=id,addIns,api,appId,applicationTemplateId,appRoles,certification,createdDateTime,"
-	selection += "deletedDateTime,disabledByMicrosoftStatus,displayName,groupMembershipClaims,id,identifierUris,"
-	selection += "info,isDeviceOnlyAuthSupported,isFallbackPublicClient,keyCredentials,logo,notes,"
-	selection += "oauth2RequiredPostResponse,optionalClaims,parentalControlSettings,passwordCredentials,"
-	selection += "publicClient,publisherDomain,requiredResourceAccess,serviceManagementReference,"
-	selection += "signInAudience,spa,tags,tokenEncryptionKeyId,verifiedPublisher,web"
+	selection := "?$select=id,addIns,api,appId,applicationTemplateId,appRoles,certification," +
+		"createdDateTime,deletedDateTime,disabledByMicrosoftStatus,displayName,groupMembershipClaims," +
+		"id,identifierUris,info,isDeviceOnlyAuthSupported,isFallbackPublicClient,keyCredentials,logo," +
+		"notes,oauth2RequiredPostResponse,optionalClaims,parentalControlSettings,passwordCredentials," +
+		"publicClient,publisherDomain,requiredResourceAccess,serviceManagementReference,signInAudience," +
+		"spa,tags,tokenEncryptionKeyId,verifiedPublisher,web"
 	url := baseUrl + "/" + uuid + selection // First search is for direct Object Id
-	r, _, _ := ApiGet(url, headers, nil)
+	r, _, _ := ApiGet(url, z.MgHeaders, nil)
 	if r != nil && r["error"] != nil {
 		// Second search is for this app's application Client Id
 		url = baseUrl + selection
 		params := map[string]string{"$filter": "appId eq '" + uuid + "'"}
-		r, _, _ := ApiGet(url, headers, params)
+		r, _, _ := ApiGet(url, z.MgHeaders, params)
 		//ApiErrorCheck("GET", url, utl.Trace(), r) // Commented out to do this quietly. Use for DEBUGging
 		if r != nil && r["value"] != nil {
 			list := r["value"].([]interface{})

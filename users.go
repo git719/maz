@@ -16,12 +16,11 @@ func PrintUser(x map[string]interface{}, z Bundle) {
 	}
 	id := utl.Str(x["id"])
 
-	// First, print the most important attributes for this user
-	list := []string{"id", "displayName", "userPrincipalName", "mailNickname", "onPremisesSamAccountName",
+	// Print the primary keys first
+	keys := []string{"id", "displayName", "userPrincipalName", "mailNickname", "onPremisesSamAccountName",
 		"onPremisesDomainName", "onPremisesUserPrincipalName"}
-	for _, i := range list {
-		v := utl.Str(x[i])
-		if v != "" { // Only print non-null attributes
+	for _, i := range keys {
+		if v := utl.Str(x[i]); v != "" { // Print only non-empty keys
 			fmt.Printf("%s: %s\n", utl.Blu(i), utl.Gre(v))
 		}
 	}
@@ -94,7 +93,7 @@ func GetUsers(filter string, force bool, z Bundle) (list []interface{}) {
 	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_users.json")
 	cacheNoGood, list := CheckLocalCache(cacheFile, 604800) // cachePeriod = 1 week in seconds
 	if cacheNoGood || force {
-		list = GetAzUsers(cacheFile, z.MgHeaders, true) // Get all from Azure and show progress (verbose = true)
+		list = GetAzUsers(cacheFile, z, true) // Get all from Azure and show progress (verbose = true)
 	}
 
 	// Do filter matching
@@ -102,15 +101,15 @@ func GetUsers(filter string, force bool, z Bundle) (list []interface{}) {
 		return list
 	}
 	var matchingList []interface{} = nil
-	searchAttributes := []string{
-		"id", "displayName", "mailNickname", "onPremisesDomainName", "onPremisesSamAccountName",
-		"onPremisesUserPrincipalName", "userPrincipalName",
+	searchKeys := []string{
+		"id", "displayName", "userPrincipalName", "mailNickname", "onPremisesSamAccountName",
+		"onPremisesDomainName", "onPremisesUserPrincipalName",
 	}
 	var ids []string // Keep track of each unique objects to eliminate repeats
 	for _, i := range list {
 		x := i.(map[string]interface{})
 		id := utl.Str(x["id"])
-		for _, i := range searchAttributes {
+		for _, i := range searchKeys {
 			if utl.SubString(utl.Str(x[i]), filter) && !utl.ItemInList(id, ids) {
 				matchingList = append(matchingList, x)
 				ids = append(ids, id)
@@ -120,7 +119,7 @@ func GetUsers(filter string, force bool, z Bundle) (list []interface{}) {
 	return matchingList
 }
 
-func GetAzUsers(cacheFile string, headers map[string]string, verbose bool) (list []interface{}) {
+func GetAzUsers(cacheFile string, z Bundle, verbose bool) (list []interface{}) {
 	// Get all Azure AD users in current tenant AND save them to local cache file. Show progress if verbose = true.
 
 	// We will first try doing a delta query. See https://docs.microsoft.com/en-us/graph/delta-query-overview
@@ -130,9 +129,10 @@ func GetAzUsers(cacheFile string, headers map[string]string, verbose bool) (list
 
 	baseUrl := ConstMgUrl + "/v1.0/users"
 	// Get delta updates only if/when below attributes in $select are modified
-	selection := "?$select=displayName,mailNickname,onPremisesDomainName,"
-	selection += "onPremisesSamAccountName,onPremisesUserPrincipalName,userPrincipalName"
+	selection := "?$select=displayName,userPrincipalName,mailNickname,onPremisesSamAccountName,"
+	selection += "onPremisesDomainName,onPremisesUserPrincipalName"
 	url := baseUrl + "/delta" + selection + "&$top=999"
+	headers := z.MgHeaders
 	headers["Prefer"] = "return=minimal" // Tells API to focus only on $select attributes
 	headers["deltaToken"] = "latest"
 
@@ -148,7 +148,7 @@ func GetAzUsers(cacheFile string, headers map[string]string, verbose bool) (list
 
 	// Now go get Azure objects using the updated URL (either a full or a deltaLink query)
 	var deltaSet []interface{} = nil
-	deltaSet, deltaLinkMap = GetAzObjects(url, headers, verbose) // Run generic deltaSet retriever function
+	deltaSet, deltaLinkMap = GetAzObjects(url, z, verbose) // Run generic deltaSet retriever function
 
 	// Save new deltaLink for future call, and merge newly acquired delta set with existing list
 	utl.SaveFileJson(deltaLinkMap, deltaLinkFile)
@@ -157,17 +157,17 @@ func GetAzUsers(cacheFile string, headers map[string]string, verbose bool) (list
 	return list
 }
 
-func GetAzUserByUuid(uuid string, headers map[string]string) map[string]interface{} {
+func GetAzUserByUuid(uuid string, z Bundle) map[string]interface{} {
 	// Get Azure user by Object UUID, with extended attributes
 	baseUrl := ConstMgUrl + "/v1.0/users"
-	selection := "?$select=id,accountEnabled,createdDateTime,creationType,displayName,identities,"
-	selection += "lastPasswordChangeDateTime,mail,mailNickname,onPremisesDistinguishedName,"
-	selection += "onPremisesDomainName,onPremisesExtensionAttributes,onPremisesImmutableId,"
-	selection += "onPremisesLastSyncDateTime,onPremisesProvisioningErrors,onPremisesSamAccountName,"
-	selection += "onPremisesSecurityIdentifier,onPremisesSyncEnabled,onPremisesUserPrincipalName,"
-	selection += "otherMails,securityIdentifier,surname,userPrincipalName,tags"
+	selection := "?$select=id,displayName,userPrincipalName,mailNickname,onPremisesSamAccountName," +
+		"onPremisesDomainName,onPremisesUserPrincipalName,otherMails,identities,accountEnabled," +
+		"createdDateTime,creationType,lastPasswordChangeDateTime,mail,onPremisesDistinguishedName," +
+		"onPremisesExtensionAttributes,onPremisesImmutableId,onPremisesLastSyncDateTime," +
+		"onPremisesProvisioningErrors,onPremisesSecurityIdentifier,onPremisesSyncEnabled," +
+		"securityIdentifier,surname,tags,"
 	url := baseUrl + "/" + uuid + selection
-	r, _, _ := ApiGet(url, headers, nil)
+	r, _, _ := ApiGet(url, z.MgHeaders, nil)
 	//ApiErrorCheck("GET", url, utl.Trace(), r) // Commented out to do this quietly. Use for DEBUGging
 	return r
 }

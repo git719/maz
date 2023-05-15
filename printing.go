@@ -105,7 +105,7 @@ func PrintObjectByUuid(uuid string, z Bundle) {
 		x := obj.(map[string]interface{})
 		mazType := utl.Str(x["mazType"])
 		if mazType != "" {
-			fmt.Printf("Object %d type = %s:\n", i, utl.Red(mazType))
+			fmt.Printf("Object %d (%s):\n", i, utl.Red(mazTypesLong[mazType]))
 			PrintObject(mazType, x, z)
 		}
 	}
@@ -274,8 +274,9 @@ func PrintStringMapColor(strMap map[string]string) {
 }
 
 func PrintMatching(printFormat, t, specifier string, z Bundle) {
-	// Print matching object or objecs in JSON format
-	if utl.ValidUuid(specifier) { // Search/print single object, if it's valid UUID
+	// Print matching object or objects in JSON format
+
+	if utl.ValidUuid(specifier) {
 		x := GetAzObjectByUuid(t, specifier, z)
 		if printFormat == "json" {
 			utl.PrintJsonColor(x)

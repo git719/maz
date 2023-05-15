@@ -16,12 +16,10 @@ func PrintGroup(x map[string]interface{}, z Bundle) {
 	}
 	id := utl.Str(x["id"])
 
-	// First, print the most important attributes of this group
-	list := []string{"id", "displayName", "description", "isAssignableToRole",
-		"mailEnabled", "mailNickname"}
-	for _, i := range list {
-		v := utl.Str(x[i])
-		if v != "" { // Only print non-null attributes
+	// Print the primary keys first
+	keys := []string{"id", "displayName", "description", "isAssignableToRole", "mailEnabled"}
+	for _, i := range keys {
+		if v := utl.Str(x[i]); v != "" { // Print only non-empty keys
 			fmt.Printf("%s: %s\n", utl.Blu(i), utl.Gre(v))
 		}
 	}
@@ -113,13 +111,13 @@ func GetIdMapGroups(z Bundle) (nameMap map[string]string) {
 }
 
 func GetGroups(filter string, force bool, z Bundle) (list []interface{}) {
-	// Get all Azure AD groups whose searchAttributes match on 'filter'. An empty "" filter returns all.
+	// Get all Azure AD groups whose searchKeys match on 'filter'. An empty "" filter returns all.
 	// Uses local cache if it's less than cachePeriod old. The 'force' option forces calling Azure query.
 	list = nil
 	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_groups.json")
 	cacheNoGood, list := CheckLocalCache(cacheFile, 604800) // cachePeriod = 1 week in seconds
 	if cacheNoGood || force {
-		list = GetAzGroups(cacheFile, z.MgHeaders, true) // Get all from Azure and show progress (verbose = true)
+		list = GetAzGroups(cacheFile, z, true) // Get all from Azure and show progress (verbose = true)
 	}
 
 	// Do filter matching
@@ -127,15 +125,15 @@ func GetGroups(filter string, force bool, z Bundle) (list []interface{}) {
 		return list
 	}
 	var matchingList []interface{} = nil
-	searchAttributes := []string{
-		"id", "displayName", "userPrincipalName", "onPremisesSamAccountName",
-		"onPremisesUserPrincipalName", "onPremisesDomainName",
+	searchKeys := []string{
+		"id", "displayName", "description", "isAssignableToRole",
+		"mailEnabled", "mail", "onPremisesSamAccountName",
 	}
 	var ids []string // Keep track of each unique objects to eliminate repeats
 	for _, i := range list {
 		x := i.(map[string]interface{})
 		id := utl.Str(x["id"])
-		for _, i := range searchAttributes {
+		for _, i := range searchKeys {
 			if utl.SubString(utl.Str(x[i]), filter) && !utl.ItemInList(id, ids) {
 				matchingList = append(matchingList, x)
 				ids = append(ids, id)
@@ -145,23 +143,24 @@ func GetGroups(filter string, force bool, z Bundle) (list []interface{}) {
 	return matchingList
 }
 
-func GetAzGroups(cacheFile string, headers map[string]string, verbose bool) (list []interface{}) {
+func GetAzGroups(cacheFile string, z Bundle, verbose bool) (list []interface{}) {
 	// Get all Azure AD groups in current tenant AND save them to local cache file. Show progress if verbose = true.
 
-	// We will first try doing a delta query. See https://docs.microsoft.com/en-us/graph/delta-query-overview
-	var deltaLinkMap map[string]interface{} = nil
+	// First, try a delta query. See https://docs.microsoft.com/en-us/graph/delta-query-overview
 	deltaLinkFile := cacheFile[:len(cacheFile)-len(filepath.Ext(cacheFile))] + "_deltaLink.json"
 	deltaAge := int64(time.Now().Unix()) - int64(utl.FileModTime(deltaLinkFile))
 
 	baseUrl := ConstMgUrl + "/v1.0/groups"
 	// Get delta updates only if/when below attributes in $select are modified
-	selection := "?$select=displayName,mailNickname,description,mailEnabled,isAssignableToRole"
+	selection := "?$select=displayName,description,mail,onPremisesLastSyncDateTime"
 	url := baseUrl + "/delta" + selection + "&$top=999"
+	headers := z.MgHeaders
 	headers["Prefer"] = "return=minimal" // This tells API to focus only on specific 'select' attributes
 	headers["deltaToken"] = "latest"
 
 	// But first, double-check the base set again to avoid running a delta query on an empty set
 	listIsEmpty, list := CheckLocalCache(cacheFile, 86400) // cachePeriod = 1 day in seconds
+	var deltaLinkMap map[string]interface{} = nil
 	if utl.FileUsable(deltaLinkFile) && deltaAge < (3660*24*27) && listIsEmpty == false {
 		// Note that deltaLink file age has to be within 30 days (we do 27)
 		tmpVal, _ := utl.LoadFileJson(deltaLinkFile)
@@ -172,7 +171,7 @@ func GetAzGroups(cacheFile string, headers map[string]string, verbose bool) (lis
 
 	// Now go get azure objects using the updated URL (either a full query or a deltaLink query)
 	var deltaSet []interface{} = nil
-	deltaSet, deltaLinkMap = GetAzObjects(url, headers, verbose) // Run generic deltaSet retriever function
+	deltaSet, deltaLinkMap = GetAzObjects(url, z, verbose) // Run generic deltaSet retriever function
 
 	// Save new deltaLink for future call, and merge newly acquired delta set with existing list
 	utl.SaveFileJson(deltaLinkMap, deltaLinkFile)
@@ -181,22 +180,23 @@ func GetAzGroups(cacheFile string, headers map[string]string, verbose bool) (lis
 	return list
 }
 
-func GetAzGroupByUuid(uuid string, headers map[string]string) map[string]interface{} {
+func GetAzGroupByUuid(uuid string, z Bundle) map[string]interface{} {
 	// Get Azure AD group by Object UUID, with extended attributes
 	baseUrl := ConstMgUrl + "/v1.0/groups"
-	selection := "?$select=id,createdDateTime,description,displayName,groupTypes,id,isAssignableToRole,"
-	selection += "mail,mailNickname,onPremisesLastSyncDateTime,onPremisesProvisioningErrors,"
-	selection += "onPremisesSecurityIdentifier,onPremisesSyncEnabled,renewedDateTime,securityEnabled,"
-	selection += "securityIdentifier,memberOf,members,owners,tags"
+	selection := "?$select=createdDateTime,description,displayName,expirationDateTime,groupTypes," +
+		"id,isAssignableToRole,mail,mailEnabled,mailNickname,memberOf,members,onPremisesLastSyncDateTime," +
+		"onPremisesProvisioningErrors,onPremisesSamAccountName,onPremisesSecurityIdentifier," +
+		"onPremisesSyncEnabled,owners,renewedDateTime,securityEnabled,securityIdentifier,tags"
+		// Not allowed: allowExternalSenders,
 	url := baseUrl + "/" + uuid + selection
-	r, _, _ := ApiGet(url, headers, nil)
+	r, _, _ := ApiGet(url, z.MgHeaders, nil)
 	//ApiErrorCheck("GET", url, utl.Trace(), r) // Commented out to do this quietly. Use for DEBUGging
 	return r
 }
 
 func PrintPags(z Bundle) {
-	// List all Privileged Access Groups
-	groups := GetGroups("", false, z) // Get all groups, false = not need to hit Azure
+	// List all cached Privileged Access Groups
+	groups := GetGroups("", false, z) // Get all groups, false = don't hit Azure
 	for _, i := range groups {
 		x := i.(map[string]interface{})
 		if x["isAssignableToRole"] != nil {

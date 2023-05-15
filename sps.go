@@ -192,7 +192,7 @@ func RemoveSpSecret(uuid, keyId string, z Bundle) {
 	}
 
 	// Get SP, display details and secret, and prompt for delete confirmation
-	x := GetAzSpByUuid(uuid, z.MgHeaders)
+	x := GetAzSpByUuid(uuid, z)
 	if x == nil || x["id"] == nil {
 		utl.Die("There's no SP with this UUID.\n")
 	}
@@ -326,7 +326,7 @@ func GetSps(filter string, force bool, z Bundle) (list []interface{}) {
 	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_servicePrincipals.json")
 	cacheNoGood, list := CheckLocalCache(cacheFile, 86400) // cachePeriod = 1 day in seconds
 	if cacheNoGood || force {
-		list = GetAzSps(cacheFile, z.MgHeaders, true) // Get all from Azure and show progress (verbose = true)
+		list = GetAzSps(cacheFile, z, true) // Get all from Azure and show progress (verbose = true)
 	}
 
 	// Do filter matching
@@ -349,10 +349,10 @@ func GetSps(filter string, force bool, z Bundle) (list []interface{}) {
 	return matchingList
 }
 
-func GetAzSps(cacheFile string, headers map[string]string, verbose bool) (list []interface{}) {
+func GetAzSps(cacheFile string, z Bundle, verbose bool) (list []interface{}) {
 	// Get all Azure AD service principal in current tenant AND save them to local cache file. Show progress if verbose = true.
 
-	// We will first try doing a delta query. See https://docs.microsoft.com/en-us/graph/delta-query-overview
+	// First try a delta query. See https://docs.microsoft.com/en-us/graph/delta-query-overview
 	var deltaLinkMap map[string]interface{} = nil
 	deltaLinkFile := cacheFile[:len(cacheFile)-len(filepath.Ext(cacheFile))] + "_deltaLink.json"
 	deltaAge := int64(time.Now().Unix()) - int64(utl.FileModTime(deltaLinkFile))
@@ -362,6 +362,7 @@ func GetAzSps(cacheFile string, headers map[string]string, verbose bool) (list [
 	// Get delta updates only if/when below attributes in $select are modified
 	selection := "?$select=displayName,appId,accountEnabled,servicePrincipalType,appOwnerOrganizationId"
 	url := baseUrl + "/delta" + selection + "&$top=999"
+	headers := z.MgHeaders
 	headers["Prefer"] = "return=minimal" // This tells API to focus only on specific 'select' attributes
 	headers["deltaToken"] = "latest"
 
@@ -377,7 +378,7 @@ func GetAzSps(cacheFile string, headers map[string]string, verbose bool) (list [
 
 	// Now go get azure objects using the updated URL (either a full query or a deltaLink query)
 	var deltaSet []interface{} = nil
-	deltaSet, deltaLinkMap = GetAzObjects(url, headers, verbose) // Run generic deltaSet retriever function
+	deltaSet, deltaLinkMap = GetAzObjects(url, z, verbose) // Run generic deltaSet retriever function
 
 	// Save new deltaLink for future call, and merge newly acquired delta set with existing list
 	utl.SaveFileJson(deltaLinkMap, deltaLinkFile)
@@ -386,21 +387,21 @@ func GetAzSps(cacheFile string, headers map[string]string, verbose bool) (list [
 	return list
 }
 
-func GetAzSpByUuid(uuid string, headers map[string]string) map[string]interface{} {
+func GetAzSpByUuid(uuid string, z Bundle) map[string]interface{} {
 	// Get Azure AD service principal by its Object UUID or by its appId, with extended attributes
 	//baseUrl := ConstMgUrl + "/v1.0/servicePrincipals"
 	baseUrl := ConstMgUrl + "/beta/servicePrincipals"
-	selection := "?$select=id,displayName,appId,accountEnabled,servicePrincipalType,appOwnerOrganizationId,"
-	selection += "appRoleAssignmentRequired,appRoles,disabledByMicrosoftStatus,addIns,alternativeNames,"
-	selection += "appDisplayName,homepage,id,info,logoutUrl,notes,oauth2PermissionScopes,replyUrls,"
-	selection += "resourceSpecificApplicationPermissions,servicePrincipalNames,tags,customSecurityAttributes"
+	selection := "?$select=id,displayName,appId,accountEnabled,servicePrincipalType,appOwnerOrganizationId," +
+		"appRoleAssignmentRequired,appRoles,disabledByMicrosoftStatus,addIns,alternativeNames," +
+		"appDisplayName,homepage,id,info,logoutUrl,notes,oauth2PermissionScopes,replyUrls," +
+		"resourceSpecificApplicationPermissions,servicePrincipalNames,tags,customSecurityAttributes"
 	url := baseUrl + "/" + uuid + selection // First search is for direct Object Id
-	r, _, _ := ApiGet(url, headers, nil)
+	r, _, _ := ApiGet(url, z.MgHeaders, nil)
 	if r != nil && r["error"] != nil {
 		// Second search is for this SP's application Client Id
 		url = baseUrl + selection
 		params := map[string]string{"$filter": "appId eq '" + uuid + "'"}
-		r, _, _ := ApiGet(url, headers, params)
+		r, _, _ := ApiGet(url, z.MgHeaders, params)
 		//ApiErrorCheck("GET", url, utl.Trace(), r) // Commented out to do this quietly. Use for DEBUGging
 		if r != nil && r["value"] != nil {
 			list := r["value"].([]interface{})
