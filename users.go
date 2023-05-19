@@ -17,23 +17,10 @@ func PrintUser(x map[string]interface{}, z Bundle) {
 	id := utl.Str(x["id"])
 
 	// Print the primary keys first
-	keys := []string{"id", "displayName", "userPrincipalName", "mailNickname", "onPremisesSamAccountName",
-		"onPremisesDomainName", "onPremisesUserPrincipalName"}
+	keys := []string{"id", "displayName", "userPrincipalName", "onPremisesSamAccountName", "onPremisesDomainName"}
 	for _, i := range keys {
 		if v := utl.Str(x[i]); v != "" { // Print only non-empty keys
 			fmt.Printf("%s: %s\n", utl.Blu(i), utl.Gre(v))
-		}
-	}
-
-	// Print other mails this user has configured
-	if x["otherMails"] != nil {
-		otherMails := x["otherMails"].([]interface{})
-		if len(otherMails) > 0 {
-			fmt.Printf(utl.Blu("otherMails") + ":\n")
-			for _, i := range otherMails {
-				email := i.(string)
-				fmt.Printf("  %s\n", utl.Gre(email))
-			}
 		}
 	}
 
@@ -102,8 +89,7 @@ func GetUsers(filter string, force bool, z Bundle) (list []interface{}) {
 	}
 	var matchingList []interface{} = nil
 	searchKeys := []string{
-		"id", "displayName", "userPrincipalName", "mailNickname", "onPremisesSamAccountName",
-		"onPremisesDomainName", "onPremisesUserPrincipalName",
+		"id", "displayName", "userPrincipalName", "onPremisesSamAccountName",
 	}
 	var ids []string // Keep track of each unique objects to eliminate repeats
 	for _, i := range list {
@@ -129,8 +115,7 @@ func GetAzUsers(cacheFile string, z Bundle, verbose bool) (list []interface{}) {
 
 	baseUrl := ConstMgUrl + "/v1.0/users"
 	// Get delta updates only if/when below attributes in $select are modified
-	selection := "?$select=displayName,userPrincipalName,mailNickname,onPremisesSamAccountName,"
-	selection += "onPremisesDomainName,onPremisesUserPrincipalName"
+	selection := "?$select=displayName,userPrincipalName,onPremisesSamAccountName,"
 	url := baseUrl + "/delta" + selection + "&$top=999"
 	headers := z.MgHeaders
 	headers["Prefer"] = "return=minimal" // Tells API to focus only on $select attributes

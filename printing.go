@@ -77,9 +77,7 @@ func PrintTersely(t string, object interface{}) {
 		fmt.Printf("%s  %-50s %-18s %s\n", utl.Str(x["id"]), upn, onPremisesSamAccountName, utl.Str(x["displayName"]))
 	case "g":
 		fmt.Printf("%s  %s\n", utl.Str(x["id"]), utl.Str(x["displayName"]))
-	case "sp":
-		fmt.Printf("%s  %-60s %-22s %s\n", utl.Str(x["id"]), utl.Str(x["displayName"]), utl.Str(x["servicePrincipalType"]), utl.Str(x["appId"]))
-	case "ap":
+	case "sp", "ap":
 		fmt.Printf("%s  %-60s %s\n", utl.Str(x["id"]), utl.Str(x["displayName"]), utl.Str(x["appId"]))
 	case "ad":
 		builtIn := "Custom"

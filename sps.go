@@ -18,8 +18,7 @@ func PrintSp(x map[string]interface{}, z Bundle) {
 	id := utl.Str(x["id"])
 
 	// Print the most important attributes
-	list := []string{"id", "displayName", "appId", "accountEnabled", "servicePrincipalType",
-		"appOwnerOrganizationId"}
+	list := []string{"id", "displayName", "appId"}
 	for _, i := range list {
 		v := utl.Str(x[i])
 		if v != "" { // Only print non-null attributes
@@ -320,7 +319,7 @@ func GetIdMapSps(z Bundle) (nameMap map[string]string) {
 }
 
 func GetSps(filter string, force bool, z Bundle) (list []interface{}) {
-	// Get all Azure AD service principal whose searchAttributes match on 'filter'. An empty "" filter returns all.
+	// Get all Azure AD service principal whose searchKeys match on 'filter'. An empty "" filter returns all.
 	// Uses local cache if it's less than cachePeriod old. The 'force' option forces calling Azure query.
 	list = nil
 	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_servicePrincipals.json")
@@ -334,12 +333,12 @@ func GetSps(filter string, force bool, z Bundle) (list []interface{}) {
 		return list
 	}
 	var matchingList []interface{} = nil
-	searchAttributes := []string{"id", "displayName", "appId"}
+	searchKeys := []string{"id", "displayName", "appId", "appOwnerOrganizationId"}
 	var ids []string // Keep track of each unique objects to eliminate repeats
 	for _, i := range list {
 		x := i.(map[string]interface{})
 		id := utl.Str(x["id"])
-		for _, i := range searchAttributes {
+		for _, i := range searchKeys {
 			if utl.SubString(utl.Str(x[i]), filter) && !utl.ItemInList(id, ids) {
 				matchingList = append(matchingList, x)
 				ids = append(ids, id)
@@ -360,7 +359,7 @@ func GetAzSps(cacheFile string, z Bundle, verbose bool) (list []interface{}) {
 	//baseUrl := ConstMgUrl + "/v1.0/servicePrincipals"
 	baseUrl := ConstMgUrl + "/beta/servicePrincipals"
 	// Get delta updates only if/when below attributes in $select are modified
-	selection := "?$select=displayName,appId,accountEnabled,servicePrincipalType,appOwnerOrganizationId"
+	selection := "?$select=displayName,appId,accountEnabled,appOwnerOrganizationId"
 	url := baseUrl + "/delta" + selection + "&$top=999"
 	headers := z.MgHeaders
 	headers["Prefer"] = "return=minimal" // This tells API to focus only on specific 'select' attributes
@@ -391,7 +390,7 @@ func GetAzSpByUuid(uuid string, z Bundle) map[string]interface{} {
 	// Get Azure AD service principal by its Object UUID or by its appId, with extended attributes
 	//baseUrl := ConstMgUrl + "/v1.0/servicePrincipals"
 	baseUrl := ConstMgUrl + "/beta/servicePrincipals"
-	selection := "?$select=id,displayName,appId,accountEnabled,servicePrincipalType,appOwnerOrganizationId," +
+	selection := "?$select=displayName,appId,accountEnabled,servicePrincipalType,appOwnerOrganizationId," +
 		"appRoleAssignmentRequired,appRoles,disabledByMicrosoftStatus,addIns,alternativeNames," +
 		"appDisplayName,homepage,id,info,logoutUrl,notes,oauth2PermissionScopes,replyUrls," +
 		"resourceSpecificApplicationPermissions,servicePrincipalNames,tags,customSecurityAttributes"

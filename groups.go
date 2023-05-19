@@ -17,7 +17,7 @@ func PrintGroup(x map[string]interface{}, z Bundle) {
 	id := utl.Str(x["id"])
 
 	// Print the primary keys first
-	keys := []string{"id", "displayName", "description", "isAssignableToRole", "mailEnabled"}
+	keys := []string{"id", "displayName", "description", "isAssignableToRole"}
 	for _, i := range keys {
 		if v := utl.Str(x[i]); v != "" { // Print only non-empty keys
 			fmt.Printf("%s: %s\n", utl.Blu(i), utl.Gre(v))
@@ -127,7 +127,6 @@ func GetGroups(filter string, force bool, z Bundle) (list []interface{}) {
 	var matchingList []interface{} = nil
 	searchKeys := []string{
 		"id", "displayName", "description", "isAssignableToRole",
-		"mailEnabled", "mail", "onPremisesSamAccountName",
 	}
 	var ids []string // Keep track of each unique objects to eliminate repeats
 	for _, i := range list {
@@ -152,7 +151,7 @@ func GetAzGroups(cacheFile string, z Bundle, verbose bool) (list []interface{}) 
 
 	baseUrl := ConstMgUrl + "/v1.0/groups"
 	// Get delta updates only if/when below attributes in $select are modified
-	selection := "?$select=displayName,description,mail,onPremisesLastSyncDateTime"
+	selection := "?$select=displayName,description,isAssignableToRole"
 	url := baseUrl + "/delta" + selection + "&$top=999"
 	headers := z.MgHeaders
 	headers["Prefer"] = "return=minimal" // This tells API to focus only on specific 'select' attributes

@@ -117,7 +117,7 @@ func AdRolesCountAzure(z Bundle) int64 {
 }
 
 func GetAdRoles(filter string, force bool, z Bundle) (list []interface{}) {
-	// Get all Azure AD role definitions whose searchAttributes match on 'filter'. An empty "" filter returns all.
+	// Get all Azure AD role definitions whose searchKeys match on 'filter'. An empty "" filter returns all.
 	// Uses local cache if it's less than cachePeriod old. The 'force' option forces calling Azure query.
 	list = nil
 	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_directoryRoles.json")
@@ -131,12 +131,12 @@ func GetAdRoles(filter string, force bool, z Bundle) (list []interface{}) {
 		return list
 	}
 	var matchingList []interface{} = nil
-	searchAttributes := []string{"id", "displayName", "description", "templateId"}
+	searchKeys := []string{"id", "displayName", "description", "templateId"}
 	var ids []string // Keep track of each unique objects to eliminate repeats
 	for _, i := range list {
 		x := i.(map[string]interface{})
 		id := utl.Str(x["id"])
-		for _, i := range searchAttributes {
+		for _, i := range searchKeys {
 			if utl.SubString(utl.Str(x[i]), filter) && !utl.ItemInList(id, ids) {
 				matchingList = append(matchingList, x)
 				ids = append(ids, id)

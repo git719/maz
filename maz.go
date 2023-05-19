@@ -95,19 +95,13 @@ func DumpCredentials(z Bundle) {
 		utl.Die("[%s] %s\n", filePath, err)
 	}
 	creds := credsRaw.(map[string]interface{})
-	co := utl.Red(":")
-	cTenant := utl.Blu("tenant_id") + co
-	fmt.Printf("%s %s\n", cTenant, utl.Str(creds["tenant_id"]))
+	fmt.Printf("%s: %s\n", utl.Blu("tenant_id"), utl.Gre(utl.Str(creds["tenant_id"])))
 	if strings.ToLower(utl.Str(creds["interactive"])) == "true" {
-		cUsername := utl.Blu("username") + co
-		fmt.Printf("%s %s\n", cUsername, utl.Str(creds["username"]))
-		cInterative := utl.Blu("interactive") + co
-		fmt.Printf("%s %s\n", cInterative, "true")
+		fmt.Printf("%s: %s\n", utl.Blu("username"), utl.Gre(utl.Str(creds["username"])))
+		fmt.Printf("%s: %s\n", utl.Blu("interactive"), utl.Mag("true"))
 	} else {
-		cClientId := utl.Blu("client_id") + co
-		fmt.Printf("%s %s\n", cClientId, utl.Str(creds["client_id"]))
-		cClientSecret := utl.Blu("client_secret") + co
-		fmt.Printf("%s %s\n", cClientSecret, utl.Str(creds["client_secret"]))
+		fmt.Printf("%s: %s\n", utl.Blu("client_id"), utl.Gre(utl.Str(creds["client_id"])))
+		fmt.Printf("%s: %s\n", utl.Blu("client_secret"), utl.Gre(utl.Str(creds["client_secret"])))
 	}
 	os.Exit(0)
 }

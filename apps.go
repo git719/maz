@@ -296,7 +296,7 @@ func GetIdMapApps(z Bundle) (nameMap map[string]string) {
 }
 
 func GetApps(filter string, force bool, z Bundle) (list []interface{}) {
-	// Get all Azure AD applications whose searchAttributes match on 'filter'. An empty "" filter returns all.
+	// Get all Azure AD applications whose searchKeys match on 'filter'. An empty "" filter returns all.
 	// Uses local cache if it's less than cachePeriod old. The 'force' option forces calling Azure query.
 	list = nil
 	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_applications.json")
@@ -310,12 +310,12 @@ func GetApps(filter string, force bool, z Bundle) (list []interface{}) {
 		return list
 	}
 	var matchingList []interface{} = nil
-	searchAttributes := []string{"id", "displayName", "appId"}
+	searchKeys := []string{"id", "displayName", "appId"}
 	var ids []string // Keep track of each unique objects to eliminate repeats
 	for _, i := range list {
 		x := i.(map[string]interface{})
 		id := utl.Str(x["id"])
-		for _, i := range searchAttributes {
+		for _, i := range searchKeys {
 			if utl.SubString(utl.Str(x[i]), filter) && !utl.ItemInList(id, ids) {
 				matchingList = append(matchingList, x)
 				ids = append(ids, id)
@@ -367,7 +367,7 @@ func GetAzAppByUuid(uuid string, z Bundle) map[string]interface{} {
 	// Get Azure AD application by its Object UUID or by its appId, with extended attributes
 	//baseUrl := ConstMgUrl + "/v1.0/applications"
 	baseUrl := ConstMgUrl + "/beta/applications"
-	selection := "?$select=id,addIns,api,appId,applicationTemplateId,appRoles,certification," +
+	selection := "?$select=addIns,api,appId,applicationTemplateId,appRoles,certification," +
 		"createdDateTime,deletedDateTime,disabledByMicrosoftStatus,displayName,groupMembershipClaims," +
 		"id,identifierUris,info,isDeviceOnlyAuthSupported,isFallbackPublicClient,keyCredentials,logo," +
 		"notes,oauth2RequiredPostResponse,optionalClaims,parentalControlSettings,passwordCredentials," +
