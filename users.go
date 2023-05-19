@@ -26,7 +26,7 @@ func PrintUser(x map[string]interface{}, z Bundle) {
 
 	// Print all groups and roles it is a member of
 	url := ConstMgUrl + "/v1.0/users/" + id + "/transitiveMemberOf"
-	r, statusCode, _ := ApiGet(url, z.MgHeaders, nil)
+	r, statusCode, _ := ApiGet(url, z, nil)
 	if statusCode == 200 && r != nil && r["value"] != nil {
 		memberOf := r["value"].([]interface{})
 		PrintMemberOfs("g", memberOf)
@@ -51,7 +51,7 @@ func UsersCountAzure(z Bundle) int64 {
 	// Return number of entries in Azure tenant
 	z.MgHeaders["ConsistencyLevel"] = "eventual"
 	url := ConstMgUrl + "/v1.0/users/$count"
-	r, _, _ := ApiGet(url, z.MgHeaders, nil)
+	r, _, _ := ApiGet(url, z, nil)
 	ApiErrorCheck("GET", url, utl.Trace(), r)
 	if r["value"] != nil {
 		return r["value"].(int64) // Expected result is a single int64 value for the count
@@ -117,9 +117,8 @@ func GetAzUsers(cacheFile string, z Bundle, verbose bool) (list []interface{}) {
 	// Get delta updates only if/when below attributes in $select are modified
 	selection := "?$select=displayName,userPrincipalName,onPremisesSamAccountName,"
 	url := baseUrl + "/delta" + selection + "&$top=999"
-	headers := z.MgHeaders
-	headers["Prefer"] = "return=minimal" // Tells API to focus only on $select attributes
-	headers["deltaToken"] = "latest"
+	z.MgHeaders["Prefer"] = "return=minimal" // Tells API to focus only on $select attributes
+	z.MgHeaders["deltaToken"] = "latest"
 
 	// But first, double-check the base set again to avoid running a delta query on an empty set
 	listIsEmpty, list := CheckLocalCache(cacheFile, 86400) // cachePeriod = 1 day in seconds
@@ -152,7 +151,7 @@ func GetAzUserByUuid(uuid string, z Bundle) map[string]interface{} {
 		"onPremisesProvisioningErrors,onPremisesSecurityIdentifier,onPremisesSyncEnabled," +
 		"securityIdentifier,surname,tags,"
 	url := baseUrl + "/" + uuid + selection
-	r, _, _ := ApiGet(url, z.MgHeaders, nil)
+	r, _, _ := ApiGet(url, z, nil)
 	//ApiErrorCheck("GET", url, utl.Trace(), r) // Commented out to do this quietly. Use for DEBUGging
 	return r
 }

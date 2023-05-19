@@ -28,7 +28,7 @@ func PrintSp(x map[string]interface{}, z Bundle) {
 
 	// Print certificates keys
 	url := ConstMgUrl + "/v1.0/servicePrincipals/" + id + "/keyCredentials"
-	r, statusCode, _ := ApiGet(url, z.MgHeaders, nil)
+	r, statusCode, _ := ApiGet(url, z, nil)
 	if statusCode == 200 && r != nil && r["value"] != nil && len(r["value"].([]interface{})) > 0 {
 		keyCredentials := r["value"].([]interface{}) // Assert as JSON array
 		if keyCredentials != nil {
@@ -38,7 +38,7 @@ func PrintSp(x map[string]interface{}, z Bundle) {
 
 	// Print secret expiry and other details. Not actual secretText, which cannot be retrieve anyway!
 	url = ConstMgUrl + "/v1.0/servicePrincipals/" + id + "/passwordCredentials"
-	r, statusCode, _ = ApiGet(url, z.MgHeaders, nil)
+	r, statusCode, _ = ApiGet(url, z, nil)
 	if statusCode == 200 && r != nil && r["value"] != nil && len(r["value"].([]interface{})) > 0 {
 		passwordCredentials := r["value"].([]interface{}) // Assert as JSON array
 		if passwordCredentials != nil {
@@ -48,7 +48,7 @@ func PrintSp(x map[string]interface{}, z Bundle) {
 
 	// Print owners
 	url = ConstMgUrl + "/beta/servicePrincipals/" + id + "/owners"
-	r, statusCode, _ = ApiGet(url, z.MgHeaders, nil)
+	r, statusCode, _ = ApiGet(url, z, nil)
 	if statusCode == 200 && r != nil && r["value"] != nil {
 		PrintOwners(r["value"].([]interface{}))
 	}
@@ -74,7 +74,7 @@ func PrintSp(x map[string]interface{}, z Bundle) {
 	// Print app role assignment members and the specific role assigned
 	//url = ConstMgUrl + "/v1.0/servicePrincipals/" + id + "/appRoleAssignedTo"
 	url = ConstMgUrl + "/beta/servicePrincipals/" + id + "/appRoleAssignedTo"
-	r, statusCode, _ = ApiGet(url, z.MgHeaders, nil)
+	r, statusCode, _ = ApiGet(url, z, nil)
 	if statusCode == 200 && r != nil && r["value"] != nil && len(r["value"].([]interface{})) > 0 {
 		appRoleAssignments := r["value"].([]interface{}) // Assert as JSON array
 		if len(appRoleAssignments) > 0 {
@@ -100,7 +100,7 @@ func PrintSp(x map[string]interface{}, z Bundle) {
 	// Print all groups and roles it is a member of
 	//url = ConstMgUrl + "/v1.0/servicePrincipals/" + id + "/transitiveMemberOf"
 	url = ConstMgUrl + "/beta/servicePrincipals/" + id + "/transitiveMemberOf"
-	r, statusCode, _ = ApiGet(url, z.MgHeaders, nil)
+	r, statusCode, _ = ApiGet(url, z, nil)
 	if statusCode == 200 && r != nil && r["value"] != nil {
 		memberOf := r["value"].([]interface{})
 		PrintMemberOfs("g", memberOf)
@@ -108,7 +108,7 @@ func PrintSp(x map[string]interface{}, z Bundle) {
 
 	// Print API permissions
 	url = ConstMgUrl + "/v1.0/servicePrincipals/" + id + "/oauth2PermissionGrants"
-	r, statusCode, _ = ApiGet(url, z.MgHeaders, nil)
+	r, statusCode, _ = ApiGet(url, z, nil)
 	if statusCode == 200 && r != nil && r["value"] != nil && len(r["value"].([]interface{})) > 0 {
 		fmt.Printf(utl.Blu("api_permissions") + ":\n")
 		apiPerms := r["value"].([]interface{}) // Assert as JSON array
@@ -120,7 +120,7 @@ func PrintSp(x map[string]interface{}, z Bundle) {
 			id := utl.Str(api["resourceId"]) // Get API's SP to get its displayName
 			//url2 := ConstMgUrl + "/v1.0/servicePrincipals/" + id
 			url2 := ConstMgUrl + "/beta/servicePrincipals/" + id
-			r2, _, _ := ApiGet(url2, z.MgHeaders, nil)
+			r2, _, _ := ApiGet(url2, z, nil)
 			ApiErrorCheck("GET", url2, utl.Trace(), r2)
 			if r2["appDisplayName"] != nil {
 				apiName = utl.Str(r2["appDisplayName"])
@@ -169,7 +169,7 @@ func AddSpSecret(uuid, displayName, expiry string, z Bundle) {
 		},
 	}
 	url := ConstMgUrl + "/v1.0/servicePrincipals/" + uuid + "/addPassword"
-	r, statusCode, _ := ApiPost(url, payload, z.MgHeaders, nil)
+	r, statusCode, _ := ApiPost(url, z, payload, nil)
 	if statusCode == 200 {
 		fmt.Printf("%s: %s\n", utl.Blu("App_Object_Id"), utl.Gre(uuid))
 		fmt.Printf("%s: %s\n", utl.Blu("New_Secret_Id"), utl.Gre(utl.Str(r["keyId"])))
@@ -196,7 +196,7 @@ func RemoveSpSecret(uuid, keyId string, z Bundle) {
 		utl.Die("There's no SP with this UUID.\n")
 	}
 	url := ConstMgUrl + "/v1.0/servicePrincipals/" + uuid + "/passwordCredentials"
-	r, statusCode, _ := ApiGet(url, z.MgHeaders, nil)
+	r, statusCode, _ := ApiGet(url, z, nil)
 	var passwordCredentials []interface{} = nil
 	if statusCode == 200 && r != nil && r["value"] != nil && len(r["value"].([]interface{})) > 0 {
 		passwordCredentials = r["value"].([]interface{}) // Assert as JSON array
@@ -237,7 +237,7 @@ func RemoveSpSecret(uuid, keyId string, z Bundle) {
 	if utl.PromptMsg("DELETE above? y/n ") == 'y' {
 		payload := map[string]interface{}{"keyId": keyId}
 		url := ConstMgUrl + "/v1.0/servicePrincipals/" + uuid + "/removePassword"
-		r, statusCode, _ := ApiPost(url, payload, z.MgHeaders, nil)
+		r, statusCode, _ := ApiPost(url, z, payload, nil)
 		if statusCode == 204 {
 			utl.Die("Successfully deleted secret.\n")
 		} else {
@@ -281,7 +281,7 @@ func SpsCountAzure(z Bundle) (native, microsoft int64) {
 	//baseUrl := ConstMgUrl + "/v1.0/servicePrincipals"
 	baseUrl := ConstMgUrl + "/beta/servicePrincipals"
 	url := baseUrl + "/$count"
-	r, _, _ := ApiGet(url, z.MgHeaders, nil)
+	r, _, _ := ApiGet(url, z, nil)
 	ApiErrorCheck("GET", url, utl.Trace(), r)
 	if r["value"] == nil {
 		return 0, 0 // Something went wrong, so return zero for both
@@ -292,7 +292,7 @@ func SpsCountAzure(z Bundle) (native, microsoft int64) {
 	params := map[string]string{"$filter": "appOwnerOrganizationId eq " + z.TenantId}
 	params["$count"] = "true"
 	url = baseUrl
-	r, _, _ = ApiGet(url, z.MgHeaders, params)
+	r, _, _ = ApiGet(url, z, params)
 	ApiErrorCheck("GET", url, utl.Trace(), r)
 	if r["value"] == nil {
 		return 0, all // Something went wrong with native count, retun all as Microsoft ones
@@ -361,9 +361,8 @@ func GetAzSps(cacheFile string, z Bundle, verbose bool) (list []interface{}) {
 	// Get delta updates only if/when below attributes in $select are modified
 	selection := "?$select=displayName,appId,accountEnabled,appOwnerOrganizationId"
 	url := baseUrl + "/delta" + selection + "&$top=999"
-	headers := z.MgHeaders
-	headers["Prefer"] = "return=minimal" // This tells API to focus only on specific 'select' attributes
-	headers["deltaToken"] = "latest"
+	z.MgHeaders["Prefer"] = "return=minimal" // This tells API to focus only on specific 'select' attributes
+	z.MgHeaders["deltaToken"] = "latest"
 
 	// But first, double-check the base set again to avoid running a delta query on an empty set
 	listIsEmpty, list := CheckLocalCache(cacheFile, 604800) // cachePeriod = 1 week in seconds
@@ -395,12 +394,12 @@ func GetAzSpByUuid(uuid string, z Bundle) map[string]interface{} {
 		"appDisplayName,homepage,id,info,logoutUrl,notes,oauth2PermissionScopes,replyUrls," +
 		"resourceSpecificApplicationPermissions,servicePrincipalNames,tags,customSecurityAttributes"
 	url := baseUrl + "/" + uuid + selection // First search is for direct Object Id
-	r, _, _ := ApiGet(url, z.MgHeaders, nil)
+	r, _, _ := ApiGet(url, z, nil)
 	if r != nil && r["error"] != nil {
 		// Second search is for this SP's application Client Id
 		url = baseUrl + selection
 		params := map[string]string{"$filter": "appId eq '" + uuid + "'"}
-		r, _, _ := ApiGet(url, z.MgHeaders, params)
+		r, _, _ := ApiGet(url, z, params)
 		//ApiErrorCheck("GET", url, utl.Trace(), r) // Commented out to do this quietly. Use for DEBUGging
 		if r != nil && r["value"] != nil {
 			list := r["value"].([]interface{})

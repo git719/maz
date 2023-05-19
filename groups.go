@@ -26,7 +26,7 @@ func PrintGroup(x map[string]interface{}, z Bundle) {
 
 	// Print owners of this group
 	url := ConstMgUrl + "/v1.0/groups/" + id + "/owners"
-	r, statusCode, _ := ApiGet(url, z.MgHeaders, nil)
+	r, statusCode, _ := ApiGet(url, z, nil)
 	if statusCode == 200 && r != nil && r["value"] != nil {
 		owners := r["value"].([]interface{}) // Assert as JSON array type
 		if len(owners) > 0 {
@@ -40,7 +40,7 @@ func PrintGroup(x map[string]interface{}, z Bundle) {
 
 	// Print all groups and roles it is a member of
 	url = ConstMgUrl + "/v1.0/groups/" + id + "/transitiveMemberOf"
-	r, statusCode, _ = ApiGet(url, z.MgHeaders, nil)
+	r, statusCode, _ = ApiGet(url, z, nil)
 	if statusCode == 200 && r != nil && r["value"] != nil {
 		memberOf := r["value"].([]interface{})
 		PrintMemberOfs("g", memberOf)
@@ -49,7 +49,7 @@ func PrintGroup(x map[string]interface{}, z Bundle) {
 	// Print members of this group
 	//url = ConstMgUrl + "/v1.0/groups/" + id + "/members"  // Get nothing with this, so evidently still in beta
 	url = ConstMgUrl + "/beta/groups/" + id + "/members" // beta works
-	r, statusCode, _ = ApiGet(url, z.MgHeaders, nil)
+	r, statusCode, _ = ApiGet(url, z, nil)
 	if statusCode == 200 && r != nil && r["value"] != nil {
 		members := r["value"].([]interface{})
 		if len(members) > 0 {
@@ -88,7 +88,7 @@ func GroupsCountAzure(z Bundle) int64 {
 	// Return number of entries in Azure tenant
 	z.MgHeaders["ConsistencyLevel"] = "eventual"
 	url := ConstMgUrl + "/v1.0/groups/$count"
-	r, _, _ := ApiGet(url, z.MgHeaders, nil)
+	r, _, _ := ApiGet(url, z, nil)
 	ApiErrorCheck("GET", url, utl.Trace(), r)
 	if r["value"] != nil {
 		return r["value"].(int64) // Expected result is a single int64 value for the count
@@ -153,9 +153,8 @@ func GetAzGroups(cacheFile string, z Bundle, verbose bool) (list []interface{}) 
 	// Get delta updates only if/when below attributes in $select are modified
 	selection := "?$select=displayName,description,isAssignableToRole"
 	url := baseUrl + "/delta" + selection + "&$top=999"
-	headers := z.MgHeaders
-	headers["Prefer"] = "return=minimal" // This tells API to focus only on specific 'select' attributes
-	headers["deltaToken"] = "latest"
+	z.MgHeaders["Prefer"] = "return=minimal" // This tells API to focus only on specific 'select' attributes
+	z.MgHeaders["deltaToken"] = "latest"
 
 	// But first, double-check the base set again to avoid running a delta query on an empty set
 	listIsEmpty, list := CheckLocalCache(cacheFile, 86400) // cachePeriod = 1 day in seconds
@@ -188,7 +187,7 @@ func GetAzGroupByUuid(uuid string, z Bundle) map[string]interface{} {
 		"onPremisesSyncEnabled,owners,renewedDateTime,securityEnabled,securityIdentifier,tags"
 		// Not allowed: allowExternalSenders,
 	url := baseUrl + "/" + uuid + selection
-	r, _, _ := ApiGet(url, z.MgHeaders, nil)
+	r, _, _ := ApiGet(url, z, nil)
 	//ApiErrorCheck("GET", url, utl.Trace(), r) // Commented out to do this quietly. Use for DEBUGging
 	return r
 }

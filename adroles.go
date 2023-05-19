@@ -46,7 +46,7 @@ func PrintAdRole(x map[string]interface{}, z Bundle) {
 		"$expand": "principal",
 	}
 	url := ConstMgUrl + "/v1.0/roleManagement/directory/roleAssignments"
-	r, statusCode, _ := ApiGet(url, z.MgHeaders, params)
+	r, statusCode, _ := ApiGet(url, z, params)
 	if statusCode == 200 && r != nil && r["value"] != nil {
 		assignments := r["value"].([]interface{})
 		if len(assignments) > 0 {
@@ -69,7 +69,7 @@ func PrintAdRole(x map[string]interface{}, z Bundle) {
 	// TODO: Fix 404 below for custom groups
 	//   Resource '<custom role UUID>' does not exist or one of its queried reference-property objects are not present.
 	url = ConstMgUrl + "/v1.0/directoryRoles(roleTemplateId='" + utl.Str(x["templateId"]) + "')/members"
-	r, statusCode, _ = ApiGet(url, z.MgHeaders, nil)
+	r, statusCode, _ = ApiGet(url, z, nil)
 	if statusCode == 200 && r != nil && r["value"] != nil {
 		members := r["value"].([]interface{})
 		if len(members) > 0 {
@@ -108,7 +108,7 @@ func AdRolesCountAzure(z Bundle) int64 {
 	// "/v1.0/directoryRoleTemplates" which is a quicker API call and has the accurate count.
 	// It's not clear why MSFT makes this so darn confusing.
 	url := ConstMgUrl + "/v1.0/directoryRoleTemplates"
-	r, _, _ := ApiGet(url, z.MgHeaders, nil)
+	r, _, _ := ApiGet(url, z, nil)
 	ApiErrorCheck("GET", url, utl.Trace(), r)
 	if r["value"] != nil {
 		return int64(len(r["value"].([]interface{})))
@@ -153,7 +153,7 @@ func GetAzAdRoles(cacheFile string, z Bundle, verbose bool) (list []interface{})
 
 	// There's no API delta options for this object (too short a list?), so just one call
 	url := ConstMgUrl + "/v1.0/roleManagement/directory/roleDefinitions"
-	r, _, _ := ApiGet(url, z.MgHeaders, nil)
+	r, _, _ := ApiGet(url, z, nil)
 	ApiErrorCheck("GET", url, utl.Trace(), r)
 	if r["value"] == nil {
 		return nil
@@ -170,7 +170,7 @@ func GetAzAdRoleByUuid(uuid string, z Bundle) map[string]interface{} {
 	selection := "?$select=id,displayName,description,isBuiltIn,isEnabled,resourceScopes," +
 		"templateId,version,rolePermissions,inheritsPermissionsFrom"
 	url := baseUrl + "/" + uuid + selection
-	r, _, _ := ApiGet(url, z.MgHeaders, nil)
+	r, _, _ := ApiGet(url, z, nil)
 	//ApiErrorCheck("GET", url, utl.Trace(), r) // Commented out to do this quietly. Use for DEBUGging
 	return r
 }

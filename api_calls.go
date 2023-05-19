@@ -19,45 +19,52 @@ import (
 type jsonT map[string]interface{} // Local syntactic sugar, for easier reading
 type strMapT map[string]string
 
-func ApiGet(url string, headers, params strMapT) (result jsonT, rsc int, err error) {
-	return ApiCall("GET", url, nil, headers, params, false) // false = quiet, for normal ops
+func ApiGet(url string, z Bundle, params strMapT) (result jsonT, rsc int, err error) {
+	return ApiCall("GET", url, z, nil, params, false) // false = quiet, for normal ops
 }
 
-func ApiGetDebug(url string, headers, params strMapT) (result jsonT, rsc int, err error) {
-	return ApiCall("GET", url, nil, headers, params, true) // true = verbose, for debugging
+func ApiGetDebug(url string, z Bundle, params strMapT) (result jsonT, rsc int, err error) {
+	return ApiCall("GET", url, z, nil, params, true) // true = verbose, for debugging
 }
 
-func ApiPost(url string, payload jsonT, headers, params strMapT) (result jsonT, rsc int, err error) {
-	return ApiCall("POST", url, payload, headers, params, false) // false = quiet, for normal ops
+func ApiPost(url string, z Bundle, payload jsonT, params strMapT) (result jsonT, rsc int, err error) {
+	return ApiCall("POST", url, z, payload, params, false) // false = quiet, for normal ops
 }
 
-// ApiPostDebug(url, payload, z.MgHeaders, nil)
-func ApiPostDebug(url string, payload jsonT, headers, params strMapT) (result jsonT, rsc int, err error) {
-	return ApiCall("POST", url, payload, headers, params, true) // true = verbose, for debugging
+func ApiPostDebug(url string, z Bundle, payload jsonT, params strMapT) (result jsonT, rsc int, err error) {
+	return ApiCall("POST", url, z, payload, params, true) // true = verbose, for debugging
 }
 
-func ApiPut(url string, payload jsonT, headers, params strMapT) (result jsonT, rsc int, err error) {
-	return ApiCall("PUT", url, payload, headers, params, false) // false = quiet, for normal ops
+func ApiPut(url string, z Bundle, payload jsonT, params strMapT) (result jsonT, rsc int, err error) {
+	return ApiCall("PUT", url, z, payload, params, false) // false = quiet, for normal ops
 }
 
-func ApiPutDebug(url string, payload jsonT, headers, params strMapT) (result jsonT, rsc int, err error) {
-	return ApiCall("PUT", url, payload, headers, params, true) // true = verbose, for debugging
+func ApiPutDebug(url string, z Bundle, payload jsonT, params strMapT) (result jsonT, rsc int, err error) {
+	return ApiCall("PUT", url, z, payload, params, true) // true = verbose, for debugging
 }
 
-func ApiDelete(url string, headers, params strMapT) (result jsonT, rsc int, err error) {
-	return ApiCall("DELETE", url, nil, headers, params, false) // false = quiet, for normal ops
+func ApiDelete(url string, z Bundle, params strMapT) (result jsonT, rsc int, err error) {
+	return ApiCall("DELETE", url, z, nil, params, false) // false = quiet, for normal ops
 }
 
-func ApiDeleteDebug(url string, headers, params strMapT) (result jsonT, rsc int, err error) {
-	return ApiCall("DELETE", url, nil, headers, params, true) // true = verbose, for debugging
+func ApiDeleteDebug(url string, z Bundle, params strMapT) (result jsonT, rsc int, err error) {
+	return ApiCall("DELETE", url, z, nil, params, true) // true = verbose, for debugging
 }
 
-func ApiCall(method, url string, payload jsonT, headers, params strMapT, verbose bool) (result jsonT, rsc int, err error) {
+func ApiCall(method, url string, z Bundle, payload jsonT, params strMapT, verbose bool) (result jsonT, rsc int, err error) {
 	// Make API call and return JSON object, Response StatusCode, and error. See https://eager.io/blog/go-and-json/
 	// for a clear explanation of how to interpret JSON responses with GoLang
 
 	if !strings.HasPrefix(url, "http") {
 		utl.Die(utl.Trace() + "Error: Bad URL, " + url + "\n")
+	}
+
+	// Map headers to corresponding API endpoint
+	var headers strMapT = nil
+	if strings.HasPrefix(url, ConstMgUrl) {
+		headers = z.MgHeaders
+	} else if strings.HasPrefix(url, ConstMgUrl) {
+		headers = z.AzHeaders
 	}
 
 	// Set up new HTTP request client
@@ -184,7 +191,7 @@ func PrintHeaders(headers http.Header) {
 }
 
 func PrintParams(params url.Values) {
-	// HTTP paramters printing fuction specific to API calls. Simplifies ApiCall function
+	// HTTP parameters printing fuction specific to API calls. Simplifies ApiCall function
 	if params == nil {
 		return
 	}

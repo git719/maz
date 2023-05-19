@@ -139,7 +139,7 @@ func CreateAzRoleAssignment(x map[string]interface{}, z Bundle) {
 	}
 	params := map[string]string{"api-version": "2022-04-01"} // roleAssignments
 	url := ConstAzUrl + scope + "/providers/Microsoft.Authorization/roleAssignments/" + newUuid
-	r, statusCode, _ := ApiPut(url, payload, z.AzHeaders, params)
+	r, statusCode, _ := ApiPut(url, z, payload, params)
 	//ApiErrorCheck("PUT", url, utl.Trace(), r)
 	if statusCode == 200 || statusCode == 201 {
 		utl.PrintYaml(r)
@@ -157,7 +157,7 @@ func DeleteAzRoleAssignmentByFqid(fqid string, z Bundle) map[string]interface{} 
 	//    /providers/Microsoft.Authorization/roleAssignments/5d586a7b-3f4b-4b5c-844a-3fa8efe49ab3"
 	params := map[string]string{"api-version": "2022-04-01"} // roleAssignments
 	url := ConstAzUrl + fqid
-	r, statusCode, _ := ApiDelete(url, z.AzHeaders, params)
+	r, statusCode, _ := ApiDelete(url, z, params)
 	//ApiErrorCheck("DELETE", url, utl.Trace(), r)
 	if statusCode != 200 {
 		if statusCode == 204 {
@@ -247,7 +247,7 @@ func GetAzRoleAssignments(verbose bool, z Bundle) (list []interface{}) {
 			scopeName = subNameMap[utl.LastElem(scope, "/")] // If it's a sub, user its name
 		}
 		url := ConstAzUrl + scope + "/providers/Microsoft.Authorization/roleAssignments"
-		r, _, _ := ApiGet(url, z.AzHeaders, params)
+		r, _, _ := ApiGet(url, z, params)
 		ApiErrorCheck("GET", url, utl.Trace(), r)
 		if r["value"] != nil {
 			assignmentsUnderThisScope := r["value"].([]interface{})
@@ -305,7 +305,7 @@ func GetAzRoleAssignmentByObject(x map[string]interface{}, z Bundle) (y map[stri
 		"$filter":     "principalId eq '" + xPrincipalId + "'",
 	}
 	url := ConstAzUrl + xScope + "/providers/Microsoft.Authorization/roleAssignments"
-	r, _, _ := ApiGet(url, z.AzHeaders, params)
+	r, _, _ := ApiGet(url, z, params)
 	//ApiErrorCheck("GET", url, utl.Trace(), r)
 	if r != nil && r["value"] != nil {
 		results := r["value"].([]interface{})
@@ -331,7 +331,7 @@ func GetAzRoleAssignmentByUuid(uuid string, z Bundle) (x map[string]interface{})
 	params := map[string]string{"api-version": "2022-04-01"} // roleAssignments
 	for _, scope := range scopes {
 		url := ConstAzUrl + scope + "/providers/Microsoft.Authorization/roleAssignments"
-		r, _, _ := ApiGet(url, z.AzHeaders, params)
+		r, _, _ := ApiGet(url, z, params)
 		//ApiErrorCheck("GET", url, utl.Trace(), r) // DEBUG. Until ApiGet rewrite with nullable _ err
 		if r != nil && r["value"] != nil {
 			assignmentsUnderThisScope := r["value"].([]interface{})

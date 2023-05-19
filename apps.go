@@ -38,7 +38,7 @@ func PrintApp(x map[string]interface{}, z Bundle) {
 	// Print federated IDs
 	//url := ConstMgUrl + "/v1.0/applications/" + id + "/federatedIdentityCredentials"
 	url := ConstMgUrl + "/beta/applications/" + id + "/federatedIdentityCredentials"
-	r, statusCode, _ := ApiGet(url, z.MgHeaders, nil)
+	r, statusCode, _ := ApiGet(url, z, nil)
 	if statusCode == 200 && r != nil && r["value"] != nil {
 		fedCreds := r["value"].([]interface{})
 		if len(fedCreds) > 0 {
@@ -57,7 +57,7 @@ func PrintApp(x map[string]interface{}, z Bundle) {
 	// Print owners
 	//url = ConstMgUrl + "/v1.0/applications/" + id + "/owners"
 	url = ConstMgUrl + "/beta/applications/" + id + "/owners"
-	r, statusCode, _ = ApiGet(url, z.MgHeaders, nil)
+	r, statusCode, _ = ApiGet(url, z, nil)
 	if statusCode == 200 && r != nil && r["value"] != nil {
 		PrintOwners(r["value"].([]interface{}))
 	}
@@ -84,7 +84,7 @@ func PrintApp(x map[string]interface{}, z Bundle) {
 			params := map[string]string{"$filter": "appId eq '" + resAppId + "'"}
 			//url := ConstMgUrl + "/v1.0/servicePrincipals"
 			url := ConstMgUrl + "/beta/servicePrincipals"
-			r, _, _ := ApiGet(url, z.MgHeaders, params)
+			r, _, _ := ApiGet(url, z, params)
 			ApiErrorCheck("GET", url, utl.Trace(), r) // TODO: Get rid of this by using StatuCode checks, etc
 			// Result is a list because this could be a multi-tenant app, having multiple SPs
 			if r["value"] == nil {
@@ -179,7 +179,7 @@ func AddAppSecret(uuid, displayName, expiry string, z Bundle) {
 		},
 	}
 	url := ConstMgUrl + "/v1.0/applications/" + uuid + "/addPassword"
-	r, statusCode, _ := ApiPost(url, payload, z.MgHeaders, nil)
+	r, statusCode, _ := ApiPost(url, z, payload, nil)
 	if statusCode == 200 {
 		fmt.Printf("%s: %s\n", utl.Blu("App_Object_Id"), utl.Gre(uuid))
 		fmt.Printf("%s: %s\n", utl.Blu("New_Secret_Id"), utl.Gre(utl.Str(r["keyId"])))
@@ -242,7 +242,7 @@ func RemoveAppSecret(uuid, keyId string, z Bundle) {
 	if utl.PromptMsg("DELETE above? y/n ") == 'y' {
 		payload := map[string]interface{}{"keyId": keyId}
 		url := ConstMgUrl + "/v1.0/applications/" + uuid + "/removePassword"
-		r, statusCode, _ := ApiPost(url, payload, z.MgHeaders, nil)
+		r, statusCode, _ := ApiPost(url, z, payload, nil)
 		if statusCode == 204 {
 			utl.Die("Successfully deleted secret.\n")
 		} else {
@@ -273,7 +273,7 @@ func AppsCountAzure(z Bundle) int64 {
 	z.MgHeaders["ConsistencyLevel"] = "eventual"
 	//url := ConstMgUrl + "/v1.0/applications/$count"
 	url := ConstMgUrl + "/beta/applications/$count"
-	r, _, _ := ApiGet(url, z.MgHeaders, nil)
+	r, _, _ := ApiGet(url, z, nil)
 	ApiErrorCheck("GET", url, utl.Trace(), r)
 	if r["value"] != nil {
 		return r["value"].(int64) // Expected result is a single int64 value for the count
@@ -338,9 +338,8 @@ func GetAzApps(cacheFile string, z Bundle, verbose bool) (list []interface{}) {
 	// Get delta updates only if/when below attributes in $select are modified
 	selection := "?$select=displayName,appId,requiredResourceAccess"
 	url := baseUrl + "/delta" + selection + "&$top=999"
-	headers := z.MgHeaders
-	headers["Prefer"] = "return=minimal" // This tells API to focus only on specific 'select' attributes
-	headers["deltaToken"] = "latest"
+	z.MgHeaders["Prefer"] = "return=minimal" // This tells API to focus only on specific 'select' attributes
+	z.MgHeaders["deltaToken"] = "latest"
 
 	// But first, double-check the base set again to avoid running a delta query on an empty set
 	listIsEmpty, list := CheckLocalCache(cacheFile, 604800) // cachePeriod = 1 week in seconds
@@ -374,12 +373,12 @@ func GetAzAppByUuid(uuid string, z Bundle) map[string]interface{} {
 		"publicClient,publisherDomain,requiredResourceAccess,serviceManagementReference,signInAudience," +
 		"spa,tags,tokenEncryptionKeyId,verifiedPublisher,web"
 	url := baseUrl + "/" + uuid + selection // First search is for direct Object Id
-	r, _, _ := ApiGet(url, z.MgHeaders, nil)
+	r, _, _ := ApiGet(url, z, nil)
 	if r != nil && r["error"] != nil {
 		// Second search is for this app's application Client Id
 		url = baseUrl + selection
 		params := map[string]string{"$filter": "appId eq '" + uuid + "'"}
-		r, _, _ := ApiGet(url, z.MgHeaders, params)
+		r, _, _ := ApiGet(url, z, params)
 		//ApiErrorCheck("GET", url, utl.Trace(), r) // Commented out to do this quietly. Use for DEBUGging
 		if r != nil && r["value"] != nil {
 			list := r["value"].([]interface{})
