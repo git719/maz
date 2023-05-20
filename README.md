@@ -100,7 +100,8 @@ specify different credentials, as well as being able to do this from different s
 allow utilities written with this library to be more used in continuous delivery and other types of automation.
 
 *NOTE*: If all four `MAZ_USERNAME`, `MAZ_INTERACTIVE`, `MAZ_CLIENT_ID`, and `MAZ_CLIENT_SECRET` are properly define, then
-_precedence_ is given to the username interactive login with the first two.
+_precedence_ is given to the Username Interactive login with the first two. In other words, to force a ClientID ClientSecret
+login, you must ensure the first two are `unset` in the shell.
 
 ## Functions
 List of all available functions.
