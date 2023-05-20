@@ -3,6 +3,7 @@
 # Tidy up and run checks before publishing
 
 set -euo pipefail  # Fail on any error
+export Gre='\e[1;32m' Red='\e[1;31m' Rst='\e[0m'
 case "$OSTYPE" in
     "linux-gnu"* ) echo "==> OS = Linux" ;;
     "darwin"* ) echo "==> OS = macOS" ;;
@@ -18,20 +19,13 @@ printf "==> Running go fmt\n"
 go fmt
 printf "==> Running go mod tidy\n"
 go mod tidy
-printf "==> Running go test ./... (fix any errors that my appear below)\n"
-go test ./...
-
-printf "\n==> HEAD of go.mod:\n"
+printf "==> Grepping go.mod for 'replace'\n$Red$(grep replace go.mod)$Rst"
+printf "==> HEAD of go.mod:\n"
 head go.mod 
-printf "\n\n==> Last 3 tag versions, sorted semantically:\n"
+printf "\n==> Running 'go test ./...' - fix all test errors before proceeding.\n"
+go test ./...
+printf "\n\n==> Last 3 tag versions:\n"
 git tag | sort -t "." -k1,1n -k2,2n -k3,3n | tail -3
 CurrentTag=`git tag | sort -t "." -k1,1n -k2,2n -k3,3n | tail -1`
-Prg=`head -1 go.mod | awk -F'/' '{print $NF}' | awk '{print $NF}'`
-printf "\n==> Good to go. To publish, do below One-liner or multiple commands, advancing Tag version:\n\n"
-printf "Tag=$CurrentTag && Prg=$Prg && git add . && git commit -m \"\$Tag: updates\" && git tag \$Tag && git push origin \$Tag && git push\n\n"
-printf "or\n\n"
-printf "git add .\n"
-printf "git commit -m \"$Prg: updates $CurrentTag\n"
-printf "git tag $CurrentTag\n"
-printf "git push origin $CurrentTag\n"
-printf "git push\n\n"
+printf "\n==> Looks good to go! To publish, do below one-liner, advancing Tag version:\n\n"
+printf "  Tag=$CurrentTag && git add . && git commit -m \"x updates\" && git tag \$Tag && git push origin \$Tag && git push\n\n"
