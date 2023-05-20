@@ -48,9 +48,9 @@ three (3) special attributes:
 |#|Type|Method|Details|
 |-|-|-|-|
 |1|Interactive|Config file|Set up attributes via `~/.maz/credentials.yaml` file|
-|2|Interactive|Environment variables|Set up attributes via environment variables|
+|2|Interactive|Environment variables|Set up attributes via environment variables (**OVERIDES config file**)|
 |3|Automated|Config file|Set up attributes via `~/.maz/credentials.yaml` file|
-|4|Automated|Environment variables|Set up attributes via environment variables|
+|4|Automated|Environment variables|Set up attributes via environment variables (**OVERIDES config file**)|
 
 1. *Interactive via config file*: The calling utility sets up a way to allow setting up the `~/.maz/credentials.yaml` file with
    the 3 special attributes. For example, the [zls CLI utility](https://github.com/git719/zls) does this via the `-cri`
@@ -72,7 +72,7 @@ three (3) special attributes:
    MAZ_USERNAME=user1@domain.io
    MAZ_INTERACTIVE=true
    ```
-   Then use above for its interaction. 
+   These variables take **precedence** and **OVERIDE** an existing config `~/.maz/credentials.yaml` file. 
 3. *Automated via config file*: The calling utility sets up a way to allow setting up the `~/.maz/credentials.yaml` file with
    the 3 special attributes. For example, the [zls CLI utility](https://github.com/git719/zls) does this via the `-cr`
    switch, to _Set up MSAL automated ClientId + Secret login_:
@@ -93,7 +93,7 @@ three (3) special attributes:
    MAZ_CLIENT_ID=f1110121-7111-4171-a181-e1614131e181
    MAZ_CLIENT_SECRET=ACB8c~HdLejfQGiHeI9LUKgNOODPQRISNTmVLX_i
    ```
-   Then use above for its interaction. 
+   These variables take **precedence** and **OVERIDE** an existing config `~/.maz/credentials.yaml` file. 
 
 The benefit of using environment variables is of course to be able to override an existing `credentials.yaml` file, and
 specify different credentials, as well as being able to do this from different shell sessions _on the same host_. They also
