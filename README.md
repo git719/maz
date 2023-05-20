@@ -53,7 +53,7 @@ three (3) special attributes:
 |4|Automated|Environment variables|Set up attributes via environment variables|
 
 1. *Interactive via config file*: The calling utility sets up a way to allow setting up the `~/.maz/credentials.yaml` file with
-   the 3 special attributes. For example, the [zls CLI utility](https://github.com/git719/zls) does this via the '-cri'
+   the 3 special attributes. For example, the [zls CLI utility](https://github.com/git719/zls) does this via the `-cri`
    switch, to _Set up MSAL interactive browser popup login_:
    ```
    zls -cri 3f050090-20b0-40a0-a060-c05060104010 user1@domain.io
@@ -74,7 +74,7 @@ three (3) special attributes:
    ```
    Then use above for its interaction. 
 3. *Automated via config file*: The calling utility sets up a way to allow setting up the `~/.maz/credentials.yaml` file with
-   the 3 special attributes. For example, the [zls CLI utility](https://github.com/git719/zls) does this via the '-cr'
+   the 3 special attributes. For example, the [zls CLI utility](https://github.com/git719/zls) does this via the `-cr`
    switch, to _Set up MSAL automated ClientId + Secret login_:
    ```
    zls -cr 3f050090-20b0-40a0-a060-c05060104010 f1110121-7111-4171-a181-e1614131e181 ACB8c~HdLejfQGiHeI9LUKgNOODPQRISNTmVLX_i
@@ -96,11 +96,11 @@ three (3) special attributes:
    Then use above for its interaction. 
 
 The benefit of using environment variables is of course to be able to override an existing `credentials.yaml` file, and
-specify different credentials, as well as being able to do this from different shell sessions _on the same host_. They als
-allow the utility to be used in continuous delivery and other types of automation.
+specify different credentials, as well as being able to do this from different shell sessions _on the same host_. They also
+allow utilities written with this library to be more used in continuous delivery and other types of automation.
 
 ## Functions
 List of all available functions.
-- *maz.SetupInterativeLogin*: This functions allows you to set up the`~/.maz/credentials.yaml` file for interactive Azure login.
+- **maz.SetupInterativeLogin**: This functions allows you to set up the`~/.maz/credentials.yaml` file for interactive Azure login.
 
 TODO: List other functions here ...
