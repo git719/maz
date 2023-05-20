@@ -42,19 +42,65 @@ if utl.FileNotExist(z.ConfDir) {
 with its `z.mgHeaders` and/or `z.azHeaders` attributes, and so on.
 
 ## Login Credentials
-There are 4 different ways to set up the login credentials to use this library module:
-||*||Type||Method||Details||
-||1|Interactive|Config file|Set up `credentials.yaml` file with the 3 special attributes|
-||2|Interactive|Environment variables|Set up the 3 special attributes via environment variables|
-||3|Automated|Config file|Set up `credentials.yaml` file with the 3 special attributes|
-||4|Automated|Environment variables|Set up the 3 special attributes via environment variables|
+There are four (4) different ways to set up the login credentials to use this library module. All four ways required
+three (3) special attributes:
 
-1. 
+|#|Type|Method|Details|
+|-|-|-|-|
+|1|Interactive|Config file|Set up attributes via `~/.maz/credentials.yaml` file|
+|2|Interactive|Environment variables|Set up attributes via environment variables|
+|3|Automated|Config file|Set up attributes via `~/.maz/credentials.yaml` file|
+|4|Automated|Environment variables|Set up attributes via environment variables|
+
+1. *Interactive via config file*: The calling utility sets up a way to allow setting up the `~/.maz/credentials.yaml` file with
+   the 3 special attributes. For example, the [zls CLI utility](https://github.com/git719/zls) does this via the '-cri'
+   switch, to _Set up MSAL interactive browser popup login_:
+   ```
+   zls -cri 3f050090-20b0-40a0-a060-c05060104010 user1@domain.io
+   ```
+   Above will populate the `~/.maz/credentials.yaml` file as follows:
+   ```yaml
+   tenant_id: 3f050090-20b0-40a0-a060-c05060104010
+   username: user1@domain.io
+   interactive: true
+   ```
+   From then on the `zls` utility will use above credentials to interact with the `maz` library to perform all its functions.
+2. *Interactive via environment variables*: The calling utility will instead use `os.Getenv("HOME")` to look for the following
+   3 special environment variables:
+   ```bash
+   MAZ_TENANT_ID=3f050090-20b0-40a0-a060-c05060104010
+   MAZ_USERNAME=user1@domain.io
+   MAZ_INTERACTIVE=true
+   ```
+   Then use above for its interaction. 
+3. *Automated via config file*: The calling utility sets up a way to allow setting up the `~/.maz/credentials.yaml` file with
+   the 3 special attributes. For example, the [zls CLI utility](https://github.com/git719/zls) does this via the '-cr'
+   switch, to _Set up MSAL automated ClientId + Secret login_:
+   ```
+   zls -cr 3f050090-20b0-40a0-a060-c05060104010 f1110121-7111-4171-a181-e1614131e181 ACB8c~HdLejfQGiHeI9LUKgNOODPQRISNTmVLX_i
+   ```
+   Above will populate the `~/.maz/credentials.yaml` file as follows:
+   ```yaml
+   tenant_id: 3f050090-20b0-40a0-a060-c05060104010
+   client_id: f1110121-7111-4171-a181-e1614131e181
+   client_secret: ACB8c~HdLejfQGiHeI9LUKgNOODPQRISNTmVLX_i
+   ```
+   From then on the `zls` utility will use above credentials to interact with the `maz` library to perform all its functions.
+4. *Automated via environment variables*: The calling utility will instead use `os.Getenv("HOME")` to look for the following
+   3 special environment variables:
+   ```bash
+   MAZ_TENANT_ID=3f050090-20b0-40a0-a060-c05060104010
+   MAZ_CLIENT_ID=f1110121-7111-4171-a181-e1614131e181
+   MAZ_CLIENT_SECRET=ACB8c~HdLejfQGiHeI9LUKgNOODPQRISNTmVLX_i
+   ```
+   Then use above for its interaction. 
+
+The benefit of using environment variables is of course to be able to override an existing `credentials.yaml` file, and
+specify different credentials, as well as being able to do this from different shell sessions _on the same host_. They als
+allow the utility to be used in continuous delivery and other types of automation.
 
 ## Functions
 List of all available functions.
-TBD
+- *maz.SetupInterativeLogin*: This functions allows you to set up the`~/.maz/credentials.yaml` file for interactive Azure login.
 
-### maz.SetupInterativeLogin
-This functions allows you to set up interactive Azure login.
-...
+TODO: List other functions here ...
