@@ -35,6 +35,13 @@ var (
 		"ap": "Registered Application",
 		"ad": "Azure AD Role",
 	}
+	eVars = map[string]string{
+		"MAZ_TENANT_ID":     "",
+		"MAZ_USERNAME":      "",
+		"MAZ_INTERACTIVE":   "",
+		"MAZ_CLIENT_ID":     "",
+		"MAZ_CLIENT_SECRET": "",
+	}
 )
 
 type Bundle struct {
@@ -54,55 +61,57 @@ type Bundle struct {
 	// To support other future APIs, those token/headers pairs can be added here
 }
 
-func DumpVariables(z Bundle) {
-	// Dump essential global variables
-	cConfDir := utl.Blu("config_dir")
-	fmt.Printf("%s: %s  # Utility's config and cache directory\n", cConfDir, utl.Gre(z.ConfDir))
+func DumpLoginValues(z Bundle) {
+	// Dump configured login values
+	fmt.Printf("%s: %s  # Config and cache directory\n", utl.Blu("config_dir"), utl.Gre(z.ConfDir))
 
-	cTenant := utl.Blu("tenant_id")
-	fmt.Printf("%s: %s\n", cTenant, utl.Gre(z.TenantId))
-	if z.Interactive {
-		cUsername := utl.Blu("username")
-		fmt.Printf("%s: %s\n", cUsername, utl.Gre(z.Username))
-		cInterative := utl.Blu("interactive")
-		fmt.Printf("%s: %s\n", cInterative, utl.Mag("true"))
-	} else {
-		cClientId := utl.Blu("client_id")
-		fmt.Printf("%s: %s\n", cClientId, utl.Gre(z.ClientId))
-		cClientSecret := utl.Blu("client_secret")
-		fmt.Printf("%s: %s\n", cClientSecret, utl.Gre(z.ClientSecret))
-	}
+	fmt.Println(utl.Blu("os_environment_variables:"))
+	fmt.Println("  # 1. Environment Variable login values override values in credentials_config_file")
+	fmt.Println("  # 2. MAZ_USERNAME+MAZ_INTERACTIVE login have priority over MAZ_CLIENT_ID+MAZ_CLIENT_SECRET login")
+	fmt.Println("  # 3. To use MAZ_CLIENT_ID+MAZ_CLIENT_SECRET login ensure MAZ_USERNAME & MAZ_INTERACTIVE are unset")
+	fmt.Printf("  %s: %s\n", utl.Blu("MAZ_TENANT_ID"), utl.Gre(os.Getenv("MAZ_TENANT_ID")))
+	fmt.Printf("  %s: %s\n", utl.Blu("MAZ_USERNAME"), utl.Gre(os.Getenv("MAZ_USERNAME")))
+	fmt.Printf("  %s: %s\n", utl.Blu("MAZ_INTERACTIVE"), utl.Mag(os.Getenv("MAZ_INTERACTIVE")))
+	fmt.Printf("  %s: %s\n", utl.Blu("MAZ_CLIENT_ID"), utl.Gre(os.Getenv("MAZ_CLIENT_ID")))
+	fmt.Printf("  %s: %s\n", utl.Blu("MAZ_CLIENT_SECRET"), utl.Gre(os.Getenv("MAZ_CLIENT_SECRET")))
 
-	cAuthorityUrl := utl.Blu("authority_url")
-	fmt.Printf("%s: %s\n", cAuthorityUrl, utl.Gre(z.AuthorityUrl))
-	cMgUrl := utl.Blu("mg_url")
-	fmt.Printf("%s: %s\n", cMgUrl, utl.Gre(ConstMgUrl))
-	cAzUrl := utl.Blu("az_url")
-	fmt.Printf("%s: %s\n", cAzUrl, utl.Gre(ConstAzUrl))
-
-	fmt.Println(utl.Blu("mg_headers") + ":")
-	PrintStringMapColor(z.MgHeaders)
-	fmt.Println(utl.Blu("az_headers") + ":")
-	PrintStringMapColor(z.AzHeaders)
-	os.Exit(0)
-}
-
-func DumpCredentials(z Bundle) {
-	// Dump credentials file
-	filePath := filepath.Join(z.ConfDir, z.CredsFile) // credentials.yaml
+	fmt.Println(utl.Blu("credentials_config_file:"))
+	filePath := filepath.Join(z.ConfDir, z.CredsFile)
+	fmt.Printf("  %s: %s\n", utl.Blu("file_path"), utl.Gre(filePath))
 	credsRaw, err := utl.LoadFileYaml(filePath)
 	if err != nil {
 		utl.Die("[%s] %s\n", filePath, err)
 	}
 	creds := credsRaw.(map[string]interface{})
-	fmt.Printf("%s: %s\n", utl.Blu("tenant_id"), utl.Gre(utl.Str(creds["tenant_id"])))
+	fmt.Printf("  %s: %s\n", utl.Blu("tenant_id"), utl.Gre(utl.Str(creds["tenant_id"])))
 	if strings.ToLower(utl.Str(creds["interactive"])) == "true" {
-		fmt.Printf("%s: %s\n", utl.Blu("username"), utl.Gre(utl.Str(creds["username"])))
-		fmt.Printf("%s: %s\n", utl.Blu("interactive"), utl.Mag("true"))
+		fmt.Printf("  %s: %s\n", utl.Blu("username"), utl.Gre(utl.Str(creds["username"])))
+		fmt.Printf("  %s: %s\n", utl.Blu("interactive"), utl.Mag("true"))
 	} else {
-		fmt.Printf("%s: %s\n", utl.Blu("client_id"), utl.Gre(utl.Str(creds["client_id"])))
-		fmt.Printf("%s: %s\n", utl.Blu("client_secret"), utl.Gre(utl.Str(creds["client_secret"])))
+		fmt.Printf("  %s: %s\n", utl.Blu("client_id"), utl.Gre(utl.Str(creds["client_id"])))
+		fmt.Printf("  %s: %s\n", utl.Blu("client_secret"), utl.Gre(utl.Str(creds["client_secret"])))
 	}
+	os.Exit(0)
+}
+
+func DumpRuntimeValues(z Bundle) {
+	// Dump runtime global variables
+	fmt.Printf("%s: %s  # Config and cache directory\n", utl.Blu("config_dir"), utl.Gre(z.ConfDir))
+
+	fmt.Println(utl.Blu("runtime_credentials:"))
+	fmt.Printf("  %s: %s\n", utl.Blu("tenant_id"), utl.Gre(z.TenantId))
+	if z.Interactive {
+		fmt.Printf("  %s: %s\n", utl.Blu("username"), utl.Gre(z.Username))
+		fmt.Printf("  %s: %s\n", utl.Blu("interactive"), utl.Mag("true"))
+	} else {
+		fmt.Printf("  %s: %s\n", utl.Blu("client_id"), utl.Gre(z.ClientId))
+		fmt.Printf("  %s: %s\n", utl.Blu("client_secret"), utl.Gre(z.ClientSecret))
+	}
+
+	fmt.Println(utl.Blu("api_variables:"))
+	fmt.Printf("  %s: %s\n", utl.Blu("authority_url"), utl.Gre(z.AuthorityUrl))
+	fmt.Printf("  %s: %s\n", utl.Blu("mg_url"), utl.Gre(ConstMgUrl))
+	fmt.Printf("  %s: %s\n", utl.Blu("az_url"), utl.Gre(ConstAzUrl))
 	os.Exit(0)
 }
 
@@ -110,62 +119,92 @@ func SetupInterativeLogin(z Bundle) {
 	// Set up credentials file for interactive login
 	filePath := filepath.Join(z.ConfDir, z.CredsFile) // credentials.yaml
 	if !utl.ValidUuid(z.TenantId) {
-		utl.Die("Error. TENANT_ID is an invalid UUIs.\n")
+		utl.Die("Error. TENANT_ID is an invalid UUID.\n")
 	}
 	content := fmt.Sprintf("%-14s %s\n%-14s %s\n%-14s %s\n", "tenant_id:", z.TenantId, "username:", z.Username, "interactive:", "true")
 	if err := ioutil.WriteFile(filePath, []byte(content), 0600); err != nil { // Write string to file
 		panic(err.Error())
 	}
-	fmt.Printf("[%s] Updated credentials\n", filePath)
+	fmt.Printf("Updated %s file\n", utl.Gre(filePath))
+	os.Exit(0)
 }
 
 func SetupAutomatedLogin(z Bundle) {
 	// Set up credentials file for client_id + secret login
 	filePath := filepath.Join(z.ConfDir, z.CredsFile) // credentials.yaml
 	if !utl.ValidUuid(z.TenantId) {
-		utl.Die("Error. TENANT_ID is an invalid UUIs.\n")
+		utl.Die("Error. TENANT_ID is an invalid UUID.\n")
 	}
 	if !utl.ValidUuid(z.ClientId) {
-		utl.Die("Error. CLIENT_ID is an invalid UUIs.\n")
+		utl.Die("Error. CLIENT_ID is an invalid UUID.\n")
 	}
 	content := fmt.Sprintf("%-14s %s\n%-14s %s\n%-14s %s\n", "tenant_id:", z.TenantId, "client_id:", z.ClientId, "client_secret:", z.ClientSecret)
 	if err := ioutil.WriteFile(filePath, []byte(content), 0600); err != nil { // Write string to file
 		panic(err.Error())
 	}
-	fmt.Printf("[%s] Updated credentials\n", filePath)
+	fmt.Printf("Updated %s file\n", utl.Gre(filePath))
+	os.Exit(0)
 }
 
 func SetupCredentials(z *Bundle) Bundle {
-	// Read credentials file and set up authentication parameters as global variables
-	filePath := filepath.Join(z.ConfDir, z.CredsFile) // credentials.yaml
-	if utl.FileNotExist(filePath) && utl.FileSize(filePath) < 1 {
-		utl.Die("Missing credentials file: " + filePath + "\n" +
-			"Please rerun program using '-cr' or '-cri' option to specify credentials.\n")
-	}
-	credsRaw, err := utl.LoadFileYaml(filePath)
-	if err != nil {
-		utl.Die("[%s] %s\n", filePath, err)
-	}
-	creds := credsRaw.(map[string]interface{})
-
-	// Note that we are updating variables to be returned and used globally
-	z.TenantId = utl.Str(creds["tenant_id"])
-	if !utl.ValidUuid(z.TenantId) {
-		utl.Die("[%s] tenant_id '%s' is not a valid UUID\n", filePath, z.TenantId)
-	}
-
-	z.Interactive, err = strconv.ParseBool(utl.Str(creds["interactive"]))
-
-	if z.Interactive {
-		z.Username = strings.ToLower(utl.Str(creds["username"]))
-	} else {
-		z.ClientId = utl.Str(creds["client_id"])
-		if !utl.ValidUuid(z.ClientId) {
-			utl.Die("[%s] client_id '%s' is not a valid UUID\n", filePath, z.ClientId)
+	// Get credentials from OS environment variables (takes precedence) or from credentials file
+	usingEnv := false // Assume environment variables are not being used
+	for k := range eVars {
+		eVars[k] = os.Getenv(k) // Read all pertinent variables
+		if eVars[k] != "" {
+			usingEnv = true
 		}
-		z.ClientSecret = utl.Str(creds["client_secret"])
-		if z.ClientSecret == "" {
-			utl.Die("[%s] client_secret is blank\n", filePath)
+	}
+	if usingEnv {
+		// Getting from OS environment variables
+		z.TenantId = eVars["MAZ_TENANT_ID"]
+		if !utl.ValidUuid(z.TenantId) {
+			utl.Die("[MAZ_TENANT_ID] tenant_id '%s' is not a valid UUID\n", z.TenantId)
+		}
+		z.Interactive, _ = strconv.ParseBool(utl.Str(eVars["MAZ_INTERACTIVE"]))
+		if z.Interactive {
+			z.Username = strings.ToLower(utl.Str(eVars["MAZ_USERNAME"]))
+			if z.ClientId != "" || z.ClientSecret != "" {
+				fmt.Println("Warning: ", utl.Yel(""))
+			}
+		} else {
+			z.ClientId = utl.Str(eVars["MAZ_CLIENT_ID"])
+			if !utl.ValidUuid(z.ClientId) {
+				utl.Die("[MAZ_CLIENT_ID] client_id '%s' is not a valid UUID\n", z.ClientId)
+			}
+			z.ClientSecret = utl.Str(eVars["MAZ_CLIENT_SECRET"])
+			if z.ClientSecret == "" {
+				utl.Die("[MAZ_CLIENT_SECRET] client_secret is blank\n")
+			}
+		}
+	} else {
+		// Getting from credentials file
+		filePath := filepath.Join(z.ConfDir, z.CredsFile) // credentials.yaml
+		if utl.FileNotExist(filePath) && utl.FileSize(filePath) < 1 {
+			utl.Die("Missing credentials file: " + filePath + "\n" +
+				"Please rerun program using '-cr' or '-cri' option to specify credentials.\n")
+		}
+		credsRaw, err := utl.LoadFileYaml(filePath)
+		if err != nil {
+			utl.Die("[%s] %s\n", filePath, err)
+		}
+		creds := credsRaw.(map[string]interface{})
+		z.TenantId = utl.Str(creds["tenant_id"])
+		if !utl.ValidUuid(z.TenantId) {
+			utl.Die("[%s] tenant_id '%s' is not a valid UUID\n", filePath, z.TenantId)
+		}
+		z.Interactive, _ = strconv.ParseBool(utl.Str(creds["interactive"]))
+		if z.Interactive {
+			z.Username = strings.ToLower(utl.Str(creds["username"]))
+		} else {
+			z.ClientId = utl.Str(creds["client_id"])
+			if !utl.ValidUuid(z.ClientId) {
+				utl.Die("[%s] client_id '%s' is not a valid UUID\n", filePath, z.ClientId)
+			}
+			z.ClientSecret = utl.Str(creds["client_secret"])
+			if z.ClientSecret == "" {
+				utl.Die("[%s] client_secret is blank\n", filePath)
+			}
 		}
 	}
 	return *z

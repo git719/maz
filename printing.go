@@ -10,7 +10,7 @@ import (
 )
 
 func PrintCountStatus(z Bundle) {
-	fmt.Printf("Note: Counting some Azure resources can take a long time.\n")
+	fmt.Printf("Note: Counting some Azure resources can take a long time\n")
 	fmt.Printf("%-36s%10s%10s\n", "OBJECTS", "LOCAL", "AZURE")
 	status := utl.Blu(utl.PostSpc("Azure AD Users", 36))
 	status += utl.Gre(utl.PreSpc(UsersCountLocal(z), 10))

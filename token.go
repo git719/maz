@@ -26,7 +26,8 @@ func GetTokenInteractively(scopes []string, confDir, tokenFile, authorityUrl, us
 	// Note we're using constant constAzPowerShellClientId for interactive login
 	app, err := public.New(ConstAzPowerShellClientId, public.WithAuthority(authorityUrl), public.WithCache(cacheAccessor))
 	if err != nil {
-		panic(err.Error())
+		PrintApiErrMsg(err.Error())
+		utl.Die("")
 	}
 
 	// Select the account to use based on username variable
@@ -45,7 +46,8 @@ func GetTokenInteractively(scopes []string, confDir, tokenFile, authorityUrl, us
 		result, err = app.AcquireTokenInteractive(context.Background(), scopes)
 		// AcquireTokenInteractive acquires a security token from the authority using the default web browser to select the account.
 		if err != nil {
-			panic(err.Error())
+			PrintApiErrMsg(err.Error())
+			utl.Die("")
 		}
 	}
 	return result.AccessToken, nil // Return only the AccessToken, which is of type string
@@ -68,7 +70,8 @@ func GetTokenByCredentials(scopes []string, confDir, tokenFile, authorityUrl, cl
 	// Automated login obviously uses the registered app client_id (App ID)
 	app, err := confidential.New(clientId, cred, confidential.WithAuthority(authorityUrl), confidential.WithAccessor(cacheAccessor))
 	if err != nil {
-		panic(err.Error())
+		PrintApiErrMsg(err.Error())
+		utl.Die("")
 	}
 
 	// Try getting cached token 1st
@@ -79,7 +82,8 @@ func GetTokenByCredentials(scopes []string, confDir, tokenFile, authorityUrl, cl
 		result, err = app.AcquireTokenByCredential(context.Background(), scopes)
 		// AcquireTokenByCredential acquires a security token from the authority, using the client credentials grant.
 		if err != nil {
-			panic(err.Error())
+			PrintApiErrMsg(err.Error())
+			utl.Die("")
 		}
 	}
 	return result.AccessToken, nil // Return only the AccessToken, which is of type string

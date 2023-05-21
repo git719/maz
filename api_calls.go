@@ -63,7 +63,7 @@ func ApiCall(method, url string, z Bundle, payload jsonT, params strMapT, verbos
 	var headers strMapT = nil
 	if strings.HasPrefix(url, ConstMgUrl) {
 		headers = z.MgHeaders
-	} else if strings.HasPrefix(url, ConstMgUrl) {
+	} else if strings.HasPrefix(url, ConstAzUrl) {
 		headers = z.AzHeaders
 	}
 
@@ -168,6 +168,17 @@ func ApiErrorCheck(method, url, caller string, r jsonT) {
 		errMsg := method + " " + url + "\n" + caller + "Error: " + e["message"].(string) + "\n"
 		fmt.Printf(utl.Red(errMsg))
 	}
+}
+
+func PrintApiErrMsg(msg string) {
+	// API error messages have 2 parts separated by a newline: A header, then a JSON byte slice
+	parts := strings.Split(msg, "\n")
+	fmt.Println(utl.Red(parts[0])) // Print error header
+	errorBytes := []byte(parts[1])
+	yamlError, _ := utl.BytesToYamlObject(errorBytes)
+	utl.PrintYamlColor(yamlError) // Print error
+	// errorMsg, _ := utl.JsonBytesReindent(errorBytes, 2)
+	// utl.PrintYamlBytesColor(errorMsg) // Print error
 }
 
 func PrintHeaders(headers http.Header) {
