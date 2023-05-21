@@ -65,14 +65,14 @@ three (3) special attributes:
    interactive: true
    ```
    From then on the `zls` utility will use above credentials to interact with the `maz` library to perform all its functions.
-2. *Interactive via environment variables*: The calling utility will instead use `os.Getenv("HOME")` to look for the following
-   3 special environment variables:
-   ```bash
+2. *Interactive via environment variables*: The calling utility will instead use the `os.Getenv("VAR")` function to look for
+   the following 3 special environment variables:
+   ```bsh
    MAZ_TENANT_ID=3f050090-20b0-40a0-a060-c05060104010
    MAZ_USERNAME=user1@domain.io
    MAZ_INTERACTIVE=true
    ```
-   These variables take **precedence** and **OVERIDE** an existing config `~/.maz/credentials.yaml` file. 
+   Above values take **precedence** and **OVERIDE** any existing config `~/.maz/credentials.yaml` file values. 
 3. *Automated via config file*: The calling utility sets up a way to allow setting up the `~/.maz/credentials.yaml` file with
    the 3 special attributes. For example, the [zls CLI utility](https://github.com/git719/zls) does this via the `-cr`
    switch, to _Set up MSAL automated ClientId + Secret login_:
@@ -86,14 +86,14 @@ three (3) special attributes:
    client_secret: ACB8c~HdLejfQGiHeI9LUKgNOODPQRISNTmVLX_i
    ```
    From then on the `zls` utility will use above credentials to interact with the `maz` library to perform all its functions.
-4. *Automated via environment variables*: The calling utility will instead use `os.Getenv("HOME")` to look for the following
-   3 special environment variables:
-   ```bash
+4. *Automated via environment variables*: The calling utility will instead use the `os.Getenv("VAR")` function to look for
+   the following 3 special environment variables
+   ```bsh
    MAZ_TENANT_ID=3f050090-20b0-40a0-a060-c05060104010
    MAZ_CLIENT_ID=f1110121-7111-4171-a181-e1614131e181
    MAZ_CLIENT_SECRET=ACB8c~HdLejfQGiHeI9LUKgNOODPQRISNTmVLX_i
    ```
-   These variables take **precedence** and **OVERIDE** an existing config `~/.maz/credentials.yaml` file. 
+   Above values take **precedence** and **OVERIDE** any existing config `~/.maz/credentials.yaml` file values. 
 
 The benefit of using environment variables is of course to be able to override an existing `credentials.yaml` file, and
 specify different credentials, as well as being able to do this from different shell sessions _on the same host_. They also
