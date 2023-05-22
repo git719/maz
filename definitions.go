@@ -406,25 +406,17 @@ func GetAzRoleDefinitionByObject(x map[string]interface{}, z Bundle) (y map[stri
 	return nil
 }
 
-func GetAzRoleDefinitionByUuid(uuid string, z Bundle) (x map[string]interface{}) {
-	// Get Azure resource roleDefinitions by Object Id. Unfortunately we have to traverse
-	// and search the ENTIRE Azure resource scope hierarchy, which can take time.
-	x = nil
+func GetAzRoleDefinitionByUuid(uuid string, z Bundle) map[string]interface{} {
+	// Get Azure resource roleDefinitions by Object Id. Unfortunately we have to iterate
+	// through the entire tenant scope hierarchy, which can take time.
 	scopes := GetAzRbacScopes(z)                             // Get all scopes
 	params := map[string]string{"api-version": "2022-04-01"} // roleDefinitions
 	for _, scope := range scopes {
-		url := ConstAzUrl + scope + "/providers/Microsoft.Authorization/roleDefinitions"
+		url := ConstAzUrl + scope + "/providers/Microsoft.Authorization/roleDefinitions/" + uuid
 		r, _, _ := ApiGet(url, z, params)
-		//ApiErrorCheck("GET", url, utl.Trace(), r) // DEBUG. Until ApiGet rewrite with nullable _ err
-		if r != nil && r["value"] != nil {
-			definitionsUnderThisScope := r["value"].([]interface{})
-			for _, i := range definitionsUnderThisScope {
-				x := i.(map[string]interface{})
-				if utl.Str(x["name"]) == uuid {
-					return x // Return immediately if found
-				}
-			}
+		if r != nil && r["id"] != nil {
+			return r // Return as soon as we find a match
 		}
 	}
-	return x
+	return nil
 }

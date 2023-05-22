@@ -170,21 +170,6 @@ func GetAzRbacScopes(z Bundle) (scopes []string) {
 			continue
 		}
 		scopes = append(scopes, utl.Str(x["id"]))
-		// SCOPES below subscriptions do not appear to be REALLY NEEDED
-		// Most list search functions pull all objects in lower scopes.
-		// ------------
-		// // Now get/add all resourceGroups under this subscription
-		// params := map[string]string{"api-version": "2021-04-01"} // resourceGroups
-		// url := ConstAzUrl + utl.Str(x["id"]) + "/resourcegroups"
-		// r, _, _ := ApiGet(url, z, params)
-		// ApiErrorCheck("GET", url, utl.Trace(), r)
-		// if r != nil && r["value"] != nil {
-		// 	resourceGroups := r["value"].([]interface{})
-		// 	for _, j := range resourceGroups {
-		// 		y := j.(map[string]interface{})
-		// 		scopes = append(scopes, utl.Str(y["id"]))
-		// 	}
-		// }
 	}
 	return scopes
 }

@@ -5,7 +5,6 @@ package maz
 import (
 	"fmt"
 	"github.com/git719/utl"
-	"os"
 	"time"
 )
 

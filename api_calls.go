@@ -132,7 +132,7 @@ func ApiCall(method, url string, z Bundle, payload jsonT, params strMapT, verbos
 	// this interpretation, but may need confirmation then better handling
 
 	// Create jsonResult variable object to be return
-	var jsonResult jsonT = nil
+	var jsonResult map[string]interface{} = nil
 	if intValue, err := strconv.ParseInt(string(body), 10, 64); err == nil {
 		// It's an integer, probably an API object count value
 		jsonResult = make(map[string]interface{})
