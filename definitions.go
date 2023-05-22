@@ -273,9 +273,9 @@ func GetAzRoleDefinitions(verbose bool, z Bundle) (list []interface{}) {
 				// } else if strings.HasPrefix(scope, "/subscriptions") {
 				// 	scopeName = subNameMap[utl.LastElem(scope, "/")]
 				// }
-				//fmt.Printf("API call %d: %d objects under %s", k, count, scopeName) // DEBUG
+				// fmt.Printf("API call %d: %5d objects under %s\n", k, count, scopeName) // DEBUG
 
-				fmt.Printf("%sAPI call %d: %d objects", rUp, k, count)
+				fmt.Printf("%sAPI call %d: %5d objects", rUp, k, count)
 			}
 		}
 		k++
