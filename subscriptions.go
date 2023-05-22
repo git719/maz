@@ -47,11 +47,14 @@ func GetAzSubscriptionsIds(z Bundle) (scopes []string) {
 	subscriptions := GetAzSubscriptions(z)
 	for _, i := range subscriptions {
 		x := i.(map[string]interface{})
-		// Skip legacy subscriptions, since they have no role definitions and calling them causes an error
-		if utl.Str(x["displayName"]) == "Access to Azure Active Directory" {
+		// Skip disabled and legacy subscriptions
+		displayName := utl.Str(x["displayName"])
+		state := utl.Str(x["state"])
+		if state != "Enabled" || displayName == "Access to Azure Active Directory" {
 			continue
 		}
-		scopes = append(scopes, utl.Str(x["id"]))
+		subId := utl.Str(x["id"])
+		scopes = append(scopes, subId)
 	}
 	return scopes
 }

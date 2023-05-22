@@ -243,9 +243,11 @@ func GetAzRoleDefinitions(verbose bool, z Bundle) (list []interface{}) {
 	var uuIds []string // Keep track of each unique object to eliminate inherited repeats
 	k := 1             // Track number of API calls to provide progress
 
-	// DEBUG: Below two only used in conjunction with scopeName debugging verbose
-	// mgGroupNameMap := GetIdMapMgGroups(z) // DEBUG
-	// subNameMap := GetIdMapSubs(z)         // DEBUG
+	var mgGroupNameMap, subNameMap map[string]string
+	if verbose {
+		mgGroupNameMap = GetIdMapMgGroups(z)
+		subNameMap = GetIdMapSubs(z)
+	}
 
 	scopes := GetAzRbacScopes(z)                             // Get all scopes
 	params := map[string]string{"api-version": "2022-04-01"} // roleDefinitions
@@ -257,31 +259,26 @@ func GetAzRoleDefinitions(verbose bool, z Bundle) (list []interface{}) {
 			count := 0
 			for _, i := range objectsUnderThisScope {
 				x := i.(map[string]interface{})
-				uuid := utl.Str(x["name"]) // This is the UUID
+				uuid := utl.Str(x["name"])
 				if utl.ItemInList(uuid, uuIds) {
-					continue // Role definitions DO repeat! Skip if it's already been added.
+					// Role definitions & assignments do repeat!
+					continue // Skip if already seen
 				}
-				list = append(list, x)      // This one is unique, append to growing list
 				uuIds = append(uuIds, uuid) // Keep track of the UUIDs we are seeing
+				list = append(list, x)
 				count++
 			}
-			if verbose {
-				// DEBUG
-				// scopeName := scope
-				// if strings.HasPrefix(scope, "/providers") {
-				// 	scopeName = mgGroupNameMap[scope]
-				// } else if strings.HasPrefix(scope, "/subscriptions") {
-				// 	scopeName = subNameMap[utl.LastElem(scope, "/")]
-				// }
-				// fmt.Printf("API call %d: %5d objects under %s\n", k, count, scopeName) // DEBUG
-
-				fmt.Printf("%sAPI call %d: %5d objects", rUp, k, count)
+			if verbose && count > 0 {
+				scopeName := scope
+				if strings.HasPrefix(scope, "/providers") {
+					scopeName = mgGroupNameMap[scope]
+				} else if strings.HasPrefix(scope, "/subscriptions") {
+					scopeName = subNameMap[utl.LastElem(scope, "/")]
+				}
+				fmt.Printf("API call %4d: %5d objects under %s\n", k, count, scopeName)
 			}
 		}
 		k++
-	}
-	if verbose {
-		fmt.Printf("\n") // Use newline now
 	}
 	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_roleDefinitions.json")
 	utl.SaveFileJson(list, cacheFile) // Update the local cache
@@ -406,7 +403,7 @@ func GetAzRoleDefinitionByObject(x map[string]interface{}, z Bundle) (y map[stri
 func GetAzRoleDefinitionByUuid(uuid string, z Bundle) map[string]interface{} {
 	// Get Azure resource roleDefinitions by Object Id. Unfortunately we have to iterate
 	// through the entire tenant scope hierarchy, which can take time.
-	scopes := GetAzRbacScopes(z)                             // Get all scopes
+	scopes := GetAzRbacScopes(z)
 	params := map[string]string{"api-version": "2022-04-01"} // roleDefinitions
 	for _, scope := range scopes {
 		url := ConstAzUrl + scope + "/providers/Microsoft.Authorization/roleDefinitions/" + uuid

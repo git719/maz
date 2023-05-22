@@ -155,22 +155,37 @@ func GetAzObjectByUuid(t, uuid string, z Bundle) (x map[string]interface{}) {
 }
 
 func GetAzRbacScopes(z Bundle) (scopes []string) {
-	// Get all scopes in the entire Azure RBAC hierarchy: All MG scopes + All subscription scopes
+	// Get all scopes in the Azure tenant RBAC hierarchy: Tenant Root Group and all
+	// management groups, plus all subscription scopes
 	scopes = nil
 	managementGroups := GetAzMgGroups(z) // Start by adding all the managementGroups scopes
 	for _, i := range managementGroups {
 		x := i.(map[string]interface{})
 		scopes = append(scopes, utl.Str(x["id"]))
 	}
-	subscriptions := GetAzSubscriptions(z) // Now add all the subscription scopes
-	for _, i := range subscriptions {
-		x := i.(map[string]interface{})
-		// Skip legacy subscriptions, since they have no role definitions and calling them causes an error
-		if utl.Str(x["displayName"]) == "Access to Azure Active Directory" {
-			continue
-		}
-		scopes = append(scopes, utl.Str(x["id"]))
-	}
+	subIds := GetAzSubscriptionsIds(z) // Now add all the subscription scopes
+	scopes = append(scopes, subIds...)
+
+	// SCOPES below subscriptions do not appear to be REALLY NEEDED. Most list
+	// search functions pull all objects in lower scopes. If there is a future
+	// need to keep drilling down, next level being Resource Group scopes, then
+	// they can be acquired with something like below:
+
+	// params := map[string]string{"api-version": "2021-04-01"} // resourceGroups
+	// for subId := range subIds {
+	// 	url := ConstAzUrl + subId + "/resourcegroups"
+	// 	r, _, _ := ApiGet(url, z, params)
+	// 	if r != nil && r["value"] != nil {
+	// 		resourceGroups := r["value"].([]interface{})
+	// 		for _, j := range resourceGroups {
+	// 			y := j.(map[string]interface{})
+	// 			rgId := utl.Str(y["id"])
+	// 			scopes = append(scopes, rgId)
+	// 		}
+	// 	}
+	// }
+	// // Then repeat for next leval scope ...
+
 	return scopes
 }
 
