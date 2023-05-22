@@ -233,55 +233,52 @@ func GetRoleDefinitions(filter string, force bool, z Bundle) (list []interface{}
 }
 
 func GetAzRoleDefinitions(verbose bool, z Bundle) (list []interface{}) {
-	// Get ALL roleDefinitions in current Azure tenant AND save them to local cache file
+	// Get all roleDefinitions in current Azure tenant and save them to local cache file
 	// Option to be verbose (true) or quiet (false), since it can take a while.
 	// References:
-	// - https://learn.microsoft.com/en-us/azure/role-based-access-control/role-definitions-list
-	// - https://learn.microsoft.com/en-us/rest/api/authorization/role-definitions/list
-
-	// Important Azure resource RBAC role definitions API note: As of api-version 2022-04-01, the filter
-	// AtScopeAndBelow() does not work as documented at:
-	// https://learn.microsoft.com/en-us/azure/role-based-access-control/role-definitions-list.
-
-	// This means that anyone searching for a comprehensive list of ALL role definitions within an Azure tenant
-	// is forced to do so by having to traverse and search for all role definitions under each MG and subscription
-	// scope. This process grabs all Azure BuiltIn role definitions, as well as als all custom ones.
+	//   https://learn.microsoft.com/en-us/azure/role-based-access-control/role-definitions-list
+	//   https://learn.microsoft.com/en-us/rest/api/authorization/role-definitions/list
 
 	list = nil         // We have to zero it out
 	var uuIds []string // Keep track of each unique object to eliminate inherited repeats
 	k := 1             // Track number of API calls to provide progress
-	mgGroupNameMap := GetIdMapMgGroups(z)
-	subNameMap := GetIdMapSubs(z)                            // Get all subscription id:name pairs
+
+	// DEBUG: Below two only used in conjunction with scopeName debugging verbose
+	// mgGroupNameMap := GetIdMapMgGroups(z) // DEBUG
+	// subNameMap := GetIdMapSubs(z)         // DEBUG
+
 	scopes := GetAzRbacScopes(z)                             // Get all scopes
 	params := map[string]string{"api-version": "2022-04-01"} // roleDefinitions
 	for _, scope := range scopes {
-		scopeName := scope // Default scope name is the whole scope string
-		if strings.HasPrefix(scope, "/providers") {
-			scopeName = mgGroupNameMap[scope] // If it's an MG, just use its name
-		} else if strings.HasPrefix(scope, "/subscriptions") {
-			scopeName = subNameMap[utl.LastElem(scope, "/")] // If it's a sub, user its name
-		}
 		url := ConstAzUrl + scope + "/providers/Microsoft.Authorization/roleDefinitions"
 		r, _, _ := ApiGet(url, z, params)
-		ApiErrorCheck("GET", url, utl.Trace(), r) // DEBUG. Until ApiGet rewrite with nullable _ err
 		if r != nil && r["value"] != nil {
-			definitionsUnderThisScope := r["value"].([]interface{})
-			u := 0 // Keep track of unique definitions in this scope
-			for _, i := range definitionsUnderThisScope {
+			objectsUnderThisScope := r["value"].([]interface{})
+			count := 0
+			for _, i := range objectsUnderThisScope {
 				x := i.(map[string]interface{})
-				uuid := utl.Str(x["name"]) // Note that 'name' is actually the role assignment UUID
+				uuid := utl.Str(x["name"]) // This is the UUID
 				if utl.ItemInList(uuid, uuIds) {
-					continue // Role assignments DO repeat! Skip if it's already been added.
+					continue // Role definitions DO repeat! Skip if it's already been added.
 				}
 				list = append(list, x)      // This one is unique, append to growing list
 				uuIds = append(uuIds, uuid) // Keep track of the UUIDs we are seeing
-				u++
+				count++
 			}
-			if verbose { // Using global var rUp to overwrite last line. Defer newline until done
-				fmt.Printf("%s(API calls = %d) %d unique role definitions under scope %s", rUp, k, u, scopeName)
+			if verbose {
+				// DEBUG
+				// scopeName := scope
+				// if strings.HasPrefix(scope, "/providers") {
+				// 	scopeName = mgGroupNameMap[scope]
+				// } else if strings.HasPrefix(scope, "/subscriptions") {
+				// 	scopeName = subNameMap[utl.LastElem(scope, "/")]
+				// }
+				//fmt.Printf("API call %d: %d objects under %s", k, count, scopeName) // DEBUG
+
+				fmt.Printf("%sAPI call %d: %d objects", rUp, k, count)
 			}
-			k++
 		}
+		k++
 	}
 	if verbose {
 		fmt.Printf("\n") // Use newline now

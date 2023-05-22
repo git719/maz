@@ -227,43 +227,49 @@ func GetRoleAssignments(filter string, force bool, z Bundle) (list []interface{}
 }
 
 func GetAzRoleAssignments(verbose bool, z Bundle) (list []interface{}) {
-	// Get ALL roleAssignments in current Azure tenant AND save them to local cache file
+	// Get all roleAssignments in current Azure tenant and save them to local cache file
 	// Option to be verbose (true) or quiet (false), since it can take a while.
 	// References:
-	// - https://learn.microsoft.com/en-us/azure/role-based-access-control/role-assignments-list-rest
-	// - https://learn.microsoft.com/en-us/rest/api/authorization/role-assignments/list-for-subscription
+	//   https://learn.microsoft.com/en-us/azure/role-based-access-control/role-assignments-list-rest
+	//   https://learn.microsoft.com/en-us/rest/api/authorization/role-assignments/list-for-subscription
+
 	list = nil         // We have to zero it out
 	var uuIds []string // Keep track of each unique objects to eliminate inherited repeats
 	k := 1             // Track number of API calls to provide progress
-	mgGroupNameMap := GetIdMapMgGroups(z)
-	subNameMap := GetIdMapSubs(z)                            // Get all subscription id:name pairs
-	scopes := GetAzRbacScopes(z)                             // Get all RBAC hierarchy scopes to search for all role assignments
+
+	// DEBUG: Below two only used in conjunction with scopeName debugging verbose
+	// mgGroupNameMap := GetIdMapMgGroups(z) // DEBUG
+	// subNameMap := GetIdMapSubs(z)         // DEBUG
+
+	scopes := GetAzRbacScopes(z)                             // Get all scopes
 	params := map[string]string{"api-version": "2022-04-01"} // roleAssignments
 	for _, scope := range scopes {
-		scopeName := scope // Default scope name is the whole scope string
-		if strings.HasPrefix(scope, "/providers") {
-			scopeName = mgGroupNameMap[scope] // If it's an MG, just use its name
-		} else if strings.HasPrefix(scope, "/subscriptions") {
-			scopeName = subNameMap[utl.LastElem(scope, "/")] // If it's a sub, user its name
-		}
 		url := ConstAzUrl + scope + "/providers/Microsoft.Authorization/roleAssignments"
 		r, _, _ := ApiGet(url, z, params)
-		ApiErrorCheck("GET", url, utl.Trace(), r)
-		if r["value"] != nil {
-			assignmentsUnderThisScope := r["value"].([]interface{})
-			u := 0 // Keep track of assignments in this scope
-			for _, i := range assignmentsUnderThisScope {
+		if r != nil && r["value"] != nil {
+			objectsUnderThisScope := r["value"].([]interface{})
+			count := 0
+			for _, i := range objectsUnderThisScope {
 				x := i.(map[string]interface{})
-				uuid := utl.Str(x["name"]) // Note that 'name' is actually the role assignment UUID
+				uuid := utl.Str(x["name"]) // This is the UUID
 				if utl.ItemInList(uuid, uuIds) {
 					continue // Role assignments DO repeat! Skip if it's already been added.
 				}
 				list = append(list, x)      // This one is unique, append to growing list
 				uuIds = append(uuIds, uuid) // Keep track of the UUIDs we are seeing
-				u++
+				count++
 			}
 			if verbose {
-				fmt.Printf("%s(API calls = %d) %d role assignments under scope %s", rUp, k, u, scopeName)
+				// DEBUG
+				// scopeName := scope
+				// if strings.HasPrefix(scope, "/providers") {
+				// 	scopeName = mgGroupNameMap[scope]
+				// } else if strings.HasPrefix(scope, "/subscriptions") {
+				// 	scopeName = subNameMap[utl.LastElem(scope, "/")]
+				// }
+				//fmt.Printf("API call %d: %d objects under %s", k, count, scopeName) // DEBUG
+
+				fmt.Printf("%sAPI call %d: %d objects", rUp, k, count)
 			}
 		}
 		k++
