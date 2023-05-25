@@ -13,12 +13,16 @@ import (
 )
 
 const (
-	ConstAuthUrl              = "https://login.microsoftonline.com/"
-	ConstMgUrl                = "https://graph.microsoft.com"
-	ConstAzUrl                = "https://management.azure.com"
-	ConstAzPowerShellClientId = "1950a258-227b-4e31-a9cf-717495945fc2"
-	// Interactive login uses above 'Azure PowerShell' clientId
-	// See https://stackoverflow.com/questions/30454771/how-does-azure-powershell-work-with-username-password-based-auth
+	ConstAuthUrl = "https://login.microsoftonline.com/"
+	ConstMgUrl   = "https://graph.microsoft.com"
+	ConstAzUrl   = "https://management.azure.com"
+
+	ConstAzPowerShellClientId = "1950a258-227b-4e31-a9cf-717495945fc2" // 'Microsoft Azure PowerShell' ClientId
+	//ConstAzPowerShellClientId = "04b07795-8ddb-461a-bbee-02f9e1bf7b46" // 'Microsoft Azure CLI' ClientId
+	// Interactive login can use either of above ClientIds. See below references:
+	//   - https://learn.microsoft.com/en-us/troubleshoot/azure/active-directory/verify-first-party-apps-sign-in
+	//   - https://stackoverflow.com/questions/30454771/how-does-azure-powershell-work-with-username-password-based-auth
+
 	rUp = "\x1B[2K\r" // Used to print in previous line
 	// See https://stackoverflow.com/questions/1508490/erase-the-current-printed-console-line
 )

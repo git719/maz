@@ -23,7 +23,7 @@ func GetTokenInteractively(scopes []string, confDir, tokenFile, authorityUrl, us
 	cacheFilePath := filepath.Join(confDir, tokenFile)
 	cacheAccessor := &TokenCache{cacheFilePath}
 
-	// Note we're using constant constAzPowerShellClientId for interactive login
+	// Note we're using constant ConstAzPowerShellClientId for interactive login
 	app, err := public.New(ConstAzPowerShellClientId, public.WithAuthority(authorityUrl), public.WithCache(cacheAccessor))
 	if err != nil {
 		PrintApiErrMsg(err.Error())
@@ -43,12 +43,20 @@ func GetTokenInteractively(scopes []string, confDir, tokenFile, authorityUrl, us
 	result, err := app.AcquireTokenSilent(context.Background(), scopes, public.WithSilentAccount(targetAccount))
 	if err != nil {
 		// Else, get a new token
+
 		result, err = app.AcquireTokenInteractive(context.Background(), scopes)
-		// AcquireTokenInteractive acquires a security token from the authority using the default web browser to select the account.
+		// app.AcquireTokenInteractive uses the default web browser to select the account and acquire a
+		// security token from the authority.
+
+		// Note that this obviously does not work from within a VM environment.
+		// TODO: Allow use of app.AcquireByDeviceCodeOption or app.AcquireByAuthCodeOption, which
+		// would allow interactive login from a virtualize environment.
+
 		if err != nil {
 			PrintApiErrMsg(err.Error())
 			utl.Die("")
 		}
+
 	}
 	return result.AccessToken, nil // Return only the AccessToken, which is of type string
 }
