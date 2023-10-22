@@ -62,17 +62,20 @@ func GetIdMapMgGroups(z Bundle) (nameMap map[string]string) {
 }
 
 func GetMgGroups(filter string, force bool, z Bundle) (list []interface{}) {
-	// Get all managementGroups that match on provided filter. An empty "" filter means return
-	// all of them. It always uses local cache if it's within the cache retention period. The force boolean
-	// option will force a call to Azure.
-	list = nil
+	// Get all Azure management groups matching on 'filter'; return entire list if filter is empty ""
+
 	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_managementGroups."+ConstCacheFileExtension)
-	cacheNoGood, list := CheckLocalCache(cacheFile, 604800) // cachePeriod = 1 week
-	if cacheNoGood || force {
-		list = GetAzMgGroups(z) // Get the entire set from Azure
+	cacheFileAge := utl.FileAge(cacheFile)
+	if utl.InternetIsAvailable() && (force || cacheFileAge == 0 || cacheFileAge > ConstAzCacheFileAgePeriod) {
+		// If Internet is available AND (force was requested OR cacheFileAge is zero (meaning does not exist)
+		// OR it is older than ConstAzCacheFileAgePeriod) then query Azure directly to get all objects
+		// and show progress while doing so (true = verbose below)
+		list = GetAzMgGroups(z)
+	} else {
+		// Use local cache for all other conditions
+		list = GetCachedObjects(cacheFile)
 	}
 
-	// Do filter matching
 	if filter == "" {
 		return list
 	}

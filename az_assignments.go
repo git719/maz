@@ -79,7 +79,7 @@ func PrintRoleAssignmentReport(z Bundle) {
 	userNameMap := GetIdMapUsers(z)    // Get all users id:name pairs
 	spNameMap := GetIdMapSps(z)        // Get all SPs id:name pairs
 
-	assignments := GetAzRoleAssignments(false, z)
+	assignments := GetAzRoleAssignments(z, false)
 	for _, i := range assignments {
 		x := i.(map[string]interface{})
 		xProp := x["properties"].(map[string]interface{})
@@ -185,23 +185,25 @@ func RoleAssignmentsCountLocal(z Bundle) int64 {
 }
 
 func RoleAssignmentsCountAzure(z Bundle) int64 {
-	list := GetAzRoleAssignments(false, z) // false = quiet
+	list := GetAzRoleAssignments(z, false) // false = quiet
 	return int64(len(list))
 }
 
 func GetRoleAssignments(filter string, force bool, z Bundle) (list []interface{}) {
-	// Get all roleAssignments that match on provided filter. An empty "" filter means return
-	// all of them. It always uses local cache if it's within the cache retention period. The
-	// force boolean option will force a call to Azure.
-	// See https://learn.microsoft.com/en-us/azure/role-based-access-control/role-assignments-list-rest
-	list = nil
-	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_roleAssignments.json")
-	cacheNoGood, list := CheckLocalCache(cacheFile, 604800) // cachePeriod = 1 week in seconds
-	if cacheNoGood || force {
-		list = GetAzRoleAssignments(true, z) // Get the entire set from Azure, true = show progress
+	// Get all RBAC role assignments matching on 'filter'; return entire list if filter is empty ""
+
+	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_roleAssignments."+ConstCacheFileExtension)
+	cacheFileAge := utl.FileAge(cacheFile)
+	if utl.InternetIsAvailable() && (force || cacheFileAge == 0 || cacheFileAge > ConstAzCacheFileAgePeriod) {
+		// If Internet is available AND (force was requested OR cacheFileAge is zero (meaning does not exist)
+		// OR it is older than ConstAzCacheFileAgePeriod) then query Azure directly to get all objects
+		// and show progress while doing so (true = verbose below)
+		list = GetAzRoleAssignments(z, true)
+	} else {
+		// Use local cache for all other conditions
+		list = GetCachedObjects(cacheFile)
 	}
 
-	// Do filter matching
 	if filter == "" {
 		return list
 	}
@@ -227,7 +229,7 @@ func GetRoleAssignments(filter string, force bool, z Bundle) (list []interface{}
 	return matchingList
 }
 
-func GetAzRoleAssignments(verbose bool, z Bundle) (list []interface{}) {
+func GetAzRoleAssignments(z Bundle, verbose bool) (list []interface{}) {
 	// Get all roleAssignments in current Azure tenant and save them to local cache file
 	// Option to be verbose (true) or quiet (false), since it can take a while.
 	// References:

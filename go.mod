@@ -1,6 +1,6 @@
 module github.com/git719/maz
 
-go 1.19
+go 1.21.3
 
 require (
 	github.com/AzureAD/microsoft-authentication-library-for-go v0.7.0

@@ -25,8 +25,9 @@ const (
 
 	rUp = "\x1B[2K\r" // Used to print in previous line
 	// See https://stackoverflow.com/questions/1508490/erase-the-current-printed-console-line
-	ConstCacheFileExtension = "gz"
-	ConstCacheFileAgePeriod = 300 // In seconds
+	ConstCacheFileExtension   = "gz"
+	ConstMgCacheFileAgePeriod = 1800  // Half hour
+	ConstAzCacheFileAgePeriod = 86400 // One day
 )
 
 var (

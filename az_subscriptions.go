@@ -75,18 +75,20 @@ func GetIdMapSubs(z Bundle) (nameMap map[string]string) {
 }
 
 func GetSubscriptions(filter string, force bool, z Bundle) (list []interface{}) {
-	// Get all subscriptions that match on provided filter. An empty "" filter means return
-	// all subscription objects. It always uses local cache if it's within the cache retention
-	// period, else it gets them from Azure. Also gets them from Azure if force is specified.
-	// TODO: Make cachePeriod a configurable variable
-	list = nil
+	// Get all Azure subscriptions matching on 'filter'; return entire list if filter is empty ""
+
 	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_subscriptions."+ConstCacheFileExtension)
-	cacheNoGood, list := CheckLocalCache(cacheFile, 604800) // cachePeriod = 1 week
-	if cacheNoGood || force {
-		list = GetAzSubscriptions(z) // Get the entire set from Azure
+	cacheFileAge := utl.FileAge(cacheFile)
+	if utl.InternetIsAvailable() && (force || cacheFileAge == 0 || cacheFileAge > ConstAzCacheFileAgePeriod) {
+		// If Internet is available AND (force was requested OR cacheFileAge is zero (meaning does not exist)
+		// OR it is older than ConstAzCacheFileAgePeriod) then query Azure directly to get all objects
+		// and show progress while doing so (true = verbose below)
+		list = GetAzSubscriptions(z)
+	} else {
+		// Use local cache for all other conditions
+		list = GetCachedObjects(cacheFile)
 	}
 
-	// Do filter matching
 	if filter == "" {
 		return list
 	}

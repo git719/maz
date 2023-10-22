@@ -205,18 +205,62 @@ func GetIdMapRoleDefs(z Bundle) (nameMap map[string]string) {
 	return nameMap
 }
 
-func GetRoleDefinitions(filter string, force bool, z Bundle) (list []interface{}) {
-	// Get all roleDefinitions that match on provided filter, empty "" filter grabs all
-	// Defaults to querying local cache if it's within the cache retention period, unless force
-	// boolean option is given to call Azure. The verbose option details the progress.
-	list = nil
+func RoleDefinitionCountLocal(z Bundle) (builtin, custom int64) {
+	// Dedicated role definition local cache counter able to discern if role is custom to native tenant or it's an Azure BuilIn role
+	var customList []interface{} = nil
+	var builtinList []interface{} = nil
 	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_roleDefinitions."+ConstCacheFileExtension)
-	cacheNoGood, list := CheckLocalCache(cacheFile, 604800) // cachePeriod = 1 week
-	if cacheNoGood || force {
-		list = GetAzRoleDefinitions(true, z) // Get the entire set from Azure, true = show progress
+	if utl.FileUsable(cacheFile) {
+		rawList, _ := utl.LoadFileJsonGzip(cacheFile)
+		if rawList != nil {
+			definitions := rawList.([]interface{})
+			for _, i := range definitions {
+				x := i.(map[string]interface{}) // Assert as JSON object type
+				xProp := x["properties"].(map[string]interface{})
+				if utl.Str(xProp["type"]) == "CustomRole" {
+					customList = append(customList, x)
+				} else {
+					builtinList = append(builtinList, x)
+				}
+			}
+			return int64(len(builtinList)), int64(len(customList))
+		}
+	}
+	return 0, 0
+}
+
+func RoleDefinitionCountAzure(z Bundle) (builtin, custom int64) {
+	// Dedicated role definition Azure counter able to discern if role is custom to native tenant or it's an Azure BuilIn role
+	var customList []interface{} = nil
+	var builtinList []interface{} = nil
+	definitions := GetAzRoleDefinitions(z, false) // false = be silent
+	for _, i := range definitions {
+		x := i.(map[string]interface{}) // Assert as JSON object type
+		xProp := x["properties"].(map[string]interface{})
+		if utl.Str(xProp["type"]) == "CustomRole" {
+			customList = append(customList, x)
+		} else {
+			builtinList = append(builtinList, x)
+		}
+	}
+	return int64(len(builtinList)), int64(len(customList))
+}
+
+func GetRoleDefinitions(filter string, force bool, z Bundle) (list []interface{}) {
+	// Get all RBAC role definitions matching on 'filter'; return entire list if filter is empty ""
+
+	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_roleDefinitions."+ConstCacheFileExtension)
+	cacheFileAge := utl.FileAge(cacheFile)
+	if utl.InternetIsAvailable() && (force || cacheFileAge == 0 || cacheFileAge > ConstAzCacheFileAgePeriod) {
+		// If Internet is available AND (force was requested OR cacheFileAge is zero (meaning does not exist)
+		// OR it is older than ConstAzCacheFileAgePeriod) then query Azure directly to get all objects
+		// and show progress while doing so (true = verbose below)
+		list = GetAzRoleDefinitions(z, true)
+	} else {
+		// Use local cache for all other conditions
+		list = GetCachedObjects(cacheFile)
 	}
 
-	// Do filter matching
 	if filter == "" {
 		return list
 	}
@@ -233,7 +277,7 @@ func GetRoleDefinitions(filter string, force bool, z Bundle) (list []interface{}
 	return matchingList
 }
 
-func GetAzRoleDefinitions(verbose bool, z Bundle) (list []interface{}) {
+func GetAzRoleDefinitions(z Bundle, verbose bool) (list []interface{}) {
 	// Get all roleDefinitions in current Azure tenant and save them to local cache file
 	// Option to be verbose (true) or quiet (false), since it can take a while.
 	// References:
@@ -284,47 +328,6 @@ func GetAzRoleDefinitions(verbose bool, z Bundle) (list []interface{}) {
 	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_roleDefinitions."+ConstCacheFileExtension)
 	utl.SaveFileJsonGzip(list, cacheFile) // Update the local cache
 	return list
-}
-
-func RoleDefinitionCountLocal(z Bundle) (builtin, custom int64) {
-	// Dedicated role definition local cache counter able to discern if role is custom to native tenant or it's an Azure BuilIn role
-	var customList []interface{} = nil
-	var builtinList []interface{} = nil
-	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_roleDefinitions."+ConstCacheFileExtension)
-	if utl.FileUsable(cacheFile) {
-		rawList, _ := utl.LoadFileJsonGzip(cacheFile)
-		if rawList != nil {
-			definitions := rawList.([]interface{})
-			for _, i := range definitions {
-				x := i.(map[string]interface{}) // Assert as JSON object type
-				xProp := x["properties"].(map[string]interface{})
-				if utl.Str(xProp["type"]) == "CustomRole" {
-					customList = append(customList, x)
-				} else {
-					builtinList = append(builtinList, x)
-				}
-			}
-			return int64(len(builtinList)), int64(len(customList))
-		}
-	}
-	return 0, 0
-}
-
-func RoleDefinitionCountAzure(z Bundle) (builtin, custom int64) {
-	// Dedicated role definition Azure counter able to discern if role is custom to native tenant or it's an Azure BuilIn role
-	var customList []interface{} = nil
-	var builtinList []interface{} = nil
-	definitions := GetAzRoleDefinitions(false, z) // false = be silent
-	for _, i := range definitions {
-		x := i.(map[string]interface{}) // Assert as JSON object type
-		xProp := x["properties"].(map[string]interface{})
-		if utl.Str(xProp["type"]) == "CustomRole" {
-			customList = append(customList, x)
-		} else {
-			builtinList = append(builtinList, x)
-		}
-	}
-	return int64(len(builtinList)), int64(len(customList))
 }
 
 func GetAzRoleDefinitionByName(roleName string, z Bundle) (y map[string]interface{}) {

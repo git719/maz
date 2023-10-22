@@ -7,7 +7,6 @@ import (
 	"github.com/git719/utl"
 	"os"
 	"path/filepath"
-	"time"
 )
 
 func UpsertAzObject(filePath string, z Bundle) {
@@ -199,22 +198,6 @@ func GetCachedObjects(cacheFile string) (cachedList []interface{}) {
 		}
 	}
 	return cachedList
-}
-
-func CheckLocalCache(cacheFile string, cachePeriod int64) (usable bool, cachedList []interface{}) {
-	// Return locally cached list of objects if it exists *and* it is within the specified cachePeriod in seconds
-	if utl.FileUsable(cacheFile) {
-		cacheFileEpoc := int64(utl.FileModTime(cacheFile))
-		cacheFileAge := int64(time.Now().Unix()) - cacheFileEpoc
-		rawList, _ := utl.LoadFileJsonGzip(cacheFile)
-		if rawList != nil {
-			cachedList = rawList.([]interface{})
-			if len(cachedList) > 0 && cacheFileAge < cachePeriod {
-				return false, cachedList // Cache is usable, returning cached list
-			}
-		}
-	}
-	return true, nil // Cache is not usable, returning nil
 }
 
 func GetObjects(t, filter string, force bool, z Bundle) (list []interface{}) {
