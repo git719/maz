@@ -266,9 +266,9 @@ func PrintStringMapColor(strMap map[string]string) {
 }
 
 func PrintMatching(printFormat, t, specifier string, z Bundle) {
-	// Print matching object or objects in JSON format
-
+	// Print objects matching on specifier
 	if utl.ValidUuid(specifier) {
+		// If valid UUID string, do direct Azure search for it
 		x := GetAzObjectByUuid(t, specifier, z)
 		if printFormat == "json" {
 			utl.PrintJsonColor(x)

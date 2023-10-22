@@ -1,4 +1,5 @@
-// subscriptions.go
+// az_subscriptions.go
+// Azure resource Subscriptions
 
 package maz
 
@@ -24,9 +25,9 @@ func PrintSubscription(x map[string]interface{}) {
 
 func SubsCountLocal(z Bundle) int64 {
 	var cachedList []interface{} = nil
-	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_subscriptions.json")
+	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_subscriptions."+ConstCacheFileExtension)
 	if utl.FileUsable(cacheFile) {
-		rawList, _ := utl.LoadFileJson(cacheFile)
+		rawList, _ := utl.LoadFileJsonGzip(cacheFile)
 		if rawList != nil {
 			cachedList = rawList.([]interface{})
 			return int64(len(cachedList))
@@ -79,8 +80,8 @@ func GetSubscriptions(filter string, force bool, z Bundle) (list []interface{}) 
 	// period, else it gets them from Azure. Also gets them from Azure if force is specified.
 	// TODO: Make cachePeriod a configurable variable
 	list = nil
-	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_subscriptions.json")
-	cacheNoGood, list := CheckLocalCache(cacheFile, 604800) // cachePeriod = 1 week in seconds
+	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_subscriptions."+ConstCacheFileExtension)
+	cacheNoGood, list := CheckLocalCache(cacheFile, 604800) // cachePeriod = 1 week
 	if cacheNoGood || force {
 		list = GetAzSubscriptions(z) // Get the entire set from Azure
 	}
@@ -114,8 +115,8 @@ func GetAzSubscriptions(z Bundle) (list []interface{}) {
 		objects := r["value"].([]interface{})
 		list = append(list, objects...)
 	}
-	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_subscriptions.json")
-	utl.SaveFileJson(list, cacheFile) // Update the local cache
+	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_subscriptions."+ConstCacheFileExtension)
+	utl.SaveFileJsonGzip(list, cacheFile) // Update the local cache
 	return list
 }
 

@@ -1,4 +1,5 @@
-// definitions.go
+// az_definitions.go
+// Azure resource RBAC role definitions
 
 package maz
 
@@ -209,8 +210,8 @@ func GetRoleDefinitions(filter string, force bool, z Bundle) (list []interface{}
 	// Defaults to querying local cache if it's within the cache retention period, unless force
 	// boolean option is given to call Azure. The verbose option details the progress.
 	list = nil
-	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_roleDefinitions.json")
-	cacheNoGood, list := CheckLocalCache(cacheFile, 604800) // cachePeriod = 1 week in seconds
+	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_roleDefinitions."+ConstCacheFileExtension)
+	cacheNoGood, list := CheckLocalCache(cacheFile, 604800) // cachePeriod = 1 week
 	if cacheNoGood || force {
 		list = GetAzRoleDefinitions(true, z) // Get the entire set from Azure, true = show progress
 	}
@@ -280,8 +281,8 @@ func GetAzRoleDefinitions(verbose bool, z Bundle) (list []interface{}) {
 		}
 		k++
 	}
-	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_roleDefinitions.json")
-	utl.SaveFileJson(list, cacheFile) // Update the local cache
+	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_roleDefinitions."+ConstCacheFileExtension)
+	utl.SaveFileJsonGzip(list, cacheFile) // Update the local cache
 	return list
 }
 
@@ -289,9 +290,9 @@ func RoleDefinitionCountLocal(z Bundle) (builtin, custom int64) {
 	// Dedicated role definition local cache counter able to discern if role is custom to native tenant or it's an Azure BuilIn role
 	var customList []interface{} = nil
 	var builtinList []interface{} = nil
-	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_roleDefinitions.json")
+	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_roleDefinitions."+ConstCacheFileExtension)
 	if utl.FileUsable(cacheFile) {
-		rawList, _ := utl.LoadFileJson(cacheFile)
+		rawList, _ := utl.LoadFileJsonGzip(cacheFile)
 		if rawList != nil {
 			definitions := rawList.([]interface{})
 			for _, i := range definitions {

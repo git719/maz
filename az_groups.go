@@ -1,4 +1,5 @@
-// mgroups.go
+// az_groups.go
+// Azure resource Management Groups
 
 package maz
 
@@ -32,9 +33,9 @@ func PrintMgGroup(x map[string]interface{}) {
 
 func MgGroupCountLocal(z Bundle) int64 {
 	var cachedList []interface{} = nil
-	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_managementGroups.json")
+	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_managementGroups."+ConstCacheFileExtension)
 	if utl.FileUsable(cacheFile) {
-		rawList, _ := utl.LoadFileJson(cacheFile)
+		rawList, _ := utl.LoadFileJsonGzip(cacheFile)
 		if rawList != nil {
 			cachedList = rawList.([]interface{})
 			return int64(len(cachedList))
@@ -65,8 +66,8 @@ func GetMgGroups(filter string, force bool, z Bundle) (list []interface{}) {
 	// all of them. It always uses local cache if it's within the cache retention period. The force boolean
 	// option will force a call to Azure.
 	list = nil
-	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_managementGroups.json")
-	cacheNoGood, list := CheckLocalCache(cacheFile, 604800) // cachePeriod = 1 week in seconds
+	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_managementGroups."+ConstCacheFileExtension)
+	cacheNoGood, list := CheckLocalCache(cacheFile, 604800) // cachePeriod = 1 week
 	if cacheNoGood || force {
 		list = GetAzMgGroups(z) // Get the entire set from Azure
 	}
@@ -98,8 +99,8 @@ func GetAzMgGroups(z Bundle) (list []interface{}) {
 		objects := r["value"].([]interface{})
 		list = append(list, objects...)
 	}
-	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_managementGroups.json")
-	utl.SaveFileJson(list, cacheFile) // Update the local cache
+	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_managementGroups."+ConstCacheFileExtension)
+	utl.SaveFileJsonGzip(list, cacheFile) // Update the local cache
 	return list
 }
 

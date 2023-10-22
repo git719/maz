@@ -189,12 +189,24 @@ func GetAzRbacScopes(z Bundle) (scopes []string) {
 	return scopes
 }
 
+func GetCachedObjects(cacheFile string) (cachedList []interface{}) {
+	// Return locally cached list of objects
+	cachedList = nil
+	if utl.FileUsable(cacheFile) {
+		rawList, _ := utl.LoadFileJsonGzip(cacheFile)
+		if rawList != nil {
+			cachedList = rawList.([]interface{})
+		}
+	}
+	return cachedList
+}
+
 func CheckLocalCache(cacheFile string, cachePeriod int64) (usable bool, cachedList []interface{}) {
 	// Return locally cached list of objects if it exists *and* it is within the specified cachePeriod in seconds
 	if utl.FileUsable(cacheFile) {
 		cacheFileEpoc := int64(utl.FileModTime(cacheFile))
 		cacheFileAge := int64(time.Now().Unix()) - cacheFileEpoc
-		rawList, _ := utl.LoadFileJson(cacheFile)
+		rawList, _ := utl.LoadFileJsonGzip(cacheFile)
 		if rawList != nil {
 			cachedList = rawList.([]interface{})
 			if len(cachedList) > 0 && cacheFileAge < cachePeriod {
@@ -271,31 +283,31 @@ func RemoveCacheFile(t string, z Bundle) {
 	case "t":
 		utl.RemoveFile(filepath.Join(z.ConfDir, z.TokenFile))
 	case "d":
-		utl.RemoveFile(filepath.Join(z.ConfDir, z.TenantId+"_roleDefinitions.json"))
+		utl.RemoveFile(filepath.Join(z.ConfDir, z.TenantId+"_roleDefinitions."+ConstCacheFileExtension))
 	case "a":
-		utl.RemoveFile(filepath.Join(z.ConfDir, z.TenantId+"_roleAssignments.json"))
+		utl.RemoveFile(filepath.Join(z.ConfDir, z.TenantId+"_roleAssignments."+ConstCacheFileExtension))
 	case "s":
-		utl.RemoveFile(filepath.Join(z.ConfDir, z.TenantId+"_subscriptions.json"))
+		utl.RemoveFile(filepath.Join(z.ConfDir, z.TenantId+"_subscriptions."+ConstCacheFileExtension))
 	case "m":
-		utl.RemoveFile(filepath.Join(z.ConfDir, z.TenantId+"_managementGroups.json"))
+		utl.RemoveFile(filepath.Join(z.ConfDir, z.TenantId+"_managementGroups."+ConstCacheFileExtension))
 	case "u":
-		utl.RemoveFile(filepath.Join(z.ConfDir, z.TenantId+"_users.json"))
-		utl.RemoveFile(filepath.Join(z.ConfDir, z.TenantId+"_users_deltaLink.json"))
+		utl.RemoveFile(filepath.Join(z.ConfDir, z.TenantId+"_users."+ConstCacheFileExtension))
+		utl.RemoveFile(filepath.Join(z.ConfDir, z.TenantId+"_users_deltaLink."+ConstCacheFileExtension))
 	case "g":
-		utl.RemoveFile(filepath.Join(z.ConfDir, z.TenantId+"_groups.json"))
-		utl.RemoveFile(filepath.Join(z.ConfDir, z.TenantId+"_groups_deltaLink.json"))
+		utl.RemoveFile(filepath.Join(z.ConfDir, z.TenantId+"_groups."+ConstCacheFileExtension))
+		utl.RemoveFile(filepath.Join(z.ConfDir, z.TenantId+"_groups_deltaLink."+ConstCacheFileExtension))
 	case "sp":
-		utl.RemoveFile(filepath.Join(z.ConfDir, z.TenantId+"_servicePrincipals.json"))
-		utl.RemoveFile(filepath.Join(z.ConfDir, z.TenantId+"_servicePrincipals_deltaLink.json"))
+		utl.RemoveFile(filepath.Join(z.ConfDir, z.TenantId+"_servicePrincipals."+ConstCacheFileExtension))
+		utl.RemoveFile(filepath.Join(z.ConfDir, z.TenantId+"_servicePrincipals_deltaLink."+ConstCacheFileExtension))
 	case "ap":
-		utl.RemoveFile(filepath.Join(z.ConfDir, z.TenantId+"_applications.json"))
-		utl.RemoveFile(filepath.Join(z.ConfDir, z.TenantId+"_applications_deltaLink.json"))
+		utl.RemoveFile(filepath.Join(z.ConfDir, z.TenantId+"_applications."+ConstCacheFileExtension))
+		utl.RemoveFile(filepath.Join(z.ConfDir, z.TenantId+"_applications_deltaLink."+ConstCacheFileExtension))
 	case "ad":
-		utl.RemoveFile(filepath.Join(z.ConfDir, z.TenantId+"_directoryRoles.json"))
-		utl.RemoveFile(filepath.Join(z.ConfDir, z.TenantId+"_directoryRoles_deltaLink.json"))
+		utl.RemoveFile(filepath.Join(z.ConfDir, z.TenantId+"_directoryRoles."+ConstCacheFileExtension))
+		utl.RemoveFile(filepath.Join(z.ConfDir, z.TenantId+"_directoryRoles_deltaLink."+ConstCacheFileExtension))
 	case "all":
 		// See https://stackoverflow.com/questions/48072236/remove-files-with-wildcard
-		fileList, err := filepath.Glob(filepath.Join(z.ConfDir, z.TenantId+"_*.json"))
+		fileList, err := filepath.Glob(filepath.Join(z.ConfDir, z.TenantId+"_*."+ConstCacheFileExtension))
 		if err != nil {
 			panic(err)
 		}
@@ -311,9 +323,9 @@ func GetObjectFromFile(filePath string) (formatType, t string, obj map[string]in
 
 	// Because JSON is essentially a subset of YAML, we have to check JSON first
 	// As an interesting aside regarding YAML & JSON, see https://news.ycombinator.com/item?id=31406473
-	formatType = "JSON"                     // Pretend it's JSON
-	objRaw, _ := utl.LoadFileJson(filePath) // Ignores the errors
-	if objRaw == nil {                      // Ok, it's NOT JSON
+	formatType = "JSON"                         // Pretend it's JSON
+	objRaw, _ := utl.LoadFileJsonGzip(filePath) // Ignores the errors
+	if objRaw == nil {                          // Ok, it's NOT JSON
 		objRaw, _ = utl.LoadFileYaml(filePath) // See if it's YAML, ignoring the error
 		if objRaw == nil {
 			return "", "", nil // Ok, it's neither, let's return 3 null values

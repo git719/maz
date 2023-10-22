@@ -1,4 +1,5 @@
-// apps.go
+// mg_apps.go
+// MS Graph applications
 
 package maz
 
@@ -257,9 +258,9 @@ func RemoveAppSecret(uuid, keyId string, z Bundle) {
 func AppsCountLocal(z Bundle) int64 {
 	// Return number of entries in local cache file
 	var cachedList []interface{} = nil
-	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_applications.json")
+	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_applications."+ConstCacheFileExtension)
 	if utl.FileUsable(cacheFile) {
-		rawList, _ := utl.LoadFileJson(cacheFile)
+		rawList, _ := utl.LoadFileJsonGzip(cacheFile)
 		if rawList != nil {
 			cachedList = rawList.([]interface{})
 			return int64(len(cachedList))
@@ -296,16 +297,19 @@ func GetIdMapApps(z Bundle) (nameMap map[string]string) {
 }
 
 func GetApps(filter string, force bool, z Bundle) (list []interface{}) {
-	// Get all Azure AD applications whose searchKeys match on 'filter'. An empty "" filter returns all.
-	// Uses local cache if it's less than cachePeriod old. The 'force' option forces calling Azure query.
-	list = nil
-	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_applications.json")
-	cacheNoGood, list := CheckLocalCache(cacheFile, 86400) // cachePeriod = 1 day in seconds
-	if cacheNoGood || force {
-		list = GetAzApps(cacheFile, z, true) // Get all from Azure and show progress (verbose = true)
+	// Get all applications matching on 'filter'; return entire list if filter is empty ""
+
+	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_applications."+ConstCacheFileExtension)
+	cacheFileAge := utl.FileAge(cacheFile)
+	if utl.InternetIsAvailable() && (force || cacheFileAge == 0 || cacheFileAge > ConstCacheFileAgePeriod) {
+		// If Internet is available AND force or cacheFileAge is zero (no file) or is older than ConstCacheFileAgePeriod,
+		// then query Azure directly for all objects and show progress (true = verbose below)
+		list = GetAzApps(z, true)
+	} else {
+		// Use local cache for all other conditions
+		list = GetCachedObjects(cacheFile)
 	}
 
-	// Do filter matching
 	if filter == "" {
 		return list
 	}
@@ -325,53 +329,49 @@ func GetApps(filter string, force bool, z Bundle) (list []interface{}) {
 	return matchingList
 }
 
-func GetAzApps(cacheFile string, z Bundle, verbose bool) (list []interface{}) {
-	// Get all Azure AD service principal in current tenant AND save them to local cache file
-	// Show progress if verbose = true
-	// Rirst try a delta query. See https://docs.microsoft.com/en-us/graph/delta-query-overview
-	var deltaLinkMap map[string]interface{} = nil
-	deltaLinkFile := cacheFile[:len(cacheFile)-len(filepath.Ext(cacheFile))] + "_deltaLink.json"
-	deltaAge := int64(time.Now().Unix()) - int64(utl.FileModTime(deltaLinkFile))
+func GetAzApps(z Bundle, verbose bool) (list []interface{}) {
+	// Get all applications from Azure and sync to local cache; show progress if verbose = true
 
-	//baseUrl := ConstMgUrl + "/v1.0/applications"
+	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_applications."+ConstCacheFileExtension)
+	deltaLinkFile := filepath.Join(z.ConfDir, z.TenantId+"_applications_deltaLink."+ConstCacheFileExtension)
+
 	baseUrl := ConstMgUrl + "/beta/applications"
 	// Get delta updates only if/when below attributes in $select are modified
 	selection := "?$select=displayName,appId,requiredResourceAccess"
 	url := baseUrl + "/delta" + selection + "&$top=999"
-	z.MgHeaders["Prefer"] = "return=minimal" // This tells API to focus only on specific 'select' attributes
-	z.MgHeaders["deltaToken"] = "latest"
-
-	// But first, double-check the base set again to avoid running a delta query on an empty set
-	listIsEmpty, list := CheckLocalCache(cacheFile, 604800) // cachePeriod = 1 week in seconds
-	if utl.FileUsable(deltaLinkFile) && deltaAge < (3660*24*27) && listIsEmpty == false {
-		// Note that deltaLink file age has to be within 30 days (we do 27)
-		tmpVal, _ := utl.LoadFileJson(deltaLinkFile)
-		deltaLinkMap = tmpVal.(map[string]interface{})
-		url = utl.Str(utl.Str(deltaLinkMap["@odata.deltaLink"]))
-		// Base URL is now the cached Delta Link
+	list = GetCachedObjects(cacheFile) // Get current cache
+	if len(list) < 1 {
+		// These are only needed on initial cache run
+		z.MgHeaders["Prefer"] = "return=minimal" // Tells API to focus only on $select attributes deltas
+		z.MgHeaders["deltaToken"] = "latest"
+		// https://graph.microsoft.com/v1.0/users/delta?$deltatoken=latest
 	}
 
-	// Now go get azure objects using the updated URL (either a full query or a deltaLink query)
+	// Prep to do a delta query if it is possible
+	var deltaLinkMap map[string]interface{} = nil
+	if utl.FileUsable(deltaLinkFile) && utl.FileAge(deltaLinkFile) < (3660*24*27) && len(list) > 0 {
+		// Note that deltaLink file age has to be within 30 days (we do 27)
+		tmpVal, _ := utl.LoadFileJsonGzip(deltaLinkFile)
+		deltaLinkMap = tmpVal.(map[string]interface{})
+		url = utl.Str(utl.Str(deltaLinkMap["@odata.deltaLink"]))
+		// Base URL is now the cached Delta Link URL
+	}
+
+	// Now go get Azure objects using the updated URL (either a full or a delta query)
 	var deltaSet []interface{} = nil
 	deltaSet, deltaLinkMap = GetAzObjects(url, z, verbose) // Run generic deltaSet retriever function
 
 	// Save new deltaLink for future call, and merge newly acquired delta set with existing list
-	utl.SaveFileJson(deltaLinkMap, deltaLinkFile)
+	utl.SaveFileJsonGzip(deltaLinkMap, deltaLinkFile)
 	list = NormalizeCache(list, deltaSet) // Run our MERGE LOGIC with new delta set
-	utl.SaveFileJson(list, cacheFile)     // Update the local cache
+	utl.SaveFileJsonGzip(list, cacheFile) // Update the local cache
 	return list
 }
 
 func GetAzAppByUuid(uuid string, z Bundle) map[string]interface{} {
-	// Get Azure AD application by its Object UUID or by its appId, with extended attributes
-	//baseUrl := ConstMgUrl + "/v1.0/applications"
+	// Get Azure AD application by its Object UUID or by its appId, with all attributes
 	baseUrl := ConstMgUrl + "/beta/applications"
-	selection := "?$select=addIns,api,appId,applicationTemplateId,appRoles,certification," +
-		"createdDateTime,deletedDateTime,disabledByMicrosoftStatus,displayName,groupMembershipClaims," +
-		"id,identifierUris,info,isDeviceOnlyAuthSupported,isFallbackPublicClient,keyCredentials,logo," +
-		"notes,oauth2RequiredPostResponse,optionalClaims,parentalControlSettings,passwordCredentials," +
-		"publicClient,publisherDomain,requiredResourceAccess,serviceManagementReference,signInAudience," +
-		"spa,tags,tokenEncryptionKeyId,verifiedPublisher,web"
+	selection := "?$select=*"
 	url := baseUrl + "/" + uuid + selection // First search is for direct Object Id
 	r, _, _ := ApiGet(url, z, nil)
 	if r != nil && r["error"] != nil {
@@ -379,7 +379,6 @@ func GetAzAppByUuid(uuid string, z Bundle) map[string]interface{} {
 		url = baseUrl + selection
 		params := map[string]string{"$filter": "appId eq '" + uuid + "'"}
 		r, _, _ := ApiGet(url, z, params)
-		//ApiErrorCheck("GET", url, utl.Trace(), r) // Commented out to do this quietly. Use for DEBUGging
 		if r != nil && r["value"] != nil {
 			list := r["value"].([]interface{})
 			count := len(list)

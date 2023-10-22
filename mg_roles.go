@@ -1,4 +1,5 @@
-// adroles.go
+// mg_roles.go
+// MS Graph directory roles
 
 package maz
 
@@ -88,9 +89,9 @@ func PrintAdRole(x map[string]interface{}, z Bundle) {
 func AdRolesCountLocal(z Bundle) int64 {
 	// Return count of Azure AD directory role entries in local cache file
 	var cachedList []interface{} = nil
-	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_directoryRoles.json")
+	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_directoryRoles."+ConstCacheFileExtension)
 	if utl.FileUsable(cacheFile) {
-		rawList, _ := utl.LoadFileJson(cacheFile)
+		rawList, _ := utl.LoadFileJsonGzip(cacheFile)
 		if rawList != nil {
 			cachedList = rawList.([]interface{})
 			return int64(len(cachedList))
@@ -117,16 +118,19 @@ func AdRolesCountAzure(z Bundle) int64 {
 }
 
 func GetAdRoles(filter string, force bool, z Bundle) (list []interface{}) {
-	// Get all Azure AD role definitions whose searchKeys match on 'filter'. An empty "" filter returns all.
-	// Uses local cache if it's less than cachePeriod old. The 'force' option forces calling Azure query.
-	list = nil
-	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_directoryRoles.json")
-	cacheNoGood, list := CheckLocalCache(cacheFile, 86400) // cachePeriod = 1 day in seconds
-	if cacheNoGood || force {
-		list = GetAzAdRoles(cacheFile, z, true) // Get all from Azure and show progress (verbose = true)
+	// Get all applications matching on 'filter'; return entire list if filter is empty ""
+
+	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_directoryRoles."+ConstCacheFileExtension)
+	cacheFileAge := utl.FileAge(cacheFile)
+	if utl.InternetIsAvailable() && (force || cacheFileAge == 0 || cacheFileAge > ConstCacheFileAgePeriod) {
+		// If Internet is available AND force or cacheFileAge is zero (no file) or is older than ConstCacheFileAgePeriod,
+		// then query Azure directly for all objects and show progress (true = verbose below)
+		list = GetAzAdRoles(z, true)
+	} else {
+		// Use local cache for all other conditions
+		list = GetCachedObjects(cacheFile)
 	}
 
-	// Do filter matching
 	if filter == "" {
 		return list
 	}
@@ -146,31 +150,29 @@ func GetAdRoles(filter string, force bool, z Bundle) (list []interface{}) {
 	return matchingList
 }
 
-func GetAzAdRoles(cacheFile string, z Bundle, verbose bool) (list []interface{}) {
-	// Get all Azure AD role definitions in current tenant AND save them to local cache file.
-	// Usually a short list, so verbose is ignored, and not used.
-	// See https://learn.microsoft.com/en-us/graph/api/rbacapplication-list-roledefinitions
+func GetAzAdRoles(z Bundle, verbose bool) (list []interface{}) {
+	// Get all directory role definitions from Azure and sync to local cache; show progress if verbose = true
+
+	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_directoryRoles."+ConstCacheFileExtension)
 
 	// There's no API delta options for this object (too short a list?), so just one call
-	url := ConstMgUrl + "/v1.0/roleManagement/directory/roleDefinitions"
+
+	url := ConstMgUrl + "/beta/roleManagement/directory/roleDefinitions"
 	r, _, _ := ApiGet(url, z, nil)
-	ApiErrorCheck("GET", url, utl.Trace(), r)
 	if r["value"] == nil {
 		return nil
 	}
 	list = r["value"].([]interface{})
-	utl.SaveFileJson(list, cacheFile) // Update the local cache
+	utl.SaveFileJsonGzip(list, cacheFile) // Update the local cache
 	return list
 }
 
 func GetAzAdRoleByUuid(uuid string, z Bundle) map[string]interface{} {
-	// Get Azure AD role definition by Object UUID, with extended attributes
+	// Get Azure AD role definition by Object UUID, with all attributes
 	// Note that role definitions are under a different area, until they are activated
-	baseUrl := ConstMgUrl + "/v1.0/roleManagement/directory/roleDefinitions"
-	selection := "?$select=id,displayName,description,isBuiltIn,isEnabled,resourceScopes," +
-		"templateId,version,rolePermissions,inheritsPermissionsFrom"
+	baseUrl := ConstMgUrl + "/beta/roleManagement/directory/roleDefinitions"
+	selection := "?$select=*"
 	url := baseUrl + "/" + uuid + selection
 	r, _, _ := ApiGet(url, z, nil)
-	//ApiErrorCheck("GET", url, utl.Trace(), r) // Commented out to do this quietly. Use for DEBUGging
 	return r
 }

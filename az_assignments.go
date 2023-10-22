@@ -1,4 +1,5 @@
-// assignments.go
+// az_assignments.go
+// Azure resource RBAC role assignments
 
 package maz
 
