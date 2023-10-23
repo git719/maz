@@ -7,7 +7,6 @@
 
 // This is Microsoft's above apps/tests/integration/cache_accessor.go file, verbatim, but in this package
 
-
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 

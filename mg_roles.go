@@ -117,7 +117,7 @@ func AdRolesCountAzure(z Bundle) int64 {
 	return 0
 }
 
-func GetAdRoles(filter string, force bool, z Bundle) (list []interface{}) {
+func GetMatchingAdRoles(filter string, force bool, z Bundle) (list []interface{}) {
 	// Get all applications matching on 'filter'; return entire list if filter is empty ""
 
 	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_directoryRoles."+ConstCacheFileExtension)

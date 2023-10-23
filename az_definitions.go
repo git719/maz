@@ -191,7 +191,7 @@ func DeleteAzRoleDefinitionByFqid(fqid string, z Bundle) map[string]interface{} 
 func GetIdMapRoleDefs(z Bundle) (nameMap map[string]string) {
 	// Return role definition id:name map
 	nameMap = make(map[string]string)
-	roleDefs := GetRoleDefinitions("", false, z) // false = don't force going to Azure
+	roleDefs := GetMatchingRoleDefinitions("", false, z) // false = don't force going to Azure
 	// By not forcing an Azure call we're opting for cache speed over id:name map accuracy
 	for _, i := range roleDefs {
 		x := i.(map[string]interface{})
@@ -246,7 +246,7 @@ func RoleDefinitionCountAzure(z Bundle) (builtin, custom int64) {
 	return int64(len(builtinList)), int64(len(customList))
 }
 
-func GetRoleDefinitions(filter string, force bool, z Bundle) (list []interface{}) {
+func GetMatchingRoleDefinitions(filter string, force bool, z Bundle) (list []interface{}) {
 	// Get all RBAC role definitions matching on 'filter'; return entire list if filter is empty ""
 
 	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_roleDefinitions."+ConstCacheFileExtension)

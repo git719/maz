@@ -99,7 +99,7 @@ func GroupsCountAzure(z Bundle) int64 {
 func GetIdMapGroups(z Bundle) (nameMap map[string]string) {
 	// Return groups id:name map
 	nameMap = make(map[string]string)
-	groups := GetGroups("", false, z) // false = don't force a call to Azure
+	groups := GetMatchingGroups("", false, z) // false = don't force a call to Azure
 	// By not forcing an Azure call we're opting for cache speed over id:name map accuracy
 	for _, i := range groups {
 		x := i.(map[string]interface{})
@@ -110,7 +110,7 @@ func GetIdMapGroups(z Bundle) (nameMap map[string]string) {
 	return nameMap
 }
 
-func GetGroups(filter string, force bool, z Bundle) (list []interface{}) {
+func GetMatchingGroups(filter string, force bool, z Bundle) (list []interface{}) {
 	// Get all groups matching on 'filter'; return entire list if filter is empty ""
 
 	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_groups."+ConstCacheFileExtension)
@@ -194,7 +194,7 @@ func GetAzGroupByUuid(uuid string, z Bundle) map[string]interface{} {
 
 func PrintPags(z Bundle) {
 	// List all cached Privileged Access Groups
-	groups := GetGroups("", false, z) // Get all groups, false = don't hit Azure
+	groups := GetMatchingGroups("", false, z) // Get all groups, false = don't hit Azure
 	for _, i := range groups {
 		x := i.(map[string]interface{})
 		if x["isAssignableToRole"] != nil {

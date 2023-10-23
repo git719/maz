@@ -19,9 +19,9 @@ go mod tidy
 go test ./...
 
 printf "\n==> grep replace go.mod:\n$Red$(grep replace go.mod)$Rst"
-printf "\n==> Last 3 tag versions:\n"
-git tag | sort -t "." -k1,1n -k2,2n -k3,3n | tail -3
-CurrentTag=`git tag | sort -t "." -k1,1n -k2,2n -k3,3n | tail -1`
+printf "\n==> Last 5 tag versions:\n"
+git tag | sort -V | tail -5
+CurrentTag=`git tag | sort -V | tail -1`
 printf "\n==> To publish, do below one-liner, advancing Tag version:\n\n"
 printf "  Tag=$CurrentTag && git add . && git commit -m \"x updates\" && git tag \$Tag && git push origin \$Tag && git push\n\n"
 

@@ -62,7 +62,7 @@ func UsersCountAzure(z Bundle) int64 {
 func GetIdMapUsers(z Bundle) (nameMap map[string]string) {
 	// Return users id:name map
 	nameMap = make(map[string]string)
-	users := GetUsers("", false, z) // false = don't force a call to Azure
+	users := GetMatchingUsers("", false, z) // false = don't force a call to Azure
 	// By not forcing an Azure call we're opting for cache speed over id:name map accuracy
 	for _, i := range users {
 		x := i.(map[string]interface{})
@@ -73,7 +73,7 @@ func GetIdMapUsers(z Bundle) (nameMap map[string]string) {
 	return nameMap
 }
 
-func GetUsers(filter string, force bool, z Bundle) (list []interface{}) {
+func GetMatchingUsers(filter string, force bool, z Bundle) (list []interface{}) {
 	// Get all users matching on 'filter'; return entire list if filter is empty ""
 
 	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_users."+ConstCacheFileExtension)

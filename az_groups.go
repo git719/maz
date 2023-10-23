@@ -52,7 +52,7 @@ func MgGroupCountAzure(z Bundle) int64 {
 func GetIdMapMgGroups(z Bundle) (nameMap map[string]string) {
 	// Return management groups id:name map
 	nameMap = make(map[string]string)
-	mgGroups := GetMgGroups("", false, z) // false = don't force a call to Azure
+	mgGroups := GetMatchingMgGroups("", false, z) // false = don't force a call to Azure
 	// By not forcing an Azure call we're opting for cache speed over id:name map accuracy
 	for _, i := range mgGroups {
 		x := i.(map[string]interface{})
@@ -61,7 +61,7 @@ func GetIdMapMgGroups(z Bundle) (nameMap map[string]string) {
 	return nameMap
 }
 
-func GetMgGroups(filter string, force bool, z Bundle) (list []interface{}) {
+func GetMatchingMgGroups(filter string, force bool, z Bundle) (list []interface{}) {
 	// Get all Azure management groups matching on 'filter'; return entire list if filter is empty ""
 
 	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_managementGroups."+ConstCacheFileExtension)

@@ -173,9 +173,9 @@ func DeleteAzRoleAssignmentByFqid(fqid string, z Bundle) map[string]interface{} 
 
 func RoleAssignmentsCountLocal(z Bundle) int64 {
 	var cachedList []interface{} = nil
-	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_roleAssignments.json")
+	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_roleAssignments."+ConstCacheFileExtension)
 	if utl.FileUsable(cacheFile) {
-		rawList, _ := utl.LoadFileJson(cacheFile)
+		rawList, _ := utl.LoadFileJsonGzip(cacheFile)
 		if rawList != nil {
 			cachedList = rawList.([]interface{})
 			return int64(len(cachedList))
@@ -189,7 +189,7 @@ func RoleAssignmentsCountAzure(z Bundle) int64 {
 	return int64(len(list))
 }
 
-func GetRoleAssignments(filter string, force bool, z Bundle) (list []interface{}) {
+func GetMatchingRoleAssignments(filter string, force bool, z Bundle) (list []interface{}) {
 	// Get all RBAC role assignments matching on 'filter'; return entire list if filter is empty ""
 
 	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_roleAssignments."+ConstCacheFileExtension)
@@ -277,8 +277,8 @@ func GetAzRoleAssignments(z Bundle, verbose bool) (list []interface{}) {
 		}
 		k++
 	}
-	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_roleAssignments.json")
-	utl.SaveFileJson(list, cacheFile) // Update the local cache
+	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_roleAssignments."+ConstCacheFileExtension)
+	utl.SaveFileJsonGzip(list, cacheFile) // Update the local cache
 	return list
 }
 

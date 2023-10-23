@@ -285,7 +285,7 @@ func AppsCountAzure(z Bundle) int64 {
 func GetIdMapApps(z Bundle) (nameMap map[string]string) {
 	// Return applications id:name map
 	nameMap = make(map[string]string)
-	apps := GetApps("", false, z) // false = don't force a call to Azure
+	apps := GetMatchingApps("", false, z) // false = don't force a call to Azure
 	// By not forcing an Azure call we're opting for cache speed over id:name map accuracy
 	for _, i := range apps {
 		x := i.(map[string]interface{})
@@ -296,7 +296,7 @@ func GetIdMapApps(z Bundle) (nameMap map[string]string) {
 	return nameMap
 }
 
-func GetApps(filter string, force bool, z Bundle) (list []interface{}) {
+func GetMatchingApps(filter string, force bool, z Bundle) (list []interface{}) {
 	// Get all applications matching on 'filter'; return entire list if filter is empty ""
 
 	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_applications."+ConstCacheFileExtension)

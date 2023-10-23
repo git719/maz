@@ -205,23 +205,23 @@ func GetObjects(t, filter string, force bool, z Bundle) (list []interface{}) {
 	// If filter is the "" empty string return ALL of the objects of this type.
 	switch t {
 	case "d":
-		return GetRoleDefinitions(filter, force, z)
+		return GetMatchingRoleDefinitions(filter, force, z)
 	case "a":
-		return GetRoleAssignments(filter, force, z)
-	case "s":
-		return GetSubscriptions(filter, force, z)
+		return GetMatchingRoleAssignments(filter, force, z)
 	case "m":
-		return GetMgGroups(filter, force, z)
-	case "u":
-		return GetUsers(filter, force, z)
-	case "g":
-		return GetGroups(filter, force, z)
-	case "sp":
-		return GetSps(filter, force, z)
+		return GetMatchingMgGroups(filter, force, z)
+	case "s":
+		return GetMatchingSubscriptions(filter, force, z)
 	case "ap":
-		return GetApps(filter, force, z)
+		return GetMatchingApps(filter, force, z)
+	case "g":
+		return GetMatchingGroups(filter, force, z)
 	case "ad":
-		return GetAdRoles(filter, force, z)
+		return GetMatchingAdRoles(filter, force, z)
+	case "sp":
+		return GetMatchingSps(filter, force, z)
+	case "u":
+		return GetMatchingUsers(filter, force, z)
 	}
 	return nil
 }

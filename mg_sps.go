@@ -308,7 +308,7 @@ func SpsCountAzure(z Bundle) (native, microsoft int64) {
 func GetIdMapSps(z Bundle) (nameMap map[string]string) {
 	// Return service principals id:name map
 	nameMap = make(map[string]string)
-	sps := GetSps("", false, z) // false = don't force a call to Azure
+	sps := GetMatchingSps("", false, z) // false = don't force a call to Azure
 	// By not forcing an Azure call we're opting for cache speed over id:name map accuracy
 	for _, i := range sps {
 		x := i.(map[string]interface{})
@@ -319,7 +319,7 @@ func GetIdMapSps(z Bundle) (nameMap map[string]string) {
 	return nameMap
 }
 
-func GetSps(filter string, force bool, z Bundle) (list []interface{}) {
+func GetMatchingSps(filter string, force bool, z Bundle) (list []interface{}) {
 	// Get all service principals matching on 'filter'; return entire list if filter is empty ""
 
 	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_servicePrincipals."+ConstCacheFileExtension)

@@ -63,7 +63,7 @@ func GetAzSubscriptionsIds(z Bundle) (scopes []string) {
 func GetIdMapSubs(z Bundle) (nameMap map[string]string) {
 	// Return subscription id:name map
 	nameMap = make(map[string]string)
-	roleDefs := GetSubscriptions("", false, z) // false = don't force a call to Azure
+	roleDefs := GetMatchingSubscriptions("", false, z) // false = don't force a call to Azure
 	// By not forcing an Azure call we're opting for cache speed over id:name map accuracy
 	for _, i := range roleDefs {
 		x := i.(map[string]interface{})
@@ -74,7 +74,7 @@ func GetIdMapSubs(z Bundle) (nameMap map[string]string) {
 	return nameMap
 }
 
-func GetSubscriptions(filter string, force bool, z Bundle) (list []interface{}) {
+func GetMatchingSubscriptions(filter string, force bool, z Bundle) (list []interface{}) {
 	// Get all Azure subscriptions matching on 'filter'; return entire list if filter is empty ""
 
 	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_subscriptions."+ConstCacheFileExtension)
