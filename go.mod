@@ -3,10 +3,10 @@ module github.com/git719/maz
 go 1.21.3
 
 require (
-	github.com/AzureAD/microsoft-authentication-library-for-go v0.7.0
+	github.com/AzureAD/microsoft-authentication-library-for-go v1.2.0
 	github.com/git719/utl v1.2.0
-	github.com/golang-jwt/jwt/v4 v4.4.2
-	github.com/google/uuid v1.3.0
+	github.com/golang-jwt/jwt/v5 v5.0.0
+	github.com/google/uuid v1.3.1
 )
 
 require (
@@ -16,7 +16,7 @@ require (
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/mattn/go-colorable v0.1.8 // indirect
 	github.com/mattn/go-isatty v0.0.12 // indirect
-	github.com/pkg/browser v0.0.0-20210115035449-ce105d075bb4 // indirect
+	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8 // indirect
 	github.com/xo/terminfo v0.0.0-20210125001918-ca9a967f8778 // indirect
 	golang.org/x/sys v0.6.0 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect

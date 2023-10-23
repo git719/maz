@@ -8,7 +8,7 @@ import (
 	"github.com/AzureAD/microsoft-authentication-library-for-go/apps/confidential"
 	"github.com/AzureAD/microsoft-authentication-library-for-go/apps/public"
 	"github.com/git719/utl"
-	"github.com/golang-jwt/jwt/v4"
+	"github.com/golang-jwt/jwt/v5"
 	"os"
 	"path/filepath"
 	"strings"
@@ -22,6 +22,7 @@ func GetTokenInteractively(scopes []string, confDir, tokenFile, authorityUrl, us
 	// Set up token cache storage file and accessor
 	cacheFilePath := filepath.Join(confDir, tokenFile)
 	cacheAccessor := &TokenCache{cacheFilePath}
+	ctx := context.Background()
 
 	// Note we're using constant ConstAzPowerShellClientId for interactive login
 	app, err := public.New(ConstAzPowerShellClientId, public.WithAuthority(authorityUrl), public.WithCache(cacheAccessor))
@@ -30,9 +31,14 @@ func GetTokenInteractively(scopes []string, confDir, tokenFile, authorityUrl, us
 		utl.Die("")
 	}
 
-	// Select the account to use based on username variable
-	var targetAccount public.Account // Type is defined in 'public' module
-	for _, i := range app.Accounts() {
+	// Use 'username' variable to locate/select the cached account
+	var targetAccount public.Account
+	accounts, err := app.Accounts(ctx)
+	if err != nil {
+		PrintApiErrMsg(err.Error())
+		utl.Die("")
+	}
+	for _, i := range accounts {
 		if strings.ToLower(i.PreferredUsername) == username {
 			targetAccount = i
 			break
@@ -40,11 +46,10 @@ func GetTokenInteractively(scopes []string, confDir, tokenFile, authorityUrl, us
 	}
 
 	// Try getting cached token 1st
-	result, err := app.AcquireTokenSilent(context.Background(), scopes, public.WithSilentAccount(targetAccount))
+	result, err := app.AcquireTokenSilent(ctx, scopes, public.WithSilentAccount(targetAccount))
 	if err != nil {
-		// Else, get a new token
-
-		result, err = app.AcquireTokenInteractive(context.Background(), scopes)
+		// If for whatever reason getting a cached token didn't work, then let's get a fresh token
+		result, err = app.AcquireTokenInteractive(ctx, scopes)
 		// app.AcquireTokenInteractive uses the default web browser to select the account and acquire a
 		// security token from the authority.
 
@@ -56,18 +61,18 @@ func GetTokenInteractively(scopes []string, confDir, tokenFile, authorityUrl, us
 			PrintApiErrMsg(err.Error())
 			utl.Die("")
 		}
-
 	}
 	return result.AccessToken, nil // Return only the AccessToken, which is of type string
 }
 
 func GetTokenByCredentials(scopes []string, confDir, tokenFile, authorityUrl, clientId, clientSecret string) (token string, err error) {
 	// ClientId+Secret automated login with 'confidential' app
-	// See See https://github.com/AzureAD/microsoft-authentication-library-for-go/blob/dev/apps/confidential/confidential.go
+	// See https://github.com/AzureAD/microsoft-authentication-library-for-go/blob/dev/apps/confidential/confidential.go
 
 	// Set up token cache storage file and accessor
 	cacheFilePath := filepath.Join(confDir, tokenFile)
 	cacheAccessor := &TokenCache{cacheFilePath}
+	ctx := context.Background()
 
 	// Initializing the client credential
 	cred, err := confidential.NewCredFromSecret(clientSecret)
@@ -76,7 +81,7 @@ func GetTokenByCredentials(scopes []string, confDir, tokenFile, authorityUrl, cl
 	}
 
 	// Automated login obviously uses the registered app client_id (App ID)
-	app, err := confidential.New(clientId, cred, confidential.WithAuthority(authorityUrl), confidential.WithAccessor(cacheAccessor))
+	app, err := confidential.New(authorityUrl, clientId, cred, confidential.WithCache(cacheAccessor))
 	if err != nil {
 		PrintApiErrMsg(err.Error())
 		utl.Die("")
@@ -84,11 +89,11 @@ func GetTokenByCredentials(scopes []string, confDir, tokenFile, authorityUrl, cl
 
 	// Try getting cached token 1st
 	// targetAccount not required, as it appears to locate existing cached tokens without it
-	result, err := app.AcquireTokenSilent(context.Background(), scopes)
+	result, err := app.AcquireTokenSilent(ctx, scopes)
 	if err != nil {
-		// Else, get a new token
-		result, err = app.AcquireTokenByCredential(context.Background(), scopes)
-		// AcquireTokenByCredential acquires a security token from the authority, using the client credentials grant.
+		// If for whatever reason getting a cached token didn't work, then let's get a fresh token
+		result, err = app.AcquireTokenByCredential(ctx, scopes)
+		// AcquireTokenByCredential acquires a security token from the authority, using the client credentials grant
 		if err != nil {
 			PrintApiErrMsg(err.Error())
 			utl.Die("")
@@ -164,7 +169,7 @@ func DecodeJwtToken(tokenString string) {
 	}
 
 	fmt.Println(utl.Blu("signature") + ":")
-	if token.Signature != "" {
+	if string(token.Signature) != "" {
 		k := "signature"
 		fmt.Printf("  %s:%s %s\n", utl.Blu(k), utl.PadSpaces(20, len(k)), utl.Gre(token.Signature))
 	}
