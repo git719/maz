@@ -226,6 +226,28 @@ func GetObjects(t, filter string, force bool, z Bundle) (list []interface{}) {
 	return nil
 }
 
+func GetAzAllPages(url string, z Bundle) (list []interface{}) {
+	// Return all Azure pages for given API URL call
+	list = nil
+	r, _, _ := ApiGet(url, z, nil)
+	for {
+		// Forver loop until there are no more pages
+		var thisBatch []interface{} = nil // Assume zero entries in this batch
+		if r["value"] != nil {
+			thisBatch = r["value"].([]interface{})
+			if len(thisBatch) > 0 {
+				list = append(list, thisBatch...) // Continue growing list
+			}
+		}
+		nextLink := utl.Str(r["@odata.deltaLink"])
+		if nextLink == "" {
+			break // Break once there is no more pages
+		}
+		r, _, _ = ApiGet(nextLink, z, nil) // Get next batch
+	}
+	return list
+}
+
 func GetAzObjects(url string, z Bundle, verbose bool) (deltaSet []interface{}, deltaLinkMap map[string]interface{}) {
 	// Generic Azure object deltaSet retriever function. Returns the set of changed or new items,
 	// and a deltaLink for running the next future Azure query. Implements the pattern described at

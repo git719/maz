@@ -24,8 +24,14 @@ func PrintUser(x map[string]interface{}, z Bundle) {
 		}
 	}
 
+	// Print app role assignment members and the specific role assigned
+	//url := ConstMgUrl + "/v1.0/users/" + id + "/appRoleAssignments"
+	url := ConstMgUrl + "/beta/users/" + id + "/appRoleAssignments"
+	appRoleAssignments := GetAzAllPages(url, z)
+	PrintAppRoleAssignmentsOthers(appRoleAssignments, z)
+
 	// Print all groups and roles it is a member of
-	url := ConstMgUrl + "/v1.0/users/" + id + "/transitiveMemberOf"
+	url = ConstMgUrl + "/v1.0/users/" + id + "/transitiveMemberOf"
 	r, statusCode, _ := ApiGet(url, z, nil)
 	if statusCode == 200 && r != nil && r["value"] != nil {
 		memberOf := r["value"].([]interface{})

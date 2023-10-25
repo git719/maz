@@ -54,9 +54,11 @@ func PrintSp(x map[string]interface{}, z Bundle) {
 		PrintOwners(r["value"].([]interface{}))
 	}
 
-	// Print App Roles this resource SP allows
-	roleNameMap := make(map[string]string)                                 // Used later when printing members and their roles
-	roleNameMap["00000000-0000-0000-0000-000000000000"] = "Default Access" // Add Default Access role
+	// This part does 2 things:
+	// 1) creates the role:name map to used later when calling PrintAppRoleAssignments()
+	// 2) prints all app_roles and
+	roleNameMap := make(map[string]string)
+	roleNameMap["00000000-0000-0000-0000-000000000000"] = "Default" // Include default app permissions role
 	appRoles := x["appRoles"].([]interface{})
 	if len(appRoles) > 0 {
 		fmt.Printf(utl.Blu("app_roles") + ":\n")
@@ -64,7 +66,7 @@ func PrintSp(x map[string]interface{}, z Bundle) {
 			a := i.(map[string]interface{})
 			rId := utl.Str(a["id"])
 			displayName := utl.Str(a["displayName"])
-			roleNameMap[rId] = displayName
+			roleNameMap[rId] = displayName // Update growing list of roleNameMap
 			if len(displayName) >= 60 {
 				displayName = utl.FirstN(displayName, 57) + "..."
 			}
@@ -75,28 +77,8 @@ func PrintSp(x map[string]interface{}, z Bundle) {
 	// Print app role assignment members and the specific role assigned
 	//url = ConstMgUrl + "/v1.0/servicePrincipals/" + id + "/appRoleAssignedTo"
 	url = ConstMgUrl + "/beta/servicePrincipals/" + id + "/appRoleAssignedTo"
-	r, statusCode, _ = ApiGet(url, z, nil)
-	if statusCode == 200 && r != nil && r["value"] != nil && len(r["value"].([]interface{})) > 0 {
-		appRoleAssignments := r["value"].([]interface{}) // Assert as JSON array
-		if len(appRoleAssignments) > 0 {
-			fmt.Printf(utl.Blu("appRoleAssignments") + ":\n")
-			for _, i := range appRoleAssignments {
-				ara := i.(map[string]interface{}) // JSON object
-				principalId := utl.Str(ara["principalId"])
-				principalType := utl.Str(ara["principalType"])
-				principalName := utl.Str(ara["principalDisplayName"])
-				roleName := roleNameMap[utl.Str(ara["appRoleId"])] // Reference roleNameMap now
-				if len(roleName) >= 40 {
-					roleName = utl.FirstN(roleName, 37) + "..."
-				}
-				principalName = utl.Gre(principalName)
-				roleName = utl.Gre(roleName)
-				principalId = utl.Gre(principalId)
-				principalType = utl.Gre(principalType)
-				fmt.Printf("  %-50s %-40s %s (%s)\n", principalName, roleName, principalId, principalType)
-			}
-		}
-	}
+	appRoleAssignments := GetAzAllPages(url, z)
+	PrintAppRoleAssignmentsSp(roleNameMap, appRoleAssignments) // roleNameMap is used here
 
 	// Print all groups and roles it is a member of
 	//url = ConstMgUrl + "/v1.0/servicePrincipals/" + id + "/transitiveMemberOf"

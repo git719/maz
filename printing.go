@@ -136,122 +136,193 @@ func PrintObject(t string, x map[string]interface{}, z Bundle) {
 	}
 }
 
+func PrintAppRoleAssignmentsSp(roleNameMap map[string]string, appRoleAssignments []interface{}) {
+	// Print appRoleAssignmens for SP
+	if len(appRoleAssignments) < 1 {
+		return
+	}
+
+	fmt.Printf(utl.Blu("appRoleAssignments") + ":\n")
+	for _, i := range appRoleAssignments {
+		ara := i.(map[string]interface{}) // JSON object
+		principalId := utl.Str(ara["principalId"])
+		principalType := utl.Str(ara["principalType"])
+		principalName := utl.Str(ara["principalDisplayName"])
+
+		roleName := roleNameMap[utl.Str(ara["appRoleId"])] // Reference roleNameMap now
+		if len(roleName) >= 40 {
+			roleName = utl.FirstN(roleName, 37) + "..."
+		}
+
+		principalName = utl.Gre(principalName)
+		roleName = utl.Gre(roleName)
+		principalId = utl.Gre(principalId)
+		principalType = utl.Gre(principalType)
+		fmt.Printf("  %-50s %-40s %s (%s)\n", principalName, roleName, principalId, principalType)
+	}
+}
+
+func PrintAppRoleAssignmentsOthers(appRoleAssignments []interface{}, z Bundle) {
+	// Print appRoleAssignmens for others (Users and Groups)
+	if len(appRoleAssignments) < 1 {
+		return
+	}
+
+	fmt.Printf(utl.Blu("appRoleAssignments") + ":\n")
+	for _, i := range appRoleAssignments {
+		ara := i.(map[string]interface{}) // JSON object
+		appRoleId := utl.Str(ara["appRoleId"])
+		resourceDisplayName := utl.Str(ara["resourceDisplayName"])
+		resourceId := utl.Str(ara["resourceId"]) // SP where the appRole is defined
+
+		// Now build roleNameMap and get roleName
+		// We are forced to do this excessive processing for each appRole, because MG Graph does
+		// not appear to have a global registry nor a call to get all SP app roles.
+		roleNameMap := make(map[string]string)
+		x := GetAzSpByUuid(resourceId, z)
+		roleNameMap["00000000-0000-0000-0000-000000000000"] = "Default" // Include default app permissions role
+		// But also get all other additional appRoles it may have defined
+		appRoles := x["appRoles"].([]interface{})
+		if len(appRoles) > 0 {
+			for _, i := range appRoles {
+				a := i.(map[string]interface{})
+				rId := utl.Str(a["id"])
+				displayName := utl.Str(a["displayName"])
+				roleNameMap[rId] = displayName // Update growing list of roleNameMap
+				if len(displayName) >= 60 {
+					displayName = utl.FirstN(displayName, 57) + "..."
+				}
+			}
+		}
+		roleName := roleNameMap[appRoleId] // Reference roleNameMap now
+
+		resourceDisplayName = utl.Gre(resourceDisplayName)
+		resourceId = utl.Gre(resourceId)
+		roleName = utl.Gre(roleName)
+		fmt.Printf("  %-50s %-46s %s\n", resourceDisplayName, resourceId, roleName)
+	}
+}
+
 func PrintMemberOfs(t string, memberOf []interface{}) {
 	// Print all memberOf entries
-	if len(memberOf) > 0 {
-		fmt.Printf(utl.Blu("memberof") + ":\n")
-		for _, i := range memberOf {
-			x := i.(map[string]interface{}) // Assert as JSON object type
-			Type := utl.LastElem(utl.Str(x["@odata.type"]), ".")
-			Type = utl.Gre(Type)
-			iId := utl.Gre(utl.Str(x["id"]))
-			name := utl.Gre(utl.Str(x["displayName"]))
-			fmt.Printf("  %-50s %s (%s)\n", name, iId, Type)
-		}
+	if len(memberOf) < 1 {
+		return
+	}
+	fmt.Printf(utl.Blu("memberof") + ":\n")
+	for _, i := range memberOf {
+		x := i.(map[string]interface{}) // Assert as JSON object type
+		Type := utl.LastElem(utl.Str(x["@odata.type"]), ".")
+		Type = utl.Gre(Type)
+		iId := utl.Gre(utl.Str(x["id"]))
+		name := utl.Gre(utl.Str(x["displayName"]))
+		fmt.Printf("  %-50s %s (%s)\n", name, iId, Type)
 	}
 }
 
 func PrintSecretList(pwdCreds []interface{}) {
 	// Print password credentials stanza for Apps and Sps
-	if len(pwdCreds) > 0 {
-		fmt.Println(utl.Blu("secrets") + ":")
-		for _, i := range pwdCreds {
-			a := i.(map[string]interface{})
-			cId := utl.Str(a["keyId"])
-			cName := utl.Str(a["displayName"])
-			cHint := utl.Str(a["hint"]) + "********"
-			// Reformat date strings for better readability
-			cStart, err := utl.ConvertDateFormat(utl.Str(a["startDateTime"]), time.RFC3339Nano, "2006-01-02 15:04")
-			if err != nil {
-				utl.Die(utl.Trace() + err.Error() + "\n")
-			}
-			cExpiry, err := utl.ConvertDateFormat(utl.Str(a["endDateTime"]), time.RFC3339Nano, "2006-01-02 15:04")
-			if err != nil {
-				utl.Die(utl.Trace() + err.Error() + "\n")
-			}
-			// Check if expiring soon
-			now := time.Now().Unix()
-			expiry, err := utl.DateStringToEpocInt64(utl.Str(a["endDateTime"]), time.RFC3339Nano)
-			if err != nil {
-				utl.Die(utl.Trace() + err.Error() + "\n")
-			}
-			daysDiff := (expiry - now) / 86400
-			if daysDiff <= 0 {
-				cExpiry = utl.Red(cExpiry) // If it's expired print in red
-			} else if daysDiff < 7 {
-				cExpiry = utl.Yel(cExpiry) // If expiring within a week print in yellow
-			} else {
-				cExpiry = utl.Gre(cExpiry)
-			}
-			fmt.Printf("  %-36s  %-30s  %-16s  %-16s  %s\n", utl.Gre(cId), utl.Gre(cName),
-				utl.Gre(cHint), utl.Gre(cStart), cExpiry)
+	if len(pwdCreds) < 1 {
+		return
+	}
+	fmt.Println(utl.Blu("secrets") + ":")
+	for _, i := range pwdCreds {
+		a := i.(map[string]interface{})
+		cId := utl.Str(a["keyId"])
+		cName := utl.Str(a["displayName"])
+		cHint := utl.Str(a["hint"]) + "********"
+		// Reformat date strings for better readability
+		cStart, err := utl.ConvertDateFormat(utl.Str(a["startDateTime"]), time.RFC3339Nano, "2006-01-02 15:04")
+		if err != nil {
+			utl.Die(utl.Trace() + err.Error() + "\n")
 		}
+		cExpiry, err := utl.ConvertDateFormat(utl.Str(a["endDateTime"]), time.RFC3339Nano, "2006-01-02 15:04")
+		if err != nil {
+			utl.Die(utl.Trace() + err.Error() + "\n")
+		}
+		// Check if expiring soon
+		now := time.Now().Unix()
+		expiry, err := utl.DateStringToEpocInt64(utl.Str(a["endDateTime"]), time.RFC3339Nano)
+		if err != nil {
+			utl.Die(utl.Trace() + err.Error() + "\n")
+		}
+		daysDiff := (expiry - now) / 86400
+		if daysDiff <= 0 {
+			cExpiry = utl.Red(cExpiry) // If it's expired print in red
+		} else if daysDiff < 7 {
+			cExpiry = utl.Yel(cExpiry) // If expiring within a week print in yellow
+		} else {
+			cExpiry = utl.Gre(cExpiry)
+		}
+		fmt.Printf("  %-36s  %-30s  %-16s  %-16s  %s\n", utl.Gre(cId), utl.Gre(cName),
+			utl.Gre(cHint), utl.Gre(cStart), cExpiry)
 	}
 }
 
 func PrintCertificateList(certificates []interface{}) {
 	// Print password credentials stanza for Apps and Sps
-	if len(certificates) > 0 {
-		fmt.Println(utl.Blu("certificates") + ":")
-		for _, i := range certificates {
-			a := i.(map[string]interface{})
-			cId := utl.Str(a["keyId"])
-			cName := utl.Str(a["displayName"])
-			cType := utl.Str(a["type"])
-			// Reformat date strings for better readability
-			cStart, err := utl.ConvertDateFormat(utl.Str(a["startDateTime"]), time.RFC3339Nano, "2006-01-02 15:04")
-			if err != nil {
-				utl.Die(utl.Trace() + err.Error() + "\n")
-			}
-			cExpiry, err := utl.ConvertDateFormat(utl.Str(a["endDateTime"]), time.RFC3339Nano, "2006-01-02 15:04")
-			if err != nil {
-				utl.Die(utl.Trace() + err.Error() + "\n")
-			}
-			// Check if expiring soon
-			now := time.Now().Unix()
-			expiry, err := utl.DateStringToEpocInt64(utl.Str(a["endDateTime"]), time.RFC3339Nano)
-			if err != nil {
-				utl.Die(utl.Trace() + err.Error() + "\n")
-			}
-			daysDiff := (expiry - now) / 86400
-			if daysDiff <= 0 {
-				cExpiry = utl.Red(cExpiry) // If it's expired print in red
-			} else if daysDiff < 7 {
-				cExpiry = utl.Yel(cExpiry) // If expiring within a week print in yellow
-			} else {
-				cExpiry = utl.Gre(cExpiry)
-			}
-			// There's also:
-			// 	"customKeyIdentifier": "09228573F93570D8113D90DA69D8DF6E2E396874",
-			// 	"key": "<RSA_KEY>",
-			// 	"usage": "Verify"
-			fmt.Printf("  %-36s  %-30s  %-40s  %-10s  %s\n", utl.Gre(cId), utl.Gre(cName),
-				utl.Gre(cType), utl.Gre(cStart), cExpiry)
-		}
-		// https://learn.microsoft.com/en-us/graph/api/application-addkey
+	if len(certificates) < 1 {
+		return
 	}
+	fmt.Println(utl.Blu("certificates") + ":")
+	for _, i := range certificates {
+		a := i.(map[string]interface{})
+		cId := utl.Str(a["keyId"])
+		cName := utl.Str(a["displayName"])
+		cType := utl.Str(a["type"])
+		// Reformat date strings for better readability
+		cStart, err := utl.ConvertDateFormat(utl.Str(a["startDateTime"]), time.RFC3339Nano, "2006-01-02 15:04")
+		if err != nil {
+			utl.Die(utl.Trace() + err.Error() + "\n")
+		}
+		cExpiry, err := utl.ConvertDateFormat(utl.Str(a["endDateTime"]), time.RFC3339Nano, "2006-01-02 15:04")
+		if err != nil {
+			utl.Die(utl.Trace() + err.Error() + "\n")
+		}
+		// Check if expiring soon
+		now := time.Now().Unix()
+		expiry, err := utl.DateStringToEpocInt64(utl.Str(a["endDateTime"]), time.RFC3339Nano)
+		if err != nil {
+			utl.Die(utl.Trace() + err.Error() + "\n")
+		}
+		daysDiff := (expiry - now) / 86400
+		if daysDiff <= 0 {
+			cExpiry = utl.Red(cExpiry) // If it's expired print in red
+		} else if daysDiff < 7 {
+			cExpiry = utl.Yel(cExpiry) // If expiring within a week print in yellow
+		} else {
+			cExpiry = utl.Gre(cExpiry)
+		}
+		// There's also:
+		// 	"customKeyIdentifier": "09228573F93570D8113D90DA69D8DF6E2E396874",
+		// 	"key": "<RSA_KEY>",
+		// 	"usage": "Verify"
+		fmt.Printf("  %-36s  %-30s  %-40s  %-10s  %s\n", utl.Gre(cId), utl.Gre(cName),
+			utl.Gre(cType), utl.Gre(cStart), cExpiry)
+	}
+	// https://learn.microsoft.com/en-us/graph/api/application-addkey
 }
 
 func PrintOwners(owners []interface{}) {
 	// Print owners stanza for Apps and Sps
-	if len(owners) > 0 {
-		fmt.Printf(utl.Blu("owners") + ":\n")
-		for _, i := range owners {
-			o := i.(map[string]interface{})
-			Type, Name := "???", "???"
-			Type = utl.LastElem(utl.Str(o["@odata.type"]), ".")
-			switch Type {
-			case "user":
-				Name = utl.Str(o["userPrincipalName"])
-			case "group":
-				Name = utl.Str(o["displayName"])
-			case "servicePrincipal":
-				Name = utl.Str(o["servicePrincipalType"])
-			default:
-				Name = "???"
-			}
-			fmt.Printf("  %-50s %s (%s)\n", utl.Gre(Name), utl.Gre(utl.Str(o["id"])), utl.Gre(Type))
+	if len(owners) < 1 {
+		return
+	}
+	fmt.Printf(utl.Blu("owners") + ":\n")
+	for _, i := range owners {
+		o := i.(map[string]interface{})
+		Type, Name := "???", "???"
+		Type = utl.LastElem(utl.Str(o["@odata.type"]), ".")
+		switch Type {
+		case "user":
+			Name = utl.Str(o["userPrincipalName"])
+		case "group":
+			Name = utl.Str(o["displayName"])
+		case "servicePrincipal":
+			Name = utl.Str(o["servicePrincipalType"])
+		default:
+			Name = "???"
 		}
+		fmt.Printf("  %-50s %s (%s)\n", utl.Gre(Name), utl.Gre(utl.Str(o["id"])), utl.Gre(Type))
 	}
 }
 
