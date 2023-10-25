@@ -239,7 +239,7 @@ func GetAzAllPages(url string, z Bundle) (list []interface{}) {
 				list = append(list, thisBatch...) // Continue growing list
 			}
 		}
-		nextLink := utl.Str(r["@odata.deltaLink"])
+		nextLink := utl.Str(r["@odata.nextLink"])
 		if nextLink == "" {
 			break // Break once there is no more pages
 		}
