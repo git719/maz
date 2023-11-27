@@ -29,7 +29,7 @@ func PrintRoleAssignment(x map[string]interface{}, z Bundle) {
 
 	roleNameMap := GetIdMapRoleDefs(z) // Get all role definition id:name pairs
 	roleId := utl.LastElem(utl.Str(xProp["roleDefinitionId"]), "/")
-	comment := "# roleName = \"" + roleNameMap[roleId] + "\""
+	comment := "# Role \"" + roleNameMap[roleId] + "\""
 	fmt.Printf("  %s: %s  %s\n", utl.Blu("roleDefinitionId"), utl.Gre(roleId), comment)
 
 	var principalNameMap map[string]string = nil
@@ -42,14 +42,14 @@ func PrintRoleAssignment(x map[string]interface{}, z Bundle) {
 	case "ServicePrincipal":
 		principalNameMap = GetIdMapSps(z) // Get all SPs id:name pairs
 	default:
-		pType = "not provided"
+		pType = "SomeObject"
 	}
 	principalId := utl.Str(xProp["principalId"])
 	pName := principalNameMap[principalId]
 	if pName == "" {
 		pName = "???"
 	}
-	comment = "# principalType = " + pType + ", displayName = \"" + pName + "\""
+	comment = "# " + pType + " \"" + pName + "\""
 	fmt.Printf("  %s: %s  %s\n", utl.Blu("principalId"), utl.Gre(principalId), comment)
 
 	subNameMap := GetIdMapSubs(z) // Get all subscription id:name pairs
