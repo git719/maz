@@ -211,18 +211,11 @@ func GetMatchingRoleAssignments(filter string, force bool, z Bundle) (list []int
 	roleNameMap := GetIdMapRoleDefs(z) // Get all role definition id:name pairs
 	for _, i := range list {           // Parse every object
 		x := i.(map[string]interface{})
-		// Match against relevant roleDefinitions attributes
+		// Match against relevant strings within roleAssigment JSON object (Note: Not all attributes are maintained)
 		xProp := x["properties"].(map[string]interface{})
-		rdId := utl.Str(xProp["roleDefinitionId"])
-		roleName := roleNameMap[utl.LastElem(rdId, "/")]
-		principalId := utl.Str(xProp["principalId"])
-		description := utl.Str(xProp["description"])
-		principalType := utl.Str(xProp["principalType"])
-		scope := utl.Str(xProp["scope"])
-		if utl.SubString(utl.Str(x["name"]), filter) || utl.SubString(rdId, filter) ||
-			utl.SubString(roleName, filter) || utl.SubString(principalId, filter) ||
-			utl.SubString(description, filter) || utl.SubString(principalType, filter) ||
-			utl.SubString(scope, filter) {
+		roleId := utl.Str(xProp["roleDefinitionId"])
+		roleName := roleNameMap[utl.LastElem(roleId, "/")]
+		if utl.SubString(roleName, filter) || utl.StringInJson(x, filter) {
 			matchingList = append(matchingList, x)
 		}
 	}

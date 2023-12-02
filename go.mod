@@ -4,7 +4,7 @@ go 1.21.3
 
 require (
 	github.com/AzureAD/microsoft-authentication-library-for-go v1.2.0
-	github.com/git719/utl v1.2.0
+	github.com/git719/utl v1.3.0
 	github.com/golang-jwt/jwt/v5 v5.0.0
 	github.com/google/uuid v1.3.1
 )

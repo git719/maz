@@ -267,10 +267,8 @@ func GetMatchingRoleDefinitions(filter string, force bool, z Bundle) (list []int
 	var matchingList []interface{} = nil
 	for _, i := range list { // Parse every object
 		x := i.(map[string]interface{})
-		// Match against relevant roleDefinitions attributes
-		xProp := x["properties"].(map[string]interface{})
-		if utl.SubString(utl.Str(x["name"]), filter) || utl.SubString(utl.Str(xProp["roleName"]), filter) ||
-			utl.SubString(utl.Str(x["description"]), filter) {
+		// Match against relevant strings within roleDefinitions JSON object (Note: Not all attributes are maintained)
+		if utl.StringInJson(x, filter) {
 			matchingList = append(matchingList, x)
 		}
 	}

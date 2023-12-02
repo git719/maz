@@ -315,16 +315,14 @@ func GetMatchingApps(filter string, force bool, z Bundle) (list []interface{}) {
 		return list
 	}
 	var matchingList []interface{} = nil
-	searchKeys := []string{"id", "displayName", "appId"}
 	var ids []string // Keep track of each unique objects to eliminate repeats
 	for _, i := range list {
 		x := i.(map[string]interface{})
 		id := utl.Str(x["id"])
-		for _, i := range searchKeys {
-			if utl.SubString(utl.Str(x[i]), filter) && !utl.ItemInList(id, ids) {
-				matchingList = append(matchingList, x)
-				ids = append(ids, id)
-			}
+		// Match against relevant strings within application JSON object (Note: Not all attributes are maintained)
+		if !utl.ItemInList(id, ids) && utl.StringInJson(x, filter) {
+			matchingList = append(matchingList, x)
+			ids = append(ids, id)
 		}
 	}
 	return matchingList

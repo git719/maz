@@ -82,9 +82,8 @@ func GetMatchingMgGroups(filter string, force bool, z Bundle) (list []interface{
 	var matchingList []interface{} = nil
 	for _, i := range list { // Parse every object
 		x := i.(map[string]interface{})
-		// Match against relevant managementGroups attributes
-		xProp := x["properties"].(map[string]interface{})
-		if utl.SubString(utl.Str(x["name"]), filter) || utl.SubString(utl.Str(xProp["displayName"]), filter) {
+		// Match against relevant strings within managementGroups JSON object (Note: Not all attributes are maintained)
+		if utl.StringInJson(x, filter) {
 			matchingList = append(matchingList, x)
 		}
 	}

@@ -339,35 +339,37 @@ func PrintStringMapColor(strMap map[string]string) {
 func PrintMatching(printFormat, t, specifier string, z Bundle) {
 	// Print objects matching on specifier
 	if utl.ValidUuid(specifier) {
-		// If valid UUID string, do direct Azure search for it
+		// If valid UUID string, get object direct from Azure
 		x := GetAzObjectByUuid(t, specifier, z)
-		if printFormat == "json" {
-			utl.PrintJsonColor(x)
-		} else if printFormat == "reg" {
-			PrintObject(t, x, z)
-		}
-	} else {
-		matchingObjects := GetObjects(t, specifier, false, z)
-		if len(matchingObjects) == 1 {
-			// If it's only one object, we'll try to get the Azure copy instead of using the local cache
-			x := matchingObjects[0].(map[string]interface{})
-			uuid := utl.Str(x["id"])
-			if utl.ValidUuid(uuid) {
-				x = GetAzObjectByUuid(t, uuid, z)
-			}
+		if x != nil {
 			if printFormat == "json" {
 				utl.PrintJsonColor(x)
 			} else if printFormat == "reg" {
 				PrintObject(t, x, z)
 			}
-		} else if len(matchingObjects) > 1 {
-			if printFormat == "json" {
-				utl.PrintJsonColor(matchingObjects) // Print all matching objects in JSON
-			} else if printFormat == "reg" {
-				for _, i := range matchingObjects { // Print all matching object teresely
-					x := i.(map[string]interface{})
-					PrintTersely(t, x)
-				}
+			return
+		}
+	}
+	matchingObjects := GetObjects(t, specifier, false, z)
+	if len(matchingObjects) == 1 {
+		// If it's only one object, try getting it direct from Azure instead of using the local cache
+		x := matchingObjects[0].(map[string]interface{})
+		uuid := utl.Str(x["id"])
+		if utl.ValidUuid(uuid) {
+			x = GetAzObjectByUuid(t, uuid, z) // Replace object with version directly in Azure
+		}
+		if printFormat == "json" {
+			utl.PrintJsonColor(x)
+		} else if printFormat == "reg" {
+			PrintObject(t, x, z)
+		}
+	} else if len(matchingObjects) > 1 {
+		if printFormat == "json" {
+			utl.PrintJsonColor(matchingObjects) // Print all matching objects in JSON
+		} else if printFormat == "reg" {
+			for _, i := range matchingObjects { // Print all matching object teresely
+				x := i.(map[string]interface{})
+				PrintTersely(t, x)
 			}
 		}
 	}

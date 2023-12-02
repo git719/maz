@@ -95,12 +95,9 @@ func GetMatchingSubscriptions(filter string, force bool, z Bundle) (list []inter
 	var matchingList []interface{} = nil
 	for _, i := range list { // Parse every object
 		x := i.(map[string]interface{})
-		// Match against relevant subscription attributes
-		searchList := []string{"displayName", "subscriptionId", "state"}
-		for _, i := range searchList {
-			if utl.SubString(utl.Str(x[i]), filter) {
-				matchingList = append(matchingList, x)
-			}
+		// Match against relevant strings within subscription JSON object (Note: Not all attributes are maintained)
+		if utl.StringInJson(x, filter) {
+			matchingList = append(matchingList, x)
 		}
 	}
 	return matchingList
