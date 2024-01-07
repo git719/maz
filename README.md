@@ -1,11 +1,10 @@
 # maz
-Microsoft Azure library module for simple MSAL authentication, and calling MS Graph and Azure resource APIs.
-Other APIs could be added in the future.
+This is a Go library package module for managing Microsoft Azure resource and security objects. Please review <https://que.tips/azure/> to better understand what we mean here by resource and security objects. Essentially this is a small library that provides basic MSAL authentication and token creation to allow principals to call the Azure Resource and Security (MS Graph) APIs. Other APIs could be added in the future.
 
-WARNING: Currently under constant changes.
+Please note that at lot of this code is still under constant changes.
 
 ## Getting Started
-1. Any program or utility wanting to use this libray module can simply import it, then instantiate a variable
+1. Any program or utility wanting to use this library module can simply import it, then instantiate a variable
 of type `maz.Bundle` to manage the interaction. For example: 
 
 ```go
@@ -104,7 +103,6 @@ _precedence_ is given to the Username Interactive login. To force a ClientID Cli
 you must ensure the first two are `unset` in the current shell.
 
 ## Functions
-List of all available functions.
+TODO: List of all available functions.
 - **maz.SetupInterativeLogin**: This functions allows you to set up the`~/.maz/credentials.yaml` file for interactive Azure login.
-
-TODO: List other functions here ...
+- ...
