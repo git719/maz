@@ -72,22 +72,21 @@ func DumpLoginValues(z Bundle) {
 	// Dump configured login values
 	fmt.Printf("%s: %s  # Config and cache directory\n", utl.Blu("config_dir"), utl.Gre(z.ConfDir))
 
-	fmt.Println(utl.Blu("os_environment_variables:"))
-	fmt.Println("  # 1. Environment Variable login values override values in credentials_config_file")
+	fmt.Printf("%s:\n", utl.Blu("config_env_variables"))
+	fmt.Println("  # 1. Credentials supplied via environment variables override values provided via credentials file")
 	fmt.Println("  # 2. MAZ_USERNAME+MAZ_INTERACTIVE login have priority over MAZ_CLIENT_ID+MAZ_CLIENT_SECRET login")
-	fmt.Println("  # 3. To use MAZ_CLIENT_ID+MAZ_CLIENT_SECRET login ensure MAZ_USERNAME & MAZ_INTERACTIVE are unset")
 	fmt.Printf("  %s: %s\n", utl.Blu("MAZ_TENANT_ID"), utl.Gre(os.Getenv("MAZ_TENANT_ID")))
 	fmt.Printf("  %s: %s\n", utl.Blu("MAZ_USERNAME"), utl.Gre(os.Getenv("MAZ_USERNAME")))
 	fmt.Printf("  %s: %s\n", utl.Blu("MAZ_INTERACTIVE"), utl.Mag(os.Getenv("MAZ_INTERACTIVE")))
 	fmt.Printf("  %s: %s\n", utl.Blu("MAZ_CLIENT_ID"), utl.Gre(os.Getenv("MAZ_CLIENT_ID")))
 	fmt.Printf("  %s: %s\n", utl.Blu("MAZ_CLIENT_SECRET"), utl.Gre(os.Getenv("MAZ_CLIENT_SECRET")))
 
-	fmt.Println(utl.Blu("credentials_config_file:"))
+	fmt.Printf("%s:\n", utl.Blu("config_creds_file"))
 	filePath := filepath.Join(z.ConfDir, z.CredsFile)
 	fmt.Printf("  %s: %s\n", utl.Blu("file_path"), utl.Gre(filePath))
 	credsRaw, err := utl.LoadFileYaml(filePath)
 	if err != nil {
-		utl.Die("[%s] %s\n", filePath, err)
+		utl.Die(utl.Red("  Credentials file does not exists yet.\n"))
 	}
 	creds := credsRaw.(map[string]interface{})
 	fmt.Printf("  %s: %s\n", utl.Blu("tenant_id"), utl.Gre(utl.Str(creds["tenant_id"])))
@@ -102,10 +101,7 @@ func DumpLoginValues(z Bundle) {
 }
 
 func DumpRuntimeValues(z Bundle) {
-	// Dump runtime global variables
-	fmt.Printf("%s: %s  # Config and cache directory\n", utl.Blu("config_dir"), utl.Gre(z.ConfDir))
-
-	fmt.Println(utl.Blu("runtime_credentials:"))
+	fmt.Printf("%s:\n", utl.Blu("runtime_credentials"))
 	fmt.Printf("  %s: %s\n", utl.Blu("tenant_id"), utl.Gre(z.TenantId))
 	if z.Interactive {
 		fmt.Printf("  %s: %s\n", utl.Blu("username"), utl.Gre(z.Username))
@@ -114,11 +110,6 @@ func DumpRuntimeValues(z Bundle) {
 		fmt.Printf("  %s: %s\n", utl.Blu("client_id"), utl.Gre(z.ClientId))
 		fmt.Printf("  %s: %s\n", utl.Blu("client_secret"), utl.Gre(z.ClientSecret))
 	}
-
-	fmt.Println(utl.Blu("api_variables:"))
-	fmt.Printf("  %s: %s\n", utl.Blu("authority_url"), utl.Gre(z.AuthorityUrl))
-	fmt.Printf("  %s: %s\n", utl.Blu("mg_url"), utl.Gre(ConstMgUrl))
-	fmt.Printf("  %s: %s\n", utl.Blu("az_url"), utl.Gre(ConstAzUrl))
 	os.Exit(0)
 }
 

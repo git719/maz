@@ -285,6 +285,8 @@ func GetAzObjects(url string, z Bundle, verbose bool) (deltaSet []interface{}, d
 
 func RemoveCacheFile(t string, z Bundle) {
 	switch t {
+	case "id":
+		utl.RemoveFile(filepath.Join(z.ConfDir, z.CredsFile))
 	case "t":
 		utl.RemoveFile(filepath.Join(z.ConfDir, z.TokenFile))
 	case "d":
@@ -320,7 +322,6 @@ func RemoveCacheFile(t string, z Bundle) {
 			utl.RemoveFile(filePath)
 		}
 	}
-	os.Exit(0)
 }
 
 func GetObjectFromFile(filePath string) (formatType, t string, obj map[string]interface{}) {

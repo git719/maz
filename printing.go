@@ -219,29 +219,107 @@ func PrintMemberOfs(t string, memberOf []interface{}) {
 	}
 }
 
-func PrintSecretList(pwdCreds []interface{}) {
-	// Print password credentials stanza for Apps and Sps
-	if len(pwdCreds) < 1 {
+func PrintExpiringSecretsReport(t, days string, z Bundle) {
+	var list []interface{} = nil
+	var format = "text"
+	switch t {
+	case "ap":
+		list = GetMatchingApps("", true, z) // true = force a call to Azure, to get latest
+		fmt.Println("PASSWORD EXPIRY REPORT: Apps")
+	case "sp":
+		list = GetMatchingSps("", true, z) // true = force a call to Azure, to get latest
+		fmt.Println("Password Expiry Report: SPs")
+	case "csv":
+		list = GetMatchingApps("", true, z) // true = force a call to Azure, to get latest
+		sps := GetMatchingSps("", true, z)  // true = force a call to Azure, to get latest
+		list = append(list, sps...)
+		fmt.Println("Password Expiry Report: Apps and SPs")
+		format = "csv"
+	}
+	if format == "csv" {
+		fmt.Printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n", "DISPLAY_NAME", "APP_ID", "SECRET_ID", "SECRET_NAME", "EXPIRY_DATE_TIME")
+	} else {
+		fmt.Printf("%-40s %-38s %-38s %-16s %s\n", "DISPLAY_NAME", "APP_ID", "SECRET_ID", "SECRET_NAME", "EXPIRY_DATE_TIME")
+	}
+	for _, i := range list {
+		x := i.(map[string]interface{})
+		displayName := utl.Str(x["displayName"])
+		appId := utl.Str(x["appId"])
+		if x["passwordCredentials"] != nil {
+			secretsList := x["passwordCredentials"].([]interface{})
+			PrintExpiringSecrets(displayName, appId, secretsList, days, format)
+		}
+	}
+}
+
+func PrintExpiringSecrets(displayName, appId string, secretsList []interface{}, days, format string) {
+	// Print expiring secrets within 'days'; if days == -1 print regular expiry date
+	if len(secretsList) < 1 {
+		return
+	}
+	daysInt, err := utl.StringToInt64(days)
+	if err != nil {
+		utl.Die("Error converting 'days' to valid integer number.\n")
+	}
+	for _, i := range secretsList {
+		pw := i.(map[string]interface{})
+		secretId := utl.Str(pw["keyId"])
+		name := utl.Str(pw["displayName"])
+		expiry := utl.Str(pw["endDateTime"])
+
+		// Convert expiry date to string and int64 epoch formats
+		expiryStr, err := utl.ConvertDateFormat(expiry, time.RFC3339Nano, "2006-01-02 15:04")
+		if err != nil {
+			utl.Die(utl.Trace() + err.Error() + "\n")
+		}
+		expiryInt, err := utl.DateStringToEpocInt64(expiry, time.RFC3339Nano)
+		if err != nil {
+			utl.Die(utl.Trace() + err.Error() + "\n")
+		}
+
+		now := time.Now().Unix()
+		daysDiff := (expiryInt - now) / 86400
+
+		cExpiryStr := expiryStr
+		if daysDiff <= 0 {
+			cExpiryStr = utl.Red(expiryStr) // If it's expired print in red
+		}
+
+		if daysInt == -1 || daysDiff <= daysInt {
+			if format == "csv" {
+				fmt.Printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n", displayName, appId, secretId, name, expiryStr)
+			} else {
+				fmt.Printf("%-40s %-38s %-38s %-16s %s\n", displayName, appId, secretId, name, cExpiryStr)
+			}
+		}
+	}
+}
+
+func PrintSecretList(secretsList []interface{}) {
+	// Print secret list stanza for App and SP objects
+	if len(secretsList) < 1 {
 		return
 	}
 	fmt.Println(utl.Blu("secrets") + ":")
-	for _, i := range pwdCreds {
-		a := i.(map[string]interface{})
-		cId := utl.Str(a["keyId"])
-		cName := utl.Str(a["displayName"])
-		cHint := utl.Str(a["hint"]) + "********"
+	for _, i := range secretsList {
+		pw := i.(map[string]interface{})
+		cId := utl.Str(pw["keyId"])
+		cName := utl.Str(pw["displayName"])
+		cHint := utl.Str(pw["hint"]) + "********"
+
 		// Reformat date strings for better readability
-		cStart, err := utl.ConvertDateFormat(utl.Str(a["startDateTime"]), time.RFC3339Nano, "2006-01-02 15:04")
+		cStart, err := utl.ConvertDateFormat(utl.Str(pw["startDateTime"]), time.RFC3339Nano, "2006-01-02 15:04")
 		if err != nil {
 			utl.Die(utl.Trace() + err.Error() + "\n")
 		}
-		cExpiry, err := utl.ConvertDateFormat(utl.Str(a["endDateTime"]), time.RFC3339Nano, "2006-01-02 15:04")
+		cExpiry, err := utl.ConvertDateFormat(utl.Str(pw["endDateTime"]), time.RFC3339Nano, "2006-01-02 15:04")
 		if err != nil {
 			utl.Die(utl.Trace() + err.Error() + "\n")
 		}
+
 		// Check if expiring soon
 		now := time.Now().Unix()
-		expiry, err := utl.DateStringToEpocInt64(utl.Str(a["endDateTime"]), time.RFC3339Nano)
+		expiry, err := utl.DateStringToEpocInt64(utl.Str(pw["endDateTime"]), time.RFC3339Nano)
 		if err != nil {
 			utl.Die(utl.Trace() + err.Error() + "\n")
 		}
