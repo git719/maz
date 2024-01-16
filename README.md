@@ -52,10 +52,10 @@ three (3) special attributes:
 |4|Automated|Environment variables|Set up attributes via environment variables (**OVERIDES config file**)|
 
 1. *Interactive via config file*: The calling utility sets up a way to allow setting up the `~/.maz/credentials.yaml` file with
-   the 3 special attributes. For example, the [zls CLI utility](https://github.com/git719/zls) does this via the `-cri`
+   the 3 special attributes. For example, the [zls CLI utility](https://github.com/git719/zls) does this via the `-id`
    switch, to _Set up MSAL interactive browser popup login_:
    ```
-   zls -cri 3f050090-20b0-40a0-a060-c05060104010 user1@domain.io
+   zls -id 3f050090-20b0-40a0-a060-c05060104010 user1@domain.io
    ```
    Above will populate the `~/.maz/credentials.yaml` file as follows:
    ```yaml
@@ -73,10 +73,10 @@ three (3) special attributes:
    ```
    Above values take **precedence** and **OVERIDE** any existing config `~/.maz/credentials.yaml` file values. 
 3. *Automated via config file*: The calling utility sets up a way to allow setting up the `~/.maz/credentials.yaml` file with
-   the 3 special attributes. For example, the [zls CLI utility](https://github.com/git719/zls) does this via the `-cr`
+   the 3 special attributes. For example, the [zls CLI utility](https://github.com/git719/zls) does this via the `-id`
    switch, to _Set up MSAL automated ClientId + Secret login_:
    ```
-   zls -cr 3f050090-20b0-40a0-a060-c05060104010 f1110121-7111-4171-a181-e1614131e181 ACB8c~HdLejfQGiHeI9LUKgNOODPQRISNTmVLX_i
+   zls -id 3f050090-20b0-40a0-a060-c05060104010 f1110121-7111-4171-a181-e1614131e181 ACB8c~HdLejfQGiHeI9LUKgNOODPQRISNTmVLX_i
    ```
    Above will populate the `~/.maz/credentials.yaml` file as follows:
    ```yaml

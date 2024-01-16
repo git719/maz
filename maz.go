@@ -100,19 +100,6 @@ func DumpLoginValues(z Bundle) {
 	os.Exit(0)
 }
 
-func DumpRuntimeValues(z Bundle) {
-	fmt.Printf("%s:\n", utl.Blu("runtime_credentials"))
-	fmt.Printf("  %s: %s\n", utl.Blu("tenant_id"), utl.Gre(z.TenantId))
-	if z.Interactive {
-		fmt.Printf("  %s: %s\n", utl.Blu("username"), utl.Gre(z.Username))
-		fmt.Printf("  %s: %s\n", utl.Blu("interactive"), utl.Mag("true"))
-	} else {
-		fmt.Printf("  %s: %s\n", utl.Blu("client_id"), utl.Gre(z.ClientId))
-		fmt.Printf("  %s: %s\n", utl.Blu("client_secret"), utl.Gre(z.ClientSecret))
-	}
-	os.Exit(0)
-}
-
 func SetupInterativeLogin(z Bundle) {
 	// Set up credentials file for interactive login
 	filePath := filepath.Join(z.ConfDir, z.CredsFile) // credentials.yaml
@@ -180,7 +167,7 @@ func SetupCredentials(z *Bundle) Bundle {
 		filePath := filepath.Join(z.ConfDir, z.CredsFile) // credentials.yaml
 		if utl.FileNotExist(filePath) && utl.FileSize(filePath) < 1 {
 			utl.Die("Missing credentials file: " + filePath + "\n" +
-				"Please rerun program using '-cr' or '-cri' option to specify credentials.\n")
+				"Re-run program to set up the appropriate login credentials.\n")
 		}
 		credsRaw, err := utl.LoadFileYaml(filePath)
 		if err != nil {
