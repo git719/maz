@@ -341,7 +341,7 @@ func GetAzSps(z Bundle, verbose bool) (list []interface{}) {
 
 	baseUrl := ConstMgUrl + "/beta/servicePrincipals"
 	// Get delta updates only if/when below attributes in $select are modified
-	selection := "?$select=displayName,appId,accountEnabled,appOwnerOrganizationId"
+	selection := "?$select=displayName,appId,accountEnabled,appOwnerOrganizationId,passwordCredentials"
 	url := baseUrl + "/delta" + selection + "&$top=999"
 	list = GetCachedObjects(cacheFile) // Get current cache
 	if len(list) < 1 {
