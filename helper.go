@@ -361,30 +361,26 @@ func CompareSpecfileToAzure(filePath string, z Bundle) {
 	if utl.FileNotExist(filePath) || utl.FileSize(filePath) < 1 {
 		utl.Die("File does not exist, or is zero size\n")
 	}
-	formatType, t, x := GetObjectFromFile(filePath)
-	if formatType != "JSON" && formatType != "YAML" {
-		utl.Die("File is not in JSON nor YAML format\n")
-	}
-	if t != "d" && t != "a" {
-		utl.Die("File " + formatType + " is not a role definition or assignment.\n")
+	formatType, t, fileDef := GetObjectFromFile(filePath)
+	if (formatType != "JSON" && formatType != "YAML" && t != "d" && t != "a") || t == "" {
+		utl.Die("File is not a properly defined role definition or assignment.\n")
 	}
 
-	fmt.Printf("==== SPECFILE ============================\n")
-	PrintObject(t, x, z) // Use generic print function
-	fmt.Printf("==== AZURE ===============================\n")
 	if t == "d" {
-		y := GetAzRoleDefinitionByObject(x, z)
-		if y == nil {
-			fmt.Printf("Role definition does not exist.\n")
+		azureDef := GetAzRoleDefinitionByObject(fileDef, z)
+		if azureDef == nil {
+			fmt.Printf("Role definition in specfile does " + utl.Red("not") + " exist in Azure.\n")
 		} else {
-			PrintRoleDefinition(y, z) // Use specific role def print function
+			fmt.Printf("Role definition in specfile " + utl.Gre("already") + " exist in Azure. See details below:\n")
+			DiffRoleDefinitionSpecfileVsAzure(fileDef, azureDef, z)
 		}
 	} else {
-		y := GetAzRoleAssignmentByObject(x, z)
-		if y == nil {
-			fmt.Printf("Role assignment does not exist.\n")
+		azureDef := GetAzRoleAssignmentByObject(fileDef, z)
+		if azureDef == nil {
+			fmt.Printf("Role assignment in specfile does " + utl.Red("not") + " exist in Azure.\n")
 		} else {
-			PrintRoleAssignment(y, z) // Use specific role assgmnt print function
+			fmt.Printf("Role assignment in specfile " + utl.Gre("already") + " exist in Azure. See details below:\n")
+			PrintRoleAssignment(azureDef, z)
 		}
 	}
 	os.Exit(0)
