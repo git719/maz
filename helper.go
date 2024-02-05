@@ -369,7 +369,9 @@ func CompareSpecfileToAzure(filePath string, z Bundle) {
 	if t == "d" {
 		azureDef := GetAzRoleDefinitionByObject(fileDef, z)
 		if azureDef == nil {
-			fmt.Printf("Role definition in specfile does " + utl.Red("not") + " exist in Azure.\n")
+			fileProp := fileDef["properties"].(map[string]interface{})
+			fileRoleName := utl.Str(fileProp["roleName"])
+			fmt.Printf("Role " + utl.Mag(fileRoleName) + " as defined in specfile does " + utl.Red("not") + " exist in Azure.\n")
 		} else {
 			fmt.Printf("Role definition in specfile " + utl.Gre("already") + " exist in Azure. See details below:\n")
 			DiffRoleDefinitionSpecfileVsAzure(fileDef, azureDef, z)

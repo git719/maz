@@ -9,32 +9,32 @@ import (
 )
 
 func DiffLists(list1, list2 []interface{}) (added, removed []interface{}, same bool) {
-    // Compares two list of strings and returns added and removed items, and whether or not the
+	// Compares two list of strings and returns added and removed items, and whether or not the
 	// lists are the same. Note they come in as []interface{} but we know they are strings.
 
 	// Create maps for quick lookup
 	set1 := make(map[string]bool)
 	for _, i := range list1 {
-		set1[utl.Str(i)] = true  // Assert the value as strings, since we know they are strings
+		set1[utl.Str(i)] = true // Assert the value as strings, since we know they are strings
 	}
 	set2 := make(map[string]bool)
 	for _, i := range list2 {
 		set2[utl.Str(i)] = true
 	}
 
-    // Find added items
+	// Find added items
 	for _, i := range list2 {
 		if !set1[utl.Str(i)] {
 			added = append(added, utl.Str(i))
 		}
 	}
 
-    // Find removed items
+	// Find removed items
 	for _, i := range list1 {
 		if !set2[utl.Str(i)] {
 			removed = append(removed, utl.Str(i))
 		}
-	}	
+	}
 
 	// Check if lists are the same
 	if len(list1) == len(list2) {
@@ -49,7 +49,7 @@ func DiffLists(list1, list2 []interface{}) (added, removed []interface{}, same b
 		same = false
 	}
 
-    return added, removed, same
+	return added, removed, same
 }
 
 func DiffRoleDefinitionSpecfileVsAzure(a, b map[string]interface{}, z Bundle) {
@@ -59,7 +59,6 @@ func DiffRoleDefinitionSpecfileVsAzure(a, b map[string]interface{}, z Bundle) {
 
 	// Gather the SPECFILE object values
 	fileProp := a["properties"].(map[string]interface{})
-	fileRoleName := utl.Str(fileProp["roleName"])
 	fileDesc := utl.Str(fileProp["description"])
 	var fileScopes []interface{} = nil
 	if fileProp["assignableScopes"] != nil {
@@ -105,91 +104,88 @@ func DiffRoleDefinitionSpecfileVsAzure(a, b map[string]interface{}, z Bundle) {
 
 	fmt.Printf("%s: %s\n", utl.Blu("id"), utl.Gre(azureId))
 	fmt.Println(utl.Blu("properties") + ":")
+	fmt.Printf("  %s: %s\n", utl.Blu("roleName"), utl.Gre(azureRoleName))
 
 	// Display differences
 
-	// roleName
-	fmt.Printf("  %s: %s\n", utl.Blu("roleName"), utl.Gre(azureRoleName))
-	if fileRoleName != azureRoleName {
-		fmt.Printf("  %s: %s\n", utl.Blu("roleName"), utl.Red(fileRoleName))
-	}
-	
 	// description
 	fmt.Printf("  %s: %s\n", utl.Blu("description"), utl.Gre(azureDesc))
 	if fileDesc != azureDesc {
 		fmt.Printf("  %s: %s\n", utl.Blu("description"), utl.Red(fileDesc))
 	}
-	
+
+	toBeRemoved := "# Not in specfile, to be removed"
+	toBeAdded := "# In specfile, to be added"
+
 	// scopes
 	fmt.Printf("  %s:\n", utl.Blu("assignableScopes"))
 	added, removed, _ := DiffLists(fileScopes, azureScopes)
 	for _, i := range azureScopes {
 		fmt.Printf("    - %s\n", utl.Gre(i))
-	}	
+	}
 	for _, i := range added {
-		fmt.Printf("    - %s  # Not in specfile, to be REMOVED\n", utl.Red(i))
+		fmt.Printf("    - %s  %s\n", utl.Red(i), toBeRemoved)
 	}
 	for _, i := range removed {
-		fmt.Printf("    - %s  # In specfile, to be ADDED\n", utl.Mag(i))
+		fmt.Printf("    - %s  %s\n", utl.Mag(i), toBeAdded)
 	}
 
 	// permissionss
 	fmt.Printf("  %s:\n", utl.Blu("permissions"))
 	// actions
-	if len(azurePermsA) > 0 {
+	if len(filePermsA) > 0 || len(azurePermsA) > 0 {
 		fmt.Printf("    - %s:\n", utl.Blu("actions"))
 		added, removed, _ := DiffLists(filePermsA, azurePermsA)
 		for _, i := range azurePermsA {
 			fmt.Printf("        - %s\n", utl.Gre(i))
-		}	
+		}
 		for _, i := range added {
-			fmt.Printf("        - %s  # Not in specfile, to be REMOVED\n", utl.Red(i))
+			fmt.Printf("        - %s  %s\n", utl.Red(i), toBeRemoved)
 		}
 		for _, i := range removed {
-			fmt.Printf("        - %s  # In specfile, to be ADDED\n", utl.Mag(i))
-		}	
+			fmt.Printf("        - %s  %s\n", utl.Mag(i), toBeAdded)
+		}
 	}
 	// notActions
-	if len(azurePermsNA) > 0 {
+	if len(filePermsNA) > 0 || len(azurePermsNA) > 0 {
 		fmt.Printf("      %s:\n", utl.Blu("notActions"))
 		added, removed, _ := DiffLists(filePermsNA, azurePermsNA)
 		for _, i := range azurePermsNA {
 			fmt.Printf("        - %s\n", utl.Gre(i))
-		}	
+		}
 		for _, i := range added {
-			fmt.Printf("        - %s  # Not in specfile, to be REMOVED\n", utl.Red(i))
+			fmt.Printf("        - %s  %s\n", utl.Red(i), toBeRemoved)
 		}
 		for _, i := range removed {
-			fmt.Printf("        - %s  # In specfile, to be ADDED\n", utl.Mag(i))
-		}	
+			fmt.Printf("        - %s  %s\n", utl.Mag(i), toBeAdded)
+		}
 	}
 	// dataActions
-	if len(azurePermsDA) > 0 {
+	if len(filePermsDA) > 0 || len(azurePermsDA) > 0 {
 		fmt.Printf("      %s:\n", utl.Blu("dataActions"))
 		added, removed, _ := DiffLists(filePermsDA, azurePermsDA)
 		for _, i := range azurePermsDA {
 			fmt.Printf("        - %s\n", utl.Gre(i))
-		}	
+		}
 		for _, i := range added {
-			fmt.Printf("        - %s  # Not in specfile, to be REMOVED\n", utl.Red(i))
+			fmt.Printf("        - %s  %s\n", utl.Red(i), toBeRemoved)
 		}
 		for _, i := range removed {
-			fmt.Printf("        - %s  # In specfile, to be ADDED\n", utl.Mag(i))
-		}	
+			fmt.Printf("        - %s  %s\n", utl.Mag(i), toBeAdded)
+		}
 	}
 	// notDataActions
-	if len(azurePermsNDA) > 0 {
+	if len(filePermsNDA) > 0 || len(azurePermsNDA) > 0 {
 		fmt.Printf("      %s:\n", utl.Blu("notDataActions"))
 		added, removed, _ := DiffLists(filePermsNDA, azurePermsNDA)
 		for _, i := range azurePermsNDA {
 			fmt.Printf("        - %s\n", utl.Gre(i))
-		}	
+		}
 		for _, i := range added {
-			fmt.Printf("        - %s  # Not in specfile, to be REMOVED\n", utl.Red(i))
+			fmt.Printf("        - %s  %s\n", utl.Red(i), toBeRemoved)
 		}
 		for _, i := range removed {
-			fmt.Printf("        - %s  # In specfile, to be ADDED\n", utl.Mag(i))
-		}	
+			fmt.Printf("        - %s  %s\n", utl.Mag(i), toBeAdded)
+		}
 	}
 }
-
