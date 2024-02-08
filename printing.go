@@ -4,8 +4,9 @@ package maz
 
 import (
 	"fmt"
-	"github.com/git719/utl"
 	"time"
+
+	"github.com/git719/utl"
 )
 
 func PrintCountStatus(z Bundle) {
@@ -137,7 +138,7 @@ func PrintObject(t string, x map[string]interface{}, z Bundle) {
 }
 
 func PrintAppRoleAssignmentsSp(roleNameMap map[string]string, appRoleAssignments []interface{}) {
-	// Print appRoleAssignmens for SP
+	// Print appRoleAssignments for SP
 	if len(appRoleAssignments) < 1 {
 		return
 	}
@@ -163,17 +164,25 @@ func PrintAppRoleAssignmentsSp(roleNameMap map[string]string, appRoleAssignments
 }
 
 func PrintAppRoleAssignmentsOthers(appRoleAssignments []interface{}, z Bundle) {
-	// Print appRoleAssignmens for others (Users and Groups)
+	// Print appRoleAssignments for others (Users and Groups)
 	if len(appRoleAssignments) < 1 {
 		return
 	}
 
 	fmt.Printf(utl.Blu("appRoleAssignments") + ":\n")
+	var uniqueIds []string // Keep track of assignments
 	for _, i := range appRoleAssignments {
 		ara := i.(map[string]interface{}) // JSON object
 		appRoleId := utl.Str(ara["appRoleId"])
 		resourceDisplayName := utl.Str(ara["resourceDisplayName"])
 		resourceId := utl.Str(ara["resourceId"]) // SP where the appRole is defined
+
+		// Only print unique assignments, skip over repeated ones
+		conbinedId := resourceDisplayName + "_" + resourceId + "_" + appRoleId
+		if utl.ItemInList(conbinedId, uniqueIds) {
+			continue // Skip this repeated one. This can happen due to inherited nesting
+		}
+		uniqueIds = append(uniqueIds, conbinedId) // Track unique ones
 
 		// Now build roleNameMap and get roleName
 		// We are forced to do this excessive processing for each appRole, because MG Graph does

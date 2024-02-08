@@ -5,10 +5,11 @@ package maz
 
 import (
 	"fmt"
-	"github.com/git719/utl"
-	"github.com/google/uuid"
 	"path/filepath"
 	"strings"
+
+	"github.com/git719/utl"
+	"github.com/google/uuid"
 )
 
 func PrintRoleAssignment(x map[string]interface{}, z Bundle) {
@@ -229,9 +230,9 @@ func GetAzRoleAssignments(z Bundle, verbose bool) (list []interface{}) {
 	//   https://learn.microsoft.com/en-us/azure/role-based-access-control/role-assignments-list-rest
 	//   https://learn.microsoft.com/en-us/rest/api/authorization/role-assignments/list-for-subscription
 
-	list = nil         // We have to zero it out
-	var uuIds []string // Keep track of each unique object to eliminate inherited repeats
-	k := 1             // Track number of API calls to provide progress
+	list = nil             // We have to zero it out
+	var uniqueIds []string // Keep track of assignment objects
+	k := 1                 // Track number of API calls to provide progress
 
 	var mgGroupNameMap, subNameMap map[string]string
 	if verbose {
@@ -250,11 +251,10 @@ func GetAzRoleAssignments(z Bundle, verbose bool) (list []interface{}) {
 			for _, i := range objectsUnderThisScope {
 				x := i.(map[string]interface{})
 				uuid := utl.Str(x["name"])
-				if utl.ItemInList(uuid, uuIds) {
-					// Role definitions & assignments do repeat!
-					continue // Skip if already seen
+				if utl.ItemInList(uuid, uniqueIds) {
+					continue // Skip this repeated one. This can happen due to inherited nesting
 				}
-				uuIds = append(uuIds, uuid) // Keep track of the UUIDs we are seeing
+				uniqueIds = append(uniqueIds, uuid) // Keep track of the UUIDs we are seeing
 				list = append(list, x)
 				count++
 			}
