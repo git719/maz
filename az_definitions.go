@@ -129,17 +129,20 @@ func UpsertAzRoleDefinition(force bool, x map[string]interface{}, z Bundle) {
 	}
 	xProp := x["properties"].(map[string]interface{})
 	xRoleName := utl.Str(xProp["roleName"])
-	xType := utl.Str(xProp["type"])
-	xDesc := utl.Str(xProp["description"])
+	// Below two are required in the API body call, but we don't need to burden
+	// the user with this requirement, and just update the values for them here.
+	if xProp["type"] == nil {
+		xProp["type"] = "CustomRole"
+	}
+	if xProp["description"] == nil {
+		xProp["description"] = ""
+	}
 	xScopes := xProp["assignableScopes"].([]interface{})
 	xScope1 := utl.Str(xScopes[0]) // For deployment, we'll use 1st scope
-	if xProp == nil || xScopes == nil || xRoleName == "" || xScope1 == "" ||
-		xDesc == "" || strings.ToLower(xType) != "customrole" {
+	if xProp == nil || xScopes == nil || xRoleName == "" || xScope1 == "" {
 		utl.Die("Specfile is missing required attributes. Need at least:\n\n" +
 			"properties:\n" +
-			"  type: CustomRole\n" +
 			"  roleName: \"My Role Name\"\n" +
-			"  description: \"My role's description\"\n" +
 			"  assignableScopes:\n" +
 			"    - \"/subscriptions/UUID\"  # At least one scope\n\n" +
 			"See script '-k*' options to create properly formatted sample files.\n")

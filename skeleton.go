@@ -4,9 +4,10 @@ package maz
 
 import (
 	"fmt"
-	"github.com/git719/utl"
 	"os"
 	"path/filepath"
+
+	"github.com/git719/utl"
 )
 
 func CreateSkeletonFile(t string) {
@@ -15,34 +16,32 @@ func CreateSkeletonFile(t string) {
 	if err != nil {
 		utl.Die(utl.Trace() + "Error: Getting CWD\n")
 	}
-	fileName, fileContent := "init-file-name.extention", []byte("init-file-content\n")
+	fileName, fileContent := "init-file-name.extension", []byte("init-file-content\n")
 	switch t {
 	case "d":
 		fileName = "role-definition.yaml"
 		fileContent = []byte("properties:\n" +
-			"  roleName:    My RBAC Role\n" +
+			"  roleName: My RBAC Role\n" +
 			"  description: Description of what this role does.\n" +
-			"  type: CustomRole\n" +
 			"  assignableScopes:\n" +
-			"    # Example scopes of where this role will be DEFINED. Recommendation: Define at highest point only, the Tenant Root Group level.\n" +
-			"    # Current limitation: Custom role with dataAction or noDataAction can ONLY be defined at subscriptions level.\n" +
+			"    # Recommendation: Always define at highest point in hierarchy, the Tenant Root Group.\n" +
 			"    - /providers/Microsoft.Management/managementGroups/3f550b9f-8888-7777-ad61-111199992222\n" +
 			"  permissions:\n" +
 			"    - actions:\n" +
-			"        - Microsoft.DevCenter/projects/*/read                     # Sample action\n" +
+			"        - Microsoft.DevCenter/projects/*/read\n" +
+			"        - '*/read'       # Wrap leading asterik entries in single-quotes\n" +
 			"      notActions:\n" +
-			"        - Microsoft.DevCenter/projects/pools/read                 # Sample notAction\n" +
+			"        - Microsoft.DevCenter/projects/pools/read\n" +
 			"      dataActions:\n" +
-			"        - Microsoft.KeyVault/vaults/secrets/*                     # Sample dataAction\n" +
+			"        - Microsoft.KeyVault/vaults/secrets/*\n" +
 			"      notDataActions:\n" +
-			"        - Microsoft.CognitiveServices/accounts/LUIS/apps/delete   # Sample notDataAction\n")
+			"        - Microsoft.CognitiveServices/accounts/LUIS/apps/delete\n")
 	case "dj":
 		fileName = "role-definition.json"
 		fileContent = []byte("{\n" +
 			"  \"properties\": {\n" +
 			"    \"roleName\": \"My RBAC Role\",\n" +
 			"    \"description\": \"Description of what this role does.\",\n" +
-			"    \"type\": \"CustomRole\",\n" +
 			"    \"assignableScopes\": [\n" +
 			"      \"/providers/Microsoft.Management/managementGroups/3f550b9f-8888-7777-ad61-111199992222\"\n" +
 			"    ],\n" +
@@ -67,15 +66,15 @@ func CreateSkeletonFile(t string) {
 	case "a":
 		fileName = "role-assignment.yaml"
 		fileContent = []byte("properties:\n" +
-			"  roleDefinitionId: 2489dfa4-3333-4444-9999-b04b7a1e4ea6  # Comment to mention the actual roleName = \"My Special Role\"\n" +
-			"  principalId:      65c6427a-1111-5555-7777-274d26531314  # Comment to mention the actual Group displayName = \"My Special Group\"\n" +
-			"  scope:            /providers/Microsoft.Management/managementGroups/3f550b9f-8888-7777-ad61-111199992222\n")
+			"  principalId: 65c6427a-1111-5555-7777-274d26531314  # Group = \"My Special Group\"\n" +
+			"  roleDefinitionId: 2489dfa4-3333-4444-9999-b04b7a1e4ea6  # Role = \"My Special Role\"\n" +
+			"  scope: /providers/Microsoft.Management/managementGroups/3f550b9f-8888-7777-ad61-111199992222\n")
 	case "aj":
 		fileName = "role-assignment.json"
 		fileContent = []byte("{\n" +
 			"  \"properties\": {\n" +
-			"    \"roleDefinitionId\": \"2489dfa4-3333-4444-9999-b04b7a1e4ea6\",\n" +
 			"    \"principalId\": \"65c6427a-1111-5555-7777-274d26531314\",\n" +
+			"    \"roleDefinitionId\": \"2489dfa4-3333-4444-9999-b04b7a1e4ea6\",\n" +
 			"    \"scope\": \"/providers/Microsoft.Management/managementGroups/3f550b9f-8888-7777-ad61-111199992222\"\n" +
 			"  }\n" +
 			"}\n")
