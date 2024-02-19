@@ -4,9 +4,10 @@ package maz
 
 import (
 	"fmt"
-	"github.com/git719/utl"
 	"os"
 	"path/filepath"
+
+	"github.com/git719/utl"
 )
 
 func UpsertAzObject(filePath string, z Bundle) {

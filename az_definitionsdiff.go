@@ -5,6 +5,7 @@ package maz
 
 import (
 	"fmt"
+
 	"github.com/git719/utl"
 )
 
@@ -130,20 +131,23 @@ func DiffRoleDefinitionSpecfileVsAzure(a, b map[string]interface{}, z Bundle) {
 		fmt.Printf("    - %s  %s\n", utl.Mag(i), toBeAdded)
 	}
 
-	// permissionss
+	// permissions
 	fmt.Printf("  %s:\n", utl.Blu("permissions"))
 	// actions
 	if len(filePermsA) > 0 || len(azurePermsA) > 0 {
 		fmt.Printf("    - %s:\n", utl.Blu("actions"))
 		added, removed, _ := DiffLists(filePermsA, azurePermsA)
 		for _, i := range azurePermsA {
-			fmt.Printf("        - %s\n", utl.Gre(i))
+			s := utl.StrSingleQuote(i)
+			fmt.Printf("        - %s\n", utl.Gre(s))
 		}
 		for _, i := range added {
-			fmt.Printf("        - %s  %s\n", utl.Red(i), toBeRemoved)
+			s := utl.StrSingleQuote(i)
+			fmt.Printf("        - %s  %s\n", utl.Red(s), toBeRemoved)
 		}
 		for _, i := range removed {
-			fmt.Printf("        - %s  %s\n", utl.Mag(i), toBeAdded)
+			s := utl.StrSingleQuote(i)
+			fmt.Printf("        - %s  %s\n", utl.Mag(s), toBeAdded)
 		}
 	}
 	// notActions
@@ -151,13 +155,16 @@ func DiffRoleDefinitionSpecfileVsAzure(a, b map[string]interface{}, z Bundle) {
 		fmt.Printf("      %s:\n", utl.Blu("notActions"))
 		added, removed, _ := DiffLists(filePermsNA, azurePermsNA)
 		for _, i := range azurePermsNA {
-			fmt.Printf("        - %s\n", utl.Gre(i))
+			s := utl.StrSingleQuote(i)
+			fmt.Printf("        - %s\n", utl.Gre(s))
 		}
 		for _, i := range added {
-			fmt.Printf("        - %s  %s\n", utl.Red(i), toBeRemoved)
+			s := utl.StrSingleQuote(i)
+			fmt.Printf("        - %s  %s\n", utl.Red(s), toBeRemoved)
 		}
 		for _, i := range removed {
-			fmt.Printf("        - %s  %s\n", utl.Mag(i), toBeAdded)
+			s := utl.StrSingleQuote(i)
+			fmt.Printf("        - %s  %s\n", utl.Mag(s), toBeAdded)
 		}
 	}
 	// dataActions
@@ -165,13 +172,16 @@ func DiffRoleDefinitionSpecfileVsAzure(a, b map[string]interface{}, z Bundle) {
 		fmt.Printf("      %s:\n", utl.Blu("dataActions"))
 		added, removed, _ := DiffLists(filePermsDA, azurePermsDA)
 		for _, i := range azurePermsDA {
-			fmt.Printf("        - %s\n", utl.Gre(i))
+			s := utl.StrSingleQuote(i)
+			fmt.Printf("        - %s\n", utl.Gre(s))
 		}
 		for _, i := range added {
-			fmt.Printf("        - %s  %s\n", utl.Red(i), toBeRemoved)
+			s := utl.StrSingleQuote(i)
+			fmt.Printf("        - %s  %s\n", utl.Red(s), toBeRemoved)
 		}
 		for _, i := range removed {
-			fmt.Printf("        - %s  %s\n", utl.Mag(i), toBeAdded)
+			s := utl.StrSingleQuote(i)
+			fmt.Printf("        - %s  %s\n", utl.Mag(s), toBeAdded)
 		}
 	}
 	// notDataActions
@@ -179,13 +189,16 @@ func DiffRoleDefinitionSpecfileVsAzure(a, b map[string]interface{}, z Bundle) {
 		fmt.Printf("      %s:\n", utl.Blu("notDataActions"))
 		added, removed, _ := DiffLists(filePermsNDA, azurePermsNDA)
 		for _, i := range azurePermsNDA {
-			fmt.Printf("        - %s\n", utl.Gre(i))
+			s := utl.StrSingleQuote(i)
+			fmt.Printf("        - %s\n", utl.Gre(s))
 		}
 		for _, i := range added {
-			fmt.Printf("        - %s  %s\n", utl.Red(i), toBeRemoved)
+			s := utl.StrSingleQuote(i)
+			fmt.Printf("        - %s  %s\n", utl.Red(s), toBeRemoved)
 		}
 		for _, i := range removed {
-			fmt.Printf("        - %s  %s\n", utl.Mag(i), toBeAdded)
+			s := utl.StrSingleQuote(i)
+			fmt.Printf("        - %s  %s\n", utl.Mag(s), toBeAdded)
 		}
 	}
 }

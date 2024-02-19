@@ -52,13 +52,13 @@ func PrintRoleDefinition(x map[string]interface{}, z Bundle) {
 				}
 			}
 		} else {
-			fmt.Printf(utl.Red("    <Not an arrays??>\n"))
+			fmt.Println(utl.Red("    <Not an arrays??>\n"))
 		}
 	}
 
 	fmt.Printf("  %s:\n", utl.Blu("permissions"))
 	if xProp["permissions"] == nil {
-		fmt.Printf(utl.Red("    < No permissions?? >\n"))
+		fmt.Println(utl.Red("    < No permissions?? >\n"))
 	} else {
 		permsSet := xProp["permissions"].([]interface{})
 		if len(permsSet) == 1 {
@@ -68,10 +68,11 @@ func PrintRoleDefinition(x map[string]interface{}, z Bundle) {
 			if perms["actions"] != nil {
 				permsA := perms["actions"].([]interface{})
 				if utl.GetType(permsA)[0] != '[' { // Open bracket character means it's an array list
-					fmt.Printf(utl.Red("        <Not an array??>\n"))
+					fmt.Println(utl.Red("        <Not an array??>\n"))
 				} else {
 					for _, i := range permsA {
-						fmt.Printf("        - %s\n", utl.Gre(utl.Str(i)))
+						s := utl.StrSingleQuote(i) // Special function to lookout for leading '*' which must be single-quoted
+						fmt.Printf("        - %s\n", utl.Gre(s))
 					}
 				}
 			}
@@ -80,10 +81,11 @@ func PrintRoleDefinition(x map[string]interface{}, z Bundle) {
 			if perms["notActions"] != nil {
 				permsNA := perms["notActions"].([]interface{})
 				if utl.GetType(permsNA)[0] != '[' {
-					fmt.Printf(utl.Red("        <Not an array??>\n"))
+					fmt.Println(utl.Red("        <Not an array??>\n"))
 				} else {
 					for _, i := range permsNA {
-						fmt.Printf("        - %s\n", utl.Gre(utl.Str(i)))
+						s := utl.StrSingleQuote(i)
+						fmt.Printf("        - %s\n", utl.Gre(s))
 					}
 				}
 			}
@@ -92,10 +94,11 @@ func PrintRoleDefinition(x map[string]interface{}, z Bundle) {
 			if perms["dataActions"] != nil {
 				permsDA := perms["dataActions"].([]interface{})
 				if utl.GetType(permsDA)[0] != '[' {
-					fmt.Printf(utl.Red("        <Not an array??>\n"))
+					fmt.Println(utl.Red("        <Not an array??>\n"))
 				} else {
 					for _, i := range permsDA {
-						fmt.Printf("        - %s\n", utl.Gre(utl.Str(i)))
+						s := utl.StrSingleQuote(i)
+						fmt.Printf("        - %s\n", utl.Gre(s))
 					}
 				}
 			}
@@ -104,16 +107,17 @@ func PrintRoleDefinition(x map[string]interface{}, z Bundle) {
 			if perms["notDataActions"] != nil {
 				permsNDA := perms["notDataActions"].([]interface{})
 				if utl.GetType(permsNDA)[0] != '[' {
-					fmt.Printf(utl.Red("        <Not an array??>\n"))
+					fmt.Println(utl.Red("        <Not an array??>\n"))
 				} else {
 					for _, i := range permsNDA {
-						fmt.Printf("        - %s\n", utl.Gre(utl.Str(i)))
+						s := utl.StrSingleQuote(i)
+						fmt.Printf("        - %s\n", utl.Gre(s))
 					}
 				}
 			}
 
 		} else {
-			fmt.Printf(utl.Red("    <More than one set??>\n"))
+			fmt.Println(utl.Red("    <More than one set??>\n"))
 		}
 	}
 }
