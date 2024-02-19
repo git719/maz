@@ -122,7 +122,7 @@ func PrintRoleDefinition(x map[string]interface{}, z Bundle) {
 	}
 }
 
-func UpsertAzRoleDefinition(x map[string]interface{}, z Bundle) {
+func UpsertAzRoleDefinition(force bool, x map[string]interface{}, z Bundle) {
 	// Create or Update Azure role definition as defined by give x object
 	if x == nil {
 		return
@@ -153,9 +153,11 @@ func UpsertAzRoleDefinition(x map[string]interface{}, z Bundle) {
 	} else {
 		// Role exists, we'll prompt for update choice
 		PrintRoleDefinition(existing, z)
-		msg := utl.Yel("Role already exists! UPDATE it? y/n ")
-		if utl.PromptMsg(msg) != 'y' {
-			utl.Die("Aborted.\n")
+		if !force {
+			msg := utl.Yel("Role already exists! UPDATE it? y/n ")
+			if utl.PromptMsg(msg) != 'y' {
+				utl.Die("Aborted.\n")
+			}
 		}
 		fmt.Println("Updating role ...")
 		roleId = utl.Str(existing["name"])
