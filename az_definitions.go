@@ -139,12 +139,19 @@ func UpsertAzRoleDefinition(force bool, x map[string]interface{}, z Bundle) {
 	}
 	xScopes := xProp["assignableScopes"].([]interface{})
 	xScope1 := utl.Str(xScopes[0]) // For deployment, we'll use 1st scope
-	if xProp == nil || xScopes == nil || xRoleName == "" || xScope1 == "" {
-		utl.Die("Specfile is missing required attributes. Need at least:\n\n" +
+	var permSet []interface{} = nil
+	if xProp["permissions"] != nil {
+		permSet = xProp["permissions"].([]interface{})
+	}
+	if xProp == nil || xScopes == nil || xRoleName == "" || xScope1 == "" ||
+		permSet == nil || len(permSet) < 1 {
+		utl.Die("Specfile is missing required attributes. The bare minimum is:\n\n" +
 			"properties:\n" +
 			"  roleName: \"My Role Name\"\n" +
 			"  assignableScopes:\n" +
-			"    - \"/subscriptions/UUID\"  # At least one scope\n\n" +
+			"    - /providers/Microsoft.Management/managementGroups/3f550b9f-8888-7777-ad61-111199992222\n" +
+			"  permissions:\n" +
+			"    - actions:\n\n" +
 			"See script '-k*' options to create properly formatted sample files.\n")
 	}
 
