@@ -5,14 +5,15 @@ package maz
 import (
 	"context"
 	"fmt"
-	"github.com/AzureAD/microsoft-authentication-library-for-go/apps/confidential"
-	"github.com/AzureAD/microsoft-authentication-library-for-go/apps/public"
-	"github.com/git719/utl"
-	"github.com/golang-jwt/jwt/v5"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/AzureAD/microsoft-authentication-library-for-go/apps/confidential"
+	"github.com/AzureAD/microsoft-authentication-library-for-go/apps/public"
+	"github.com/git719/utl"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 func GetTokenInteractively(scopes []string, confDir, tokenFile, authorityUrl, username string) (token string, err error) {
@@ -102,26 +103,34 @@ func GetTokenByCredentials(scopes []string, confDir, tokenFile, authorityUrl, cl
 	return result.AccessToken, nil // Return only the AccessToken, which is of type string
 }
 
+func TokenValid(tokenString string) bool {
+	// Validate as per https://tools.ietf.org/html/rfc7519
+	if tokenString == "" || (!strings.HasPrefix(tokenString, "eyJ") && !strings.Contains(tokenString, ".")) {
+		return false
+	}
+	return true
+}
+
 func DecodeJwtToken(tokenString string) {
 	// Decode and dump token string, trusting, without verifying/validating
 
-	// Validate as per https://tools.ietf.org/html/rfc7519
-	if tokenString == "" || (!strings.HasPrefix(tokenString, "eyJ") && !strings.Contains(tokenString, ".")) {
-		utl.Die("Invalid token: Does not start with 'eyJ', contain any '.', or it's empty.\n")
-	}
-	// A JSON Web Token consists of three parts which are separated using .(dot):
-	// Header: It indicates the token’s type it is and which signing algorithm has been used.
+	// A JSON Web Token (JWT) consists of three parts which are separated using .(dot):
+	// Header: It indicates the token’s type and which signing algorithm has been used.
 	// Payload: It consists of the claims. And claims comprise of application’s data( email id,
-	// username, role), the expiration period of a token (Exp), and so on.
+	//          username, role), the expiration period of a token (Exp), and so on.
 	// Signature: It is generated using the secret (provided by the user), encoded header, and payload.
 	//
 	// Token struct fields:
-	//   Raw       string                 // The raw token.  Populated when you Parse a token
+	//   Raw       string                 // The raw token. Populated when you Parse a token
 	//   Method    SigningMethod          // The signing method used or to be used
 	//   Header    map[string]interface{} // The first segment of the token
 	//   Claims    Claims                 // The second segment of the token
-	//   Signature string                 // The third segment of the token.  Populated when you Parse a token
-	//   Valid     bool                   // Is the token valid?  Populated when you Parse/Verify a token
+	//   Signature string                 // The third segment of the token. Populated when you Parse a token
+	//   Valid     bool                   // Is the token valid? Populated when you Parse/Verify a token
+
+	if !TokenValid(tokenString) {
+		utl.Die(utl.Red("Invalid token: Does not start with 'eyJ', contain any '.', or it's empty.\n"))
+	}
 
 	// Parse the token without verifying the signature
 	claims := jwt.MapClaims{} // claims are actually a map[string]interface{}

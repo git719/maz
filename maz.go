@@ -4,12 +4,13 @@ package maz
 
 import (
 	"fmt"
-	"github.com/git719/utl"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"github.com/git719/utl"
 )
 
 const (
@@ -48,6 +49,8 @@ var (
 		"MAZ_INTERACTIVE":   "",
 		"MAZ_CLIENT_ID":     "",
 		"MAZ_CLIENT_SECRET": "",
+		"MAZ_MG_TOKEN":      "",
+		"MAZ_AZ_TOKEN":      "",
 	}
 )
 
@@ -73,14 +76,20 @@ func DumpLoginValues(z Bundle) {
 	fmt.Printf("%s: %s  # Config and cache directory\n", utl.Blu("config_dir"), utl.Gre(z.ConfDir))
 
 	fmt.Printf("%s:\n", utl.Blu("config_env_variables"))
-	fmt.Println("  # 1. Credentials supplied via environment variables override values provided via credentials file")
-	fmt.Println("  # 2. MAZ_USERNAME+MAZ_INTERACTIVE login have priority over MAZ_CLIENT_ID+MAZ_CLIENT_SECRET login")
+	fmt.Println("  # 1. MS Graph and Azure ARM tokens can be supplied directly via MAZ_MG_TOKEN and")
+	fmt.Println("  #    MAZ_AZ_TOKEN environment variables, and they have the highest precedence.")
+	fmt.Println("  #    Note, MAZ_TENANT_ID is still required when using these 2.")
+	fmt.Println("  # 2. Credentials supplied via environment variables have precedence over those")
+	fmt.Println("  #    provided via credentials file.")
+	fmt.Println("  # 3. The MAZ_USERNAME + MAZ_INTERACTIVE combo have priority over the MAZ_CLIENT_ID")
+	fmt.Println("  #    + MAZ_CLIENT_SECRET combination.")
 	fmt.Printf("  %s: %s\n", utl.Blu("MAZ_TENANT_ID"), utl.Gre(os.Getenv("MAZ_TENANT_ID")))
 	fmt.Printf("  %s: %s\n", utl.Blu("MAZ_USERNAME"), utl.Gre(os.Getenv("MAZ_USERNAME")))
 	fmt.Printf("  %s: %s\n", utl.Blu("MAZ_INTERACTIVE"), utl.Mag(os.Getenv("MAZ_INTERACTIVE")))
 	fmt.Printf("  %s: %s\n", utl.Blu("MAZ_CLIENT_ID"), utl.Gre(os.Getenv("MAZ_CLIENT_ID")))
 	fmt.Printf("  %s: %s\n", utl.Blu("MAZ_CLIENT_SECRET"), utl.Gre(os.Getenv("MAZ_CLIENT_SECRET")))
-
+	fmt.Printf("  %s: %s\n", utl.Blu("MAZ_MG_TOKEN"), utl.Gre(os.Getenv("MAZ_MG_TOKEN")))
+	fmt.Printf("  %s: %s\n", utl.Blu("MAZ_AZ_TOKEN"), utl.Gre(os.Getenv("MAZ_AZ_TOKEN")))
 	fmt.Printf("%s:\n", utl.Blu("config_creds_file"))
 	filePath := filepath.Join(z.ConfDir, z.CredsFile)
 	fmt.Printf("  %s: %s\n", utl.Blu("file_path"), utl.Gre(filePath))
@@ -135,9 +144,9 @@ func SetupCredentials(z *Bundle) Bundle {
 	// Get credentials from OS environment variables (takes precedence) or from credentials file
 	usingEnv := false // Assume environment variables are not being used
 	for k := range eVars {
-		eVars[k] = os.Getenv(k) // Read all pertinent variables
+		eVars[k] = os.Getenv(k) // Read all MAZ_* environment variables
 		if eVars[k] != "" {
-			usingEnv = true
+			usingEnv = true // If any are set, environment variable login/token is true
 		}
 	}
 	if usingEnv {
@@ -146,21 +155,30 @@ func SetupCredentials(z *Bundle) Bundle {
 		if !utl.ValidUuid(z.TenantId) {
 			utl.Die("[MAZ_TENANT_ID] tenant_id '%s' is not a valid UUID\n", z.TenantId)
 		}
-		z.Interactive, _ = strconv.ParseBool(utl.Str(eVars["MAZ_INTERACTIVE"]))
-		if z.Interactive {
-			z.Username = strings.ToLower(utl.Str(eVars["MAZ_USERNAME"]))
-			if z.ClientId != "" || z.ClientSecret != "" {
-				fmt.Println("Warning: ", utl.Yel(""))
+		z.MgToken = eVars["MAZ_MG_TOKEN"]
+		z.AzToken = eVars["MAZ_AZ_TOKEN"]
+		// Let's assume tokens for each of the 2 APIs have been supplied
+		if !TokenValid(z.AzToken) && !TokenValid(z.MgToken) {
+			// If they are both not valid, then we'll process the other variables
+			z.Interactive, _ = strconv.ParseBool(utl.Str(eVars["MAZ_INTERACTIVE"]))
+			if z.Interactive {
+				z.Username = strings.ToLower(utl.Str(eVars["MAZ_USERNAME"]))
+				if z.ClientId != "" || z.ClientSecret != "" {
+					fmt.Println("Warning: ", utl.Yel(""))
+				}
+			} else {
+				z.ClientId = utl.Str(eVars["MAZ_CLIENT_ID"])
+				if !utl.ValidUuid(z.ClientId) {
+					utl.Die("[MAZ_CLIENT_ID] client_id '%s' is not a valid UUID\n", z.ClientId)
+				}
+				z.ClientSecret = utl.Str(eVars["MAZ_CLIENT_SECRET"])
+				if z.ClientSecret == "" {
+					utl.Die("[MAZ_CLIENT_SECRET] client_secret is blank\n")
+				}
 			}
 		} else {
-			z.ClientId = utl.Str(eVars["MAZ_CLIENT_ID"])
-			if !utl.ValidUuid(z.ClientId) {
-				utl.Die("[MAZ_CLIENT_ID] client_id '%s' is not a valid UUID\n", z.ClientId)
-			}
-			z.ClientSecret = utl.Str(eVars["MAZ_CLIENT_SECRET"])
-			if z.ClientSecret == "" {
-				utl.Die("[MAZ_CLIENT_SECRET] client_secret is blank\n")
-			}
+			// Get the Tenant Id from the valid tokens
+
 		}
 	} else {
 		// Getting from credentials file
@@ -198,37 +216,43 @@ func SetupCredentials(z *Bundle) Bundle {
 func SetupApiTokens(z *Bundle) Bundle {
 	// Initialize necessary global variables, acquire all API tokens, and set them up for use
 	*z = SetupCredentials(z) // Sets up tenant ID, client ID, authentication method, etc
-	z.AuthorityUrl = ConstAuthUrl + z.TenantId
 
 	// Currently supporting calls for 2 different APIs (Azure Resource Management (ARM) and MS Graph), so each needs its own
 	// separate token. The Microsoft identity platform does not allow using same token for multiple resources at once.
 	// See https://learn.microsoft.com/en-us/azure/active-directory/develop/msal-net-user-gets-consent-for-multiple-resources
 
-	// Get a token for ARM access
-	azScope := []string{ConstAzUrl + "/.default"} // The scope is a slice of URL strings
-	// Appending '/.default' allows using all static and consented permissions of the identity in use
-	// See https://learn.microsoft.com/en-us/azure/active-directory/develop/msal-v1-app-scopes
-	if z.Interactive {
-		// Get token interactively
-		z.AzToken, _ = GetTokenInteractively(azScope, z.ConfDir, z.TokenFile, z.AuthorityUrl, z.Username)
-	} else {
-		// Get token with clientId + Secret
-		z.AzToken, _ = GetTokenByCredentials(azScope, z.ConfDir, z.TokenFile, z.AuthorityUrl, z.ClientId, z.ClientSecret)
+	if !TokenValid(z.AzToken) && !TokenValid(z.MgToken) {
+		// If API tokens have *both* not been supplied via environment variables, let's go ahead and get them
+		// via the other supported methods.
+
+		z.AuthorityUrl = ConstAuthUrl + z.TenantId
+
+		// Get a token for ARM access
+		azScope := []string{ConstAzUrl + "/.default"}
+		// Appending '/.default' allows using all static and consented permissions of the identity in use
+		// See https://learn.microsoft.com/en-us/azure/active-directory/develop/msal-v1-app-scopes
+		if z.Interactive {
+			// Get token interactively
+			z.AzToken, _ = GetTokenInteractively(azScope, z.ConfDir, z.TokenFile, z.AuthorityUrl, z.Username)
+		} else {
+			// Get token with clientId + Secret
+			z.AzToken, _ = GetTokenByCredentials(azScope, z.ConfDir, z.TokenFile, z.AuthorityUrl, z.ClientId, z.ClientSecret)
+		}
+
+		// Get a token for MS Graph access
+		mgScope := []string{ConstMgUrl + "/.default"}
+		if z.Interactive {
+			z.MgToken, _ = GetTokenInteractively(mgScope, z.ConfDir, z.TokenFile, z.AuthorityUrl, z.Username)
+		} else {
+			z.MgToken, _ = GetTokenByCredentials(mgScope, z.ConfDir, z.TokenFile, z.AuthorityUrl, z.ClientId, z.ClientSecret)
+		}
+
+		// Support for other APIs can be added here in the future ...
 	}
+
+	// Setup the base API headers; token + content type
 	z.AzHeaders = map[string]string{"Authorization": "Bearer " + z.AzToken, "Content-Type": "application/json"}
-
-	// Get a token for MS Graph access
-	mgScope := []string{ConstMgUrl + "/.default"}
-	if z.Interactive {
-		// Get token interactively
-		z.MgToken, _ = GetTokenInteractively(mgScope, z.ConfDir, z.TokenFile, z.AuthorityUrl, z.Username)
-	} else {
-		// Get token with clientId + Secret
-		z.MgToken, _ = GetTokenByCredentials(mgScope, z.ConfDir, z.TokenFile, z.AuthorityUrl, z.ClientId, z.ClientSecret)
-	}
 	z.MgHeaders = map[string]string{"Authorization": "Bearer " + z.MgToken, "Content-Type": "application/json"}
-
-	// Support for other APIs can be added here in the future ...
 
 	return *z
 }
