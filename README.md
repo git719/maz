@@ -52,10 +52,10 @@ three (3) special attributes:
 |4|Automated|Environment variables|Set up attributes via environment variables (**OVERIDES config file**)|
 
 1. *Interactive via config file*: The calling utility sets up a way to allow setting up the `~/.maz/credentials.yaml` file with
-   the 3 special attributes. For example, the [zls CLI utility](https://github.com/git719/zls) does this via the `-id`
+   the 3 special attributes. For example, the [azm CLI utility](https://github.com/git719/azm) does this via the `-id`
    switch, to _Set up MSAL interactive browser popup login_:
    ```
-   zls -id 3f050090-20b0-40a0-a060-c05060104010 user1@domain.io
+   azm -id 3f050090-20b0-40a0-a060-c05060104010 user1@domain.io
    ```
    Above will populate the `~/.maz/credentials.yaml` file as follows:
    ```yaml
@@ -63,7 +63,7 @@ three (3) special attributes:
    username: user1@domain.io
    interactive: true
    ```
-   From then on the `zls` utility will use above credentials to interact with the `maz` library to perform all its functions.
+   From then on the `azm` utility will use above credentials to interact with the `maz` library to perform all its functions.
 2. *Interactive via environment variables*: The calling utility will instead use the `os.Getenv("VAR")` function to look for
    the following 3 special environment variables:
    ```bsh
@@ -73,10 +73,10 @@ three (3) special attributes:
    ```
    Above values take **precedence** and **OVERIDE** any existing config `~/.maz/credentials.yaml` file values. 
 3. *Automated via config file*: The calling utility sets up a way to allow setting up the `~/.maz/credentials.yaml` file with
-   the 3 special attributes. For example, the [zls CLI utility](https://github.com/git719/zls) does this via the `-id`
+   the 3 special attributes. For example, the [azm CLI utility](https://github.com/git719/azm) does this via the `-id`
    switch, to _Set up MSAL automated ClientId + Secret login_:
    ```
-   zls -id 3f050090-20b0-40a0-a060-c05060104010 f1110121-7111-4171-a181-e1614131e181 ACB8c~HdLejfQGiHeI9LUKgNOODPQRISNTmVLX_i
+   azm -id 3f050090-20b0-40a0-a060-c05060104010 f1110121-7111-4171-a181-e1614131e181 ACB8c~HdLejfQGiHeI9LUKgNOODPQRISNTmVLX_i
    ```
    Above will populate the `~/.maz/credentials.yaml` file as follows:
    ```yaml
@@ -84,7 +84,7 @@ three (3) special attributes:
    client_id: f1110121-7111-4171-a181-e1614131e181
    client_secret: ACB8c~HdLejfQGiHeI9LUKgNOODPQRISNTmVLX_i
    ```
-   From then on the `zls` utility will use above credentials to interact with the `maz` library to perform all its functions.
+   From then on the `azm` utility will use above credentials to interact with the `maz` library to perform all its functions.
 4. *Automated via environment variables*: The calling utility will instead use the `os.Getenv("VAR")` function to look for
    the following 3 special environment variables
    ```bsh
