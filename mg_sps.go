@@ -5,10 +5,11 @@ package maz
 
 import (
 	"fmt"
-	"github.com/git719/utl"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/git719/utl"
 )
 
 func PrintSp(x map[string]interface{}, z Bundle) {
@@ -90,31 +91,80 @@ func PrintSp(x map[string]interface{}, z Bundle) {
 	}
 
 	// Print API permissions
+	// This unfortunately feels like too much code, but not sure is avoidable
+	var apiPerms [][]string = nil
+	// First, lets gather the delegated permissions
 	url = ConstMgUrl + "/v1.0/servicePrincipals/" + id + "/oauth2PermissionGrants"
 	r, statusCode, _ = ApiGet(url, z, nil)
 	if statusCode == 200 && r != nil && r["value"] != nil && len(r["value"].([]interface{})) > 0 {
-		fmt.Printf(utl.Blu("api_permissions") + ":\n")
-		apiPerms := r["value"].([]interface{}) // Assert as JSON array
-
-		// Print OAuth 2.0 scopes for each API
-		for _, i := range apiPerms {
+		oauth2Perms := r["value"].([]interface{}) // Assert as JSON array
+		// Collate each OAuth 2.0 scope
+		for _, i := range oauth2Perms {
 			api := i.(map[string]interface{}) // Assert as JSON object
-			apiName := "Unknown"
-			id := utl.Str(api["resourceId"]) // Get API's SP to get its displayName
-			//url2 := ConstMgUrl + "/v1.0/servicePrincipals/" + id
-			url2 := ConstMgUrl + "/beta/servicePrincipals/" + id
-			r2, _, _ := ApiGet(url2, z, nil)
-			ApiErrorCheck("GET", url2, utl.Trace(), r2)
-			if r2["appDisplayName"] != nil {
-				apiName = utl.Str(r2["appDisplayName"])
-			}
 
-			// Print each delegated claim for this API
+			resourceId := utl.Str(api["resourceId"]) // Get API's SP to get its displayName
+			url2 := ConstMgUrl + "/v1.0/servicePrincipals/" + resourceId
+			r2, _, _ := ApiGet(url2, z, nil)
+			apiName := "Unknown"
+			if r2["displayName"] != nil {
+				apiName = utl.Str(r2["displayName"])
+			}
+			// Collect each delegated claim for this perm
 			scope := strings.TrimSpace(utl.Str(api["scope"]))
 			claims := strings.Split(scope, " ")
 			for _, j := range claims {
-				fmt.Printf("  %-50s %s\n", utl.Gre(apiName), utl.Gre(j))
+				apiPerms = append(apiPerms, []string{apiName, "Delegated", j})
 			}
+		}
+	}
+	// Secondly, lets gather the application permissions
+	url = ConstMgUrl + "/v1.0/servicePrincipals/" + id + "/appRoleAssignments"
+	r, statusCode, _ = ApiGet(url, z, nil)
+	uniqueResIds := make(map[string]struct{}) // Unique resourceIds (SPs)
+	if statusCode == 200 && r != nil && r["value"] != nil && len(r["value"].([]interface{})) > 0 {
+		apiAssignments := r["value"].([]interface{}) // Assert as JSON array
+		// Collate assignments for each API
+		for _, i := range apiAssignments {
+			api := i.(map[string]interface{}) // Assert as JSON object
+			apiName := utl.Str(api["resourceDisplayName"])
+			resourceId := utl.Str(api["resourceId"])
+			appRoleId := utl.Str(api["appRoleId"])
+			j := resourceId + "/" + appRoleId
+
+			// Keeping track of unique resourceIds speeds up and simplifies getting permission value names below
+			uniqueResIds[resourceId] = struct{}{} // Go mem optimization trick, since we only care about the key
+
+			apiPerms = append(apiPerms, []string{apiName, "Application", j})
+		}
+	}
+	// Create the resId/roleId:value map
+	roleMap := make(map[string]string)
+	for resId := range uniqueResIds {
+		url := ConstMgUrl + "/beta/servicePrincipals/" + resId
+		r, _, _ := ApiGet(url, z, nil)
+		if r["appRoles"] != nil {
+			for _, i := range r["appRoles"].([]interface{}) {
+				role := i.(map[string]interface{})
+				k := resId + "/" + utl.Str(role["id"])
+				roleMap[k] = utl.Str(role["value"])
+			}
+		}
+	}
+	// Now print them
+	if len(apiPerms) > 0 {
+		fmt.Printf(utl.Blu("api_permissions") + ":\n")
+		for _, v := range apiPerms {
+			perm := v[2]
+			if utl.ValidUuid(strings.Split(v[2], "/")[0]) {
+				perm = roleMap[v[2]]
+			}
+			// // TODO: Sort by the 3rd column
+			// import "sort"
+			// sort.Slice(myList, func(i, j int) bool {
+			// 	return myList[i][2] < myList[j][2]
+			// })
+			// API Name | Permission | Type
+			fmt.Printf("  %s%s  %s%s  %s\n", utl.Gre(v[0]), utl.PadSpaces(40, len(v[0])), utl.Gre(v[1]), utl.PadSpaces(14, len(v[1])), utl.Gre(perm))
 		}
 	}
 }

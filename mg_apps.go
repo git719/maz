@@ -5,9 +5,10 @@ package maz
 
 import (
 	"fmt"
-	"github.com/git719/utl"
 	"path/filepath"
 	"time"
+
+	"github.com/git719/utl"
 )
 
 func PrintApp(x map[string]interface{}, z Bundle) {
@@ -138,7 +139,8 @@ func PrintApp(x map[string]interface{}, z Bundle) {
 					} else {
 						pType = "Delegated"
 					}
-					fmt.Printf("  %-50s %-40s %s\n", utl.Gre(apiName), utl.Gre(roleMap[pid]), utl.Gre(pType))
+					fmt.Printf("  %s%s  %s%s  %s\n", utl.Gre(apiName), utl.PadSpaces(40, len(apiName)),
+						utl.Gre(pType), utl.PadSpaces(14, len(pType)), utl.Gre(roleMap[pid]))
 				}
 			} else {
 				fmt.Printf("  %-50s %s\n", resAppId, "Error getting list of appRoles.")
