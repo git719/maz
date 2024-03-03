@@ -76,13 +76,11 @@ func PrintSp(x map[string]interface{}, z Bundle) {
 	}
 
 	// Print app role assignment members and the specific role assigned
-	//url = ConstMgUrl + "/v1.0/servicePrincipals/" + id + "/appRoleAssignedTo"
 	url = ConstMgUrl + "/beta/servicePrincipals/" + id + "/appRoleAssignedTo"
 	appRoleAssignments := GetAzAllPages(url, z)
 	PrintAppRoleAssignmentsSp(roleNameMap, appRoleAssignments) // roleNameMap is used here
 
 	// Print all groups and roles it is a member of
-	//url = ConstMgUrl + "/v1.0/servicePrincipals/" + id + "/transitiveMemberOf"
 	url = ConstMgUrl + "/beta/servicePrincipals/" + id + "/transitiveMemberOf"
 	r, statusCode, _ = ApiGet(url, z, nil)
 	if statusCode == 200 && r != nil && r["value"] != nil {

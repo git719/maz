@@ -321,7 +321,7 @@ func PrintOwners(owners []interface{}) {
 	fmt.Printf(utl.Blu("owners") + ":\n")
 	for _, i := range owners {
 		o := i.(map[string]interface{})
-		Type, Name := "???", "???"
+		Type, Name := "?UnknownType?", "?UnknownName?"
 		Type = utl.LastElem(utl.Str(o["@odata.type"]), ".")
 		switch Type {
 		case "user":
@@ -329,9 +329,10 @@ func PrintOwners(owners []interface{}) {
 		case "group":
 			Name = utl.Str(o["displayName"])
 		case "servicePrincipal":
-			Name = utl.Str(o["servicePrincipalType"])
-		default:
-			Name = "???"
+			Name = utl.Str(o["displayName"])
+			if utl.Str(o["servicePrincipalType"]) == "ManageIdentity" {
+				Type = "ManageIdentity"
+			}
 		}
 		fmt.Printf("  %-50s %s (%s)\n", utl.Gre(Name), utl.Gre(utl.Str(o["id"])), utl.Gre(Type))
 	}

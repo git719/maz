@@ -57,7 +57,6 @@ func PrintApp(x map[string]interface{}, z Bundle) {
 	}
 
 	// Print owners
-	//url = ConstMgUrl + "/v1.0/applications/" + id + "/owners"
 	url = ConstMgUrl + "/beta/applications/" + id + "/owners"
 	r, statusCode, _ = ApiGet(url, z, nil)
 	if statusCode == 200 && r != nil && r["value"] != nil {
@@ -84,7 +83,6 @@ func PrintApp(x map[string]interface{}, z Bundle) {
 
 			// Get this API's SP object with all relevant attributes
 			params := map[string]string{"$filter": "appId eq '" + resAppId + "'"}
-			//url := ConstMgUrl + "/v1.0/servicePrincipals"
 			url := ConstMgUrl + "/beta/servicePrincipals"
 			r, _, _ := ApiGet(url, z, params)
 			ApiErrorCheck("GET", url, utl.Trace(), r) // TODO: Get rid of this by using StatuCode checks, etc
