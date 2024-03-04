@@ -330,8 +330,8 @@ func PrintOwners(owners []interface{}) {
 			Name = utl.Str(o["displayName"])
 		case "servicePrincipal":
 			Name = utl.Str(o["displayName"])
-			if utl.Str(o["servicePrincipalType"]) == "ManageIdentity" {
-				Type = "ManageIdentity"
+			if utl.Str(o["servicePrincipalType"]) == "ManagedIdentity" {
+				Type = "ManagedIdentity"
 			}
 		}
 		fmt.Printf("  %-50s %s (%s)\n", utl.Gre(Name), utl.Gre(utl.Str(o["id"])), utl.Gre(Type))
