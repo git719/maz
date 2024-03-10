@@ -237,10 +237,10 @@ func RemoveAppSecret(uuid, keyId string, z Bundle) {
 	fmt.Printf("%s: %s\n", utl.Blu("id"), utl.Gre(utl.Str(x["id"])))
 	fmt.Printf("%s: %s\n", utl.Blu("appId"), utl.Gre(utl.Str(x["appId"])))
 	fmt.Printf("%s: %s\n", utl.Blu("displayName"), utl.Gre(utl.Str(x["displayName"])))
-	fmt.Printf("%s:\n", utl.Blu("secret_to_be_deleted"))
-	fmt.Printf("  %-36s  %-30s  %-16s  %-16s  %s\n", utl.Gre(cId), utl.Gre(cName),
-		utl.Gre(cHint), utl.Gre(cStart), utl.Gre(cExpiry))
-	if utl.PromptMsg("DELETE above? y/n ") == 'y' {
+	fmt.Printf("%s:\n", utl.Yel("secret_to_be_deleted"))
+	fmt.Printf("  %-36s  %-30s  %-16s  %-16s  %s\n", utl.Yel(cId), utl.Yel(cName),
+		utl.Yel(cHint), utl.Yel(cStart), utl.Yel(cExpiry))
+	if utl.PromptMsg(utl.Yel("DELETE above? y/n ")) == 'y' {
 		payload := map[string]interface{}{"keyId": keyId}
 		url := ConstMgUrl + "/v1.0/applications/" + uuid + "/removePassword"
 		r, statusCode, _ := ApiPost(url, z, payload, nil)
