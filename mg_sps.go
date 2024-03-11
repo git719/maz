@@ -57,7 +57,7 @@ func PrintSp(x map[string]interface{}, z Bundle) {
 
 	// This part does 2 things:
 	// 1) creates the role:name map to used later when calling PrintAppRoleAssignments()
-	// 2) prints all app_roles and
+	// 2) prints all app_roles
 	roleNameMap := make(map[string]string)
 	roleNameMap["00000000-0000-0000-0000-000000000000"] = "Default" // Include default app permissions role
 	appRoles := x["appRoles"].([]interface{})
@@ -89,7 +89,8 @@ func PrintSp(x map[string]interface{}, z Bundle) {
 	}
 
 	// Print API permissions
-	// This unfortunately feels like too much code, but not sure is avoidable
+	// - https://learn.microsoft.com/en-us/entra/identity-platform/app-objects-and-service-principals?tabs=browser
+	// - https://learn.microsoft.com/en-us/entra/identity-platform/permissions-consent-overview
 	var apiPerms [][]string = nil
 	// First, lets gather the delegated permissions
 	url = ConstMgUrl + "/v1.0/servicePrincipals/" + id + "/oauth2PermissionGrants"
@@ -99,7 +100,9 @@ func PrintSp(x map[string]interface{}, z Bundle) {
 		// Collate each OAuth 2.0 scope
 		for _, i := range oauth2Perms {
 			api := i.(map[string]interface{}) // Assert as JSON object
+			// utl.PrintJsonColor(api) // DEBUG
 
+			apiId := utl.Str(api["id"])              // This api assignment ID is used to delete it if ever necessary
 			resourceId := utl.Str(api["resourceId"]) // Get API's SP to get its displayName
 			url2 := ConstMgUrl + "/v1.0/servicePrincipals/" + resourceId
 			r2, _, _ := ApiGet(url2, z, nil)
@@ -111,7 +114,7 @@ func PrintSp(x map[string]interface{}, z Bundle) {
 			scope := strings.TrimSpace(utl.Str(api["scope"]))
 			claims := strings.Split(scope, " ")
 			for _, j := range claims {
-				apiPerms = append(apiPerms, []string{apiName, "Delegated", j})
+				apiPerms = append(apiPerms, []string{apiId, apiName, "Delegated", j})
 			}
 		}
 	}
@@ -124,6 +127,9 @@ func PrintSp(x map[string]interface{}, z Bundle) {
 		// Collate assignments for each API
 		for _, i := range apiAssignments {
 			api := i.(map[string]interface{}) // Assert as JSON object
+			//utl.PrintJsonColor(api) // DEBUG
+
+			apiId := utl.Str(api["id"]) // This api assignment ID is used to delete it if ever necessary
 			apiName := utl.Str(api["resourceDisplayName"])
 			resourceId := utl.Str(api["resourceId"])
 			appRoleId := utl.Str(api["appRoleId"])
@@ -132,7 +138,7 @@ func PrintSp(x map[string]interface{}, z Bundle) {
 			// Keeping track of unique resourceIds speeds up and simplifies getting permission value names below
 			uniqueResIds[resourceId] = struct{}{} // Go mem optimization trick, since we only care about the key
 
-			apiPerms = append(apiPerms, []string{apiName, "Application", j})
+			apiPerms = append(apiPerms, []string{apiId, apiName, "Application", j})
 		}
 	}
 	// Create the resId/roleId:value map
@@ -150,10 +156,10 @@ func PrintSp(x map[string]interface{}, z Bundle) {
 	}
 	// Now print them
 	if len(apiPerms) > 0 {
-		fmt.Printf(utl.Blu("api_permissions") + ":\n")
+		fmt.Printf(utl.Blu("oauth2PermissionGrants") + ":\n")
 		for _, v := range apiPerms {
-			perm := v[2]
-			if utl.ValidUuid(strings.Split(v[2], "/")[0]) {
+			perm := v[3]
+			if utl.ValidUuid(strings.Split(v[3], "/")[0]) {
 				perm = roleMap[v[2]]
 			}
 			// // TODO: Sort by the 3rd column
@@ -162,7 +168,9 @@ func PrintSp(x map[string]interface{}, z Bundle) {
 			// 	return myList[i][2] < myList[j][2]
 			// })
 			// API Name | Permission | Type
-			fmt.Printf("  %s%s  %s%s  %s\n", utl.Gre(v[0]), utl.PadSpaces(40, len(v[0])), utl.Gre(v[1]), utl.PadSpaces(14, len(v[1])), utl.Gre(perm))
+			fmt.Printf("  %s%s  %s%s  %s%s  %s\n", utl.Gre(v[0]), utl.PadSpaces(40, len(v[0])),
+				utl.Gre(v[1]), utl.PadSpaces(40, len(v[1])),
+				utl.Gre(v[2]), utl.PadSpaces(14, len(v[2])), utl.Gre(perm))
 		}
 	}
 }

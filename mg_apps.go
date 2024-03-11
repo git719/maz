@@ -63,10 +63,12 @@ func PrintApp(x map[string]interface{}, z Bundle) {
 		PrintOwners(r["value"].([]interface{}))
 	}
 
-	// Print API permissions
-	// Just look under this object's 'requiredResourceAccess' attribute
+	// Print API permissions that have been setup as *REQUIRED* for this application
+	// - https://learn.microsoft.com/en-us/entra/identity-platform/app-objects-and-service-principals?tabs=browser
+	// - https://learn.microsoft.com/en-us/entra/identity-platform/permissions-consent-overview
+	// Just look under the object's 'requiredResourceAccess' attribute
 	if x["requiredResourceAccess"] != nil && len(x["requiredResourceAccess"].([]interface{})) > 0 {
-		fmt.Printf(utl.Blu("api_permissions") + ":\n")
+		fmt.Printf(utl.Blu("requiredResourceAccess") + ":\n")
 		APIs := x["requiredResourceAccess"].([]interface{}) // Assert to JSON array
 		for _, a := range APIs {
 			api := a.(map[string]interface{})
@@ -127,6 +129,7 @@ func PrintApp(x map[string]interface{}, z Bundle) {
 			// 2. Parse this app permissions, and use roleMap to display permission value
 			if api["resourceAccess"] != nil && len(api["resourceAccess"].([]interface{})) > 0 {
 				Perms := api["resourceAccess"].([]interface{})
+				//utl.PrintJsonColor(Perms)             // DEBUG
 				apiName := utl.Str(sp["displayName"]) // This API's name
 				for _, i := range Perms {             // Iterate through perms
 					perm := i.(map[string]interface{})

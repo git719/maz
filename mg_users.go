@@ -5,8 +5,9 @@ package maz
 
 import (
 	"fmt"
-	"github.com/git719/utl"
 	"path/filepath"
+
+	"github.com/git719/utl"
 )
 
 func PrintUser(x map[string]interface{}, z Bundle) {
