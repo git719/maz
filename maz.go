@@ -1,16 +1,18 @@
-// maz.go
-
+// Package maz is a library of functions for interacting with essential Azure APIs via
+// REST calls. Currently it supports two APIs, the Azure Resource Management (ARM) API
+// and the MS Graph API, but can be extended to support additional APIs. This package
+// obviously also includes code to get an Azure JWT token using the MSAL library, to
+// then use against either the 2 currently supported Azure APIs.
 package maz
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 
-	"github.com/git719/utl"
+	"github.com/queone/utl"
 )
 
 const (
@@ -71,8 +73,8 @@ type Bundle struct {
 	// To support other future APIs, those token/headers pairs can be added here
 }
 
+// Dumps configured login values
 func DumpLoginValues(z Bundle) {
-	// Dump configured login values
 	fmt.Printf("%s: %s  # Config and cache directory\n", utl.Blu("config_dir"), utl.Gre(z.ConfDir))
 
 	fmt.Printf("%s:\n", utl.Blu("config_env_variables"))
@@ -109,22 +111,22 @@ func DumpLoginValues(z Bundle) {
 	os.Exit(0)
 }
 
+// Sets up credentials file for interactive login
 func SetupInterativeLogin(z Bundle) {
-	// Set up credentials file for interactive login
 	filePath := filepath.Join(z.ConfDir, z.CredsFile) // credentials.yaml
 	if !utl.ValidUuid(z.TenantId) {
 		utl.Die("Error. TENANT_ID is an invalid UUID.\n")
 	}
 	content := fmt.Sprintf("%-14s %s\n%-14s %s\n%-14s %s\n", "tenant_id:", z.TenantId, "username:", z.Username, "interactive:", "true")
-	if err := ioutil.WriteFile(filePath, []byte(content), 0600); err != nil { // Write string to file
+	if err := os.WriteFile(filePath, []byte(content), 0600); err != nil { // Write string to file
 		panic(err.Error())
 	}
 	fmt.Printf("Updated %s file\n", utl.Gre(filePath))
 	os.Exit(0)
 }
 
+// Sets up credentials file for client_id + secret login
 func SetupAutomatedLogin(z Bundle) {
-	// Set up credentials file for client_id + secret login
 	filePath := filepath.Join(z.ConfDir, z.CredsFile) // credentials.yaml
 	if !utl.ValidUuid(z.TenantId) {
 		utl.Die("Error. TENANT_ID is an invalid UUID.\n")
@@ -133,15 +135,16 @@ func SetupAutomatedLogin(z Bundle) {
 		utl.Die("Error. CLIENT_ID is an invalid UUID.\n")
 	}
 	content := fmt.Sprintf("%-14s %s\n%-14s %s\n%-14s %s\n", "tenant_id:", z.TenantId, "client_id:", z.ClientId, "client_secret:", z.ClientSecret)
-	if err := ioutil.WriteFile(filePath, []byte(content), 0600); err != nil { // Write string to file
+	if err := os.WriteFile(filePath, []byte(content), 0600); err != nil { // Write string to file
 		panic(err.Error())
 	}
 	fmt.Printf("Updated %s file\n", utl.Gre(filePath))
 	os.Exit(0)
 }
 
+// Gets credentials from OS environment variables (which take precedence), or from the
+// credentials file.
 func SetupCredentials(z *Bundle) Bundle {
-	// Get credentials from OS environment variables (takes precedence) or from credentials file
 	usingEnv := false // Assume environment variables are not being used
 	for k := range eVars {
 		eVars[k] = os.Getenv(k) // Read all MAZ_* environment variables
@@ -176,10 +179,7 @@ func SetupCredentials(z *Bundle) Bundle {
 					utl.Die("[MAZ_CLIENT_SECRET] client_secret is blank\n")
 				}
 			}
-		} else {
-			// Get the Tenant Id from the valid tokens
-
-		}
+		} // ... else it gets the Tenant Id from the valid tokens
 	} else {
 		// Getting from credentials file
 		filePath := filepath.Join(z.ConfDir, z.CredsFile) // credentials.yaml
@@ -213,8 +213,8 @@ func SetupCredentials(z *Bundle) Bundle {
 	return *z
 }
 
+// Initializes the necessary global variables, acquires all API tokens, and sets them up for use.
 func SetupApiTokens(z *Bundle) Bundle {
-	// Initialize necessary global variables, acquire all API tokens, and set them up for use
 	*z = SetupCredentials(z) // Sets up tenant ID, client ID, authentication method, etc
 
 	// Currently supporting calls for 2 different APIs (Azure Resource Management (ARM) and MS Graph), so each needs its own

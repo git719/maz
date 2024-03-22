@@ -1,14 +1,24 @@
-// az_groups.go
-// Azure resource Management Groups
-
 package maz
 
 import (
 	"fmt"
-	"github.com/git719/utl"
 	"path/filepath"
+
+	"github.com/queone/utl"
 )
 
+// Prints management group object in YAML-like format
+func PrintMgGroup(x map[string]interface{}) {
+	if x == nil {
+		return
+	}
+	xProp := x["properties"].(map[string]interface{})
+	fmt.Printf("%-12s: %s\n", utl.Blu("id"), utl.Gre(utl.Str(x["name"])))
+	fmt.Printf("%-12s: %s\n", utl.Blu("displayName"), utl.Gre(utl.Str(xProp["displayName"])))
+	fmt.Printf("%-12s: %s\n", utl.Blu("type"), utl.Gre(MgType(utl.Str(x["type"]))))
+}
+
+// Returns ARM object type based on long string
 func MgType(typeIn string) string {
 	switch typeIn {
 	case "Microsoft.Management/managementGroups":
@@ -20,17 +30,7 @@ func MgType(typeIn string) string {
 	}
 }
 
-func PrintMgGroup(x map[string]interface{}) {
-	// Print management group object in YAML-like
-	if x == nil {
-		return
-	}
-	xProp := x["properties"].(map[string]interface{})
-	fmt.Printf("%-12s: %s\n", utl.Blu("id"), utl.Gre(utl.Str(x["name"])))
-	fmt.Printf("%-12s: %s\n", utl.Blu("displayName"), utl.Gre(utl.Str(xProp["displayName"])))
-	fmt.Printf("%-12s: %s\n", utl.Blu("type"), utl.Gre(MgType(utl.Str(x["type"]))))
-}
-
+// Returns count of management group objects in local cache file
 func MgGroupCountLocal(z Bundle) int64 {
 	var cachedList []interface{} = nil
 	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_managementGroups."+ConstCacheFileExtension)
@@ -44,13 +44,14 @@ func MgGroupCountLocal(z Bundle) int64 {
 	return 0
 }
 
+// Returns count of management groups in Azure
 func MgGroupCountAzure(z Bundle) int64 {
 	list := GetAzMgGroups(z)
 	return int64(len(list))
 }
 
+// Returns id:name map of management groups
 func GetIdMapMgGroups(z Bundle) (nameMap map[string]string) {
-	// Return management groups id:name map
 	nameMap = make(map[string]string)
 	mgGroups := GetMatchingMgGroups("", false, z) // false = don't force a call to Azure
 	// By not forcing an Azure call we're opting for cache speed over id:name map accuracy
@@ -61,9 +62,8 @@ func GetIdMapMgGroups(z Bundle) (nameMap map[string]string) {
 	return nameMap
 }
 
+// Gets all Azure management groups matching on 'filter'. Returns entire list if filter is empty ""
 func GetMatchingMgGroups(filter string, force bool, z Bundle) (list []interface{}) {
-	// Get all Azure management groups matching on 'filter'; return entire list if filter is empty ""
-
 	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_managementGroups."+ConstCacheFileExtension)
 	cacheFileAge := utl.FileAge(cacheFile)
 	if utl.InternetIsAvailable() && (force || cacheFileAge == 0 || cacheFileAge > ConstAzCacheFileAgePeriod) {
@@ -90,8 +90,8 @@ func GetMatchingMgGroups(filter string, force bool, z Bundle) (list []interface{
 	return matchingList
 }
 
+// Gets all management groups in current Azure tenant, and saves them to local cache file
 func GetAzMgGroups(z Bundle) (list []interface{}) {
-	// Get ALL managementGroups in current Azure tenant AND save them to local cache file
 	list = nil                                               // We have to zero it out
 	params := map[string]string{"api-version": "2020-05-01"} // managementGroups
 	url := ConstAzUrl + "/providers/Microsoft.Management/managementGroups"
@@ -106,8 +106,8 @@ func GetAzMgGroups(z Bundle) (list []interface{}) {
 	return list
 }
 
+// Recursively print management groups and all its children MGs and subscriptions
 func PrintMgChildren(indent int, children []interface{}) {
-	// Recursively print managementGroups children (MGs and subscriptions)
 	for _, i := range children {
 		child := i.(map[string]interface{})
 		Name := utl.Str(child["displayName"])
@@ -131,9 +131,9 @@ func PrintMgChildren(indent int, children []interface{}) {
 	}
 }
 
+// Gets current tenant management group tree, and recursively calls function
+// PrintMgChildren() to print the hierarchy
 func PrintMgTree(z Bundle) {
-	// Get current tenant managementGroups and subscriptions tree, and use
-	// recursive function PrintMgChildren() to print the entire hierarchy
 	url := ConstAzUrl + "/providers/Microsoft.Management/managementGroups/" + z.TenantId
 	params := map[string]string{
 		"api-version": "2020-05-01", // managementGroups

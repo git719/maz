@@ -1,6 +1,3 @@
-// az_assignments.go
-// Azure resource RBAC role assignments
-
 package maz
 
 import (
@@ -8,12 +5,12 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/git719/utl"
 	"github.com/google/uuid"
+	"github.com/queone/utl"
 )
 
+// Prints RBAC role definition object in YAML-like format
 func PrintRoleAssignment(x map[string]interface{}, z Bundle) {
-	// Print role definition object in YAML-like
 	if x == nil {
 		return
 	}
@@ -72,8 +69,8 @@ func PrintRoleAssignment(x map[string]interface{}, z Bundle) {
 	}
 }
 
+// Prints a human-readable report of all RBAC role assignments
 func PrintRoleAssignmentReport(z Bundle) {
-	// Print a human-readable report of all role assignments
 	roleNameMap := GetIdMapRoleDefs(z) // Get all role definition id:name pairs
 	subNameMap := GetIdMapSubs(z)      // Get all subscription id:name pairs
 	groupNameMap := GetIdMapGroups(z)  // Get all users id:name pairs
@@ -110,8 +107,8 @@ func PrintRoleAssignmentReport(z Bundle) {
 	}
 }
 
+// Creates an RBAC role assignment as defined by give x object
 func CreateAzRoleAssignment(x map[string]interface{}, z Bundle) {
-	// Create Azure role assignment as defined by give x object
 	if x == nil {
 		return
 	}
@@ -149,14 +146,14 @@ func CreateAzRoleAssignment(x map[string]interface{}, z Bundle) {
 		e := r["error"].(map[string]interface{})
 		fmt.Println(e["message"].(string))
 	}
-	return
 }
 
+// Deletes an RBAC role assignment by its fully qualified object Id
+// Example of a fully qualified Id string (note it's one long line):
+//
+//	/providers/Microsoft.Management/managementGroups/33550b0b-2929-4b4b-adad-cccc66664444 \
+//	  /providers/Microsoft.Authorization/roleAssignments/5d586a7b-3f4b-4b5c-844a-3fa8efe49ab3
 func DeleteAzRoleAssignmentByFqid(fqid string, z Bundle) map[string]interface{} {
-	// Delete Azure resource RBAC roleAssignments by fully qualified object Id
-	// Example of a fully qualified Id string:
-	//   "/providers/Microsoft.Management/managementGroups/33550b0b-2929-4b4b-adad-cccc66664444 +
-	//    /providers/Microsoft.Authorization/roleAssignments/5d586a7b-3f4b-4b5c-844a-3fa8efe49ab3"
 	params := map[string]string{"api-version": "2022-04-01"} // roleAssignments
 	url := ConstAzUrl + fqid
 	r, statusCode, _ := ApiDelete(url, z, params)
@@ -172,6 +169,7 @@ func DeleteAzRoleAssignmentByFqid(fqid string, z Bundle) map[string]interface{} 
 	return nil
 }
 
+// Retrieves count of all role assignment objects in local cache file
 func RoleAssignmentsCountLocal(z Bundle) int64 {
 	var cachedList []interface{} = nil
 	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_roleAssignments."+ConstCacheFileExtension)
@@ -185,14 +183,14 @@ func RoleAssignmentsCountLocal(z Bundle) int64 {
 	return 0
 }
 
+// Calculates count of all role assignment objects in Azure
 func RoleAssignmentsCountAzure(z Bundle) int64 {
 	list := GetAzRoleAssignments(z, false) // false = quiet
 	return int64(len(list))
 }
 
+// Gets all RBAC role assignments matching on 'filter'. Return entire list if filter is empty ""
 func GetMatchingRoleAssignments(filter string, force bool, z Bundle) (list []interface{}) {
-	// Get all RBAC role assignments matching on 'filter'; return entire list if filter is empty ""
-
 	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_roleAssignments."+ConstCacheFileExtension)
 	cacheFileAge := utl.FileAge(cacheFile)
 	if utl.InternetIsAvailable() && (force || cacheFileAge == 0 || cacheFileAge > ConstAzCacheFileAgePeriod) {
@@ -223,13 +221,13 @@ func GetMatchingRoleAssignments(filter string, force bool, z Bundle) (list []int
 	return matchingList
 }
 
+// Gets all role assignments objects in current Azure tenant and save them to local cache file.
+// Option to be verbose (true) or quiet (false), since it can take a while.
+// References:
+//
+//	https://learn.microsoft.com/en-us/azure/role-based-access-control/role-assignments-list-rest
+//	https://learn.microsoft.com/en-us/rest/api/authorization/role-assignments/list-for-subscription
 func GetAzRoleAssignments(z Bundle, verbose bool) (list []interface{}) {
-	// Get all roleAssignments in current Azure tenant and save them to local cache file
-	// Option to be verbose (true) or quiet (false), since it can take a while.
-	// References:
-	//   https://learn.microsoft.com/en-us/azure/role-based-access-control/role-assignments-list-rest
-	//   https://learn.microsoft.com/en-us/rest/api/authorization/role-assignments/list-for-subscription
-
 	list = nil             // We have to zero it out
 	var uniqueIds []string // Keep track of assignment objects
 	k := 1                 // Track number of API calls to provide progress
@@ -275,10 +273,9 @@ func GetAzRoleAssignments(z Bundle, verbose bool) (list []interface{}) {
 	return list
 }
 
+// Gets Azure resource RBAC role assignment object by matching given objects: roleId, principalId,
+// and scope (the 3 parameters which make a role assignment unique)
 func GetAzRoleAssignmentByObject(x map[string]interface{}, z Bundle) (y map[string]interface{}) {
-	// Get Azure resource RBAC role assignment object by matching given objects: roleId, principalId,
-	// and scope (the 3 parameters which make a role assignment unique)
-
 	// First, make sure x is a searchable role assignment object
 	if x == nil {
 		return nil
@@ -322,9 +319,9 @@ func GetAzRoleAssignmentByObject(x map[string]interface{}, z Bundle) (y map[stri
 	return nil // If we get here, we didn't fine it, so return nil
 }
 
+// Gets RBAC role assignment by its Object UUID. Unfortunately we have to iterate
+// through the entire tenant scope hierarchy, which can take time.
 func GetAzRoleAssignmentByUuid(uuid string, z Bundle) map[string]interface{} {
-	// Get Azure resource roleAssignment by Object UUID. Unfortunately we have to iterate
-	// through the entire tenant scope hierarchy, which can take time.
 	scopes := GetAzRbacScopes(z)
 	params := map[string]string{"api-version": "2022-04-01"} // roleAssignments
 	for _, scope := range scopes {

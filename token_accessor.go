@@ -1,11 +1,10 @@
-// token_accessor.go
-
-// The https://github.com/AzureAD/microsoft-authentication-library-for-go/blob/v1.2.0/apps/cache/cache.go just defines the
-// types, and expect you to craft a cache accessor implementation of your own. You can base yours on below examples:
-// https://github.com/AzureAD/microsoft-authentication-library-for-go/blob/v1.2.0/apps/tests/integration/cache_accessor.go
-// https://github.com/AzureAD/microsoft-authentication-library-for-go/blob/v1.2.0/apps/tests/devapps/sample_cache_accessor.go
-
-// This is Microsoft's above apps/tests/integration/cache_accessor.go file, verbatim, but in this package
+// The MSAL Go library defines the types of cache file, and expect you to roll your own
+// implementation. See below:
+//   https://github.com/AzureAD/microsoft-authentication-library-for-go/blob/v1.2.2/apps/cache/cache.go
+// One can base one's own cache accessor on below examples:
+//   https://github.com/AzureAD/microsoft-authentication-library-for-go/blob/v1.2.2/apps/tests/integration/cache_accessor.go
+//   https://github.com/AzureAD/microsoft-authentication-library-for-go/blob/v1.2.2/apps/tests/devapps/sample_cache_accessor.go
+// This file is just a verbatim copy of above 'cache_accessor.go'.
 
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.

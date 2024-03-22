@@ -1,5 +1,3 @@
-// skeleton.go
-
 package maz
 
 import (
@@ -7,11 +5,11 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/git719/utl"
+	"github.com/queone/utl"
 )
 
+// Creates specfile skeleton/scaffold files
 func CreateSkeletonFile(t string) {
-	// Create specfile skeleton files
 	pwd, err := os.Getwd()
 	if err != nil {
 		utl.Die(utl.Trace() + "Error: Getting CWD\n")

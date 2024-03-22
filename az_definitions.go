@@ -1,6 +1,3 @@
-// az_definitions.go
-// Azure resource RBAC role definitions
-
 package maz
 
 import (
@@ -8,12 +5,12 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/git719/utl"
 	"github.com/google/uuid"
+	"github.com/queone/utl"
 )
 
+// Prints role definition object in a YAML-like format
 func PrintRoleDefinition(x map[string]interface{}, z Bundle) {
-	// Print role definition object in YAML-like format
 	if x == nil {
 		return
 	}
@@ -122,8 +119,8 @@ func PrintRoleDefinition(x map[string]interface{}, z Bundle) {
 	}
 }
 
+// Creates or updates an RBAC role definition as defined by give x object
 func UpsertAzRoleDefinition(force bool, x map[string]interface{}, z Bundle) {
-	// Create or Update Azure role definition as defined by give x object
 	if x == nil {
 		return
 	}
@@ -183,13 +180,13 @@ func UpsertAzRoleDefinition(force bool, x map[string]interface{}, z Bundle) {
 		e := r["error"].(map[string]interface{})
 		fmt.Println(e["message"].(string))
 	}
-	return
 }
 
+// Deletes an RBAC role definition object by its fully qualified object Id
+// Example of a fully qualified Id string:
+//
+//	"/providers/Microsoft.Authorization/roleDefinitions/50a6ff7c-3ac5-4acc-b4f4-9a43aee0c80f"
 func DeleteAzRoleDefinitionByFqid(fqid string, z Bundle) map[string]interface{} {
-	// Delete Azure resource RBAC roleDefinition by fully qualified object Id
-	// Example of a fully qualified Id string:
-	//   "/providers/Microsoft.Authorization/roleDefinitions/50a6ff7c-3ac5-4acc-b4f4-9a43aee0c80f"
 	params := map[string]string{"api-version": "2022-04-01"} // roleDefinitions
 	url := ConstAzUrl + fqid
 	r, statusCode, _ := ApiDelete(url, z, params)
@@ -205,8 +202,8 @@ func DeleteAzRoleDefinitionByFqid(fqid string, z Bundle) map[string]interface{} 
 	return nil
 }
 
+// Returns id:name map of all RBAC role definitions
 func GetIdMapRoleDefs(z Bundle) (nameMap map[string]string) {
-	// Return role definition id:name map
 	nameMap = make(map[string]string)
 	roleDefs := GetMatchingRoleDefinitions("", false, z) // false = don't force going to Azure
 	// By not forcing an Azure call we're opting for cache speed over id:name map accuracy
@@ -222,8 +219,8 @@ func GetIdMapRoleDefs(z Bundle) (nameMap map[string]string) {
 	return nameMap
 }
 
+// Dedicated role definition local cache counter able to discern if role is custom to native tenant or it's an Azure BuilIn role
 func RoleDefinitionCountLocal(z Bundle) (builtin, custom int64) {
-	// Dedicated role definition local cache counter able to discern if role is custom to native tenant or it's an Azure BuilIn role
 	var customList []interface{} = nil
 	var builtinList []interface{} = nil
 	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_roleDefinitions."+ConstCacheFileExtension)
@@ -246,8 +243,8 @@ func RoleDefinitionCountLocal(z Bundle) (builtin, custom int64) {
 	return 0, 0
 }
 
+// Counts all role definition in Azure. Returns 2 lists: one of native custom roles, the other of built-in role
 func RoleDefinitionCountAzure(z Bundle) (builtin, custom int64) {
-	// Dedicated role definition Azure counter able to discern if role is custom to native tenant or it's an Azure BuilIn role
 	var customList []interface{} = nil
 	var builtinList []interface{} = nil
 	definitions := GetAzRoleDefinitions(z, false) // false = be silent
@@ -263,9 +260,8 @@ func RoleDefinitionCountAzure(z Bundle) (builtin, custom int64) {
 	return int64(len(builtinList)), int64(len(customList))
 }
 
+// Gets all role definitions matching on 'filter'. Returns entire list if filter is empty ""
 func GetMatchingRoleDefinitions(filter string, force bool, z Bundle) (list []interface{}) {
-	// Get all RBAC role definitions matching on 'filter'; return entire list if filter is empty ""
-
 	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_roleDefinitions."+ConstCacheFileExtension)
 	cacheFileAge := utl.FileAge(cacheFile)
 	if utl.InternetIsAvailable() && (force || cacheFileAge == 0 || cacheFileAge > ConstAzCacheFileAgePeriod) {
@@ -292,13 +288,13 @@ func GetMatchingRoleDefinitions(filter string, force bool, z Bundle) (list []int
 	return matchingList
 }
 
+// Gets all role definitions in current Azure tenant and save them to local cache file
+// Option to be verbose (true) or quiet (false), since it can take a while.
+// References:
+//
+//	https://learn.microsoft.com/en-us/azure/role-based-access-control/role-definitions-list
+//	https://learn.microsoft.com/en-us/rest/api/authorization/role-definitions/list
 func GetAzRoleDefinitions(z Bundle, verbose bool) (list []interface{}) {
-	// Get all roleDefinitions in current Azure tenant and save them to local cache file
-	// Option to be verbose (true) or quiet (false), since it can take a while.
-	// References:
-	//   https://learn.microsoft.com/en-us/azure/role-based-access-control/role-definitions-list
-	//   https://learn.microsoft.com/en-us/rest/api/authorization/role-definitions/list
-
 	list = nil             // We have to zero it out
 	var uniqueIds []string // Keep track of assignment objects
 	k := 1                 // Track number of API calls to provide progress
@@ -344,9 +340,9 @@ func GetAzRoleDefinitions(z Bundle, verbose bool) (list []interface{}) {
 	return list
 }
 
+// Gets role definition by displayName
+// See https://learn.microsoft.com/en-us/rest/api/authorization/role-definitions/list
 func GetAzRoleDefinitionByName(roleName string, z Bundle) (y map[string]interface{}) {
-	// Get Azure resource roleDefinition by displayName
-	// See https://learn.microsoft.com/en-us/rest/api/authorization/role-definitions/list
 	y = nil
 	scopes := GetAzRbacScopes(z) // Get all scopes
 	params := map[string]string{
@@ -369,10 +365,9 @@ func GetAzRoleDefinitionByName(roleName string, z Bundle) (y map[string]interfac
 	return nil
 }
 
+// Gets role definition object if it exists exactly as x object (as per essential attributes).
+// Matches on: displayName and assignableScopes
 func GetAzRoleDefinitionByObject(x map[string]interface{}, z Bundle) (y map[string]interface{}) {
-	// Get Azure resource RBAC role definition object if it exists exactly as x object.
-	// Looks for matching: displayName and assignableScopes
-
 	// First, make sure x is a searchable role definition object
 	if x == nil { // Don't look for empty objects
 		return nil
@@ -418,9 +413,9 @@ func GetAzRoleDefinitionByObject(x map[string]interface{}, z Bundle) (y map[stri
 	return nil
 }
 
+// Gets role definition by Object Id. Unfortunately we have to iterate
+// through the entire tenant scope hierarchy, which can take time.
 func GetAzRoleDefinitionByUuid(uuid string, z Bundle) map[string]interface{} {
-	// Get Azure resource roleDefinitions by Object Id. Unfortunately we have to iterate
-	// through the entire tenant scope hierarchy, which can take time.
 	scopes := GetAzRbacScopes(z)
 	params := map[string]string{"api-version": "2022-04-01"} // roleDefinitions
 	for _, scope := range scopes {

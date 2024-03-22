@@ -1,12 +1,12 @@
 module github.com/git719/maz
 
-go 1.21.3
+go 1.22
 
 require (
-	github.com/AzureAD/microsoft-authentication-library-for-go v1.2.0
-	github.com/git719/utl v1.3.2
+	github.com/AzureAD/microsoft-authentication-library-for-go v1.2.2
 	github.com/golang-jwt/jwt/v5 v5.0.0
 	github.com/google/uuid v1.3.1
+	github.com/queone/utl v1.0.0
 )
 
 require (

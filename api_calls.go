@@ -1,60 +1,67 @@
-// api_calls.go
-
 package maz
 
 import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/git719/utl"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/queone/utl"
 )
 
 type jsonT map[string]interface{} // Local syntactic sugar, for easier reading
 type strMapT map[string]string
 
+// ApiCall alias to do a GET
 func ApiGet(url string, z Bundle, params strMapT) (result jsonT, rsc int, err error) {
 	return ApiCall("GET", url, z, nil, params, false) // false = quiet, for normal ops
 }
 
+// ApiCall alias to do a GET with debugging on
 func ApiGetDebug(url string, z Bundle, params strMapT) (result jsonT, rsc int, err error) {
 	return ApiCall("GET", url, z, nil, params, true) // true = verbose, for debugging
 }
 
+// ApiCall alias to do a POST
 func ApiPost(url string, z Bundle, payload jsonT, params strMapT) (result jsonT, rsc int, err error) {
 	return ApiCall("POST", url, z, payload, params, false) // false = quiet, for normal ops
 }
 
+// ApiCall alias to do a POST with debugging on
 func ApiPostDebug(url string, z Bundle, payload jsonT, params strMapT) (result jsonT, rsc int, err error) {
 	return ApiCall("POST", url, z, payload, params, true) // true = verbose, for debugging
 }
 
+// ApiCall alias to do a PUT
 func ApiPut(url string, z Bundle, payload jsonT, params strMapT) (result jsonT, rsc int, err error) {
 	return ApiCall("PUT", url, z, payload, params, false) // false = quiet, for normal ops
 }
 
+// ApiCall alias to do a PUT with debugging on
 func ApiPutDebug(url string, z Bundle, payload jsonT, params strMapT) (result jsonT, rsc int, err error) {
 	return ApiCall("PUT", url, z, payload, params, true) // true = verbose, for debugging
 }
 
+// ApiCall alias to do a DELETE
 func ApiDelete(url string, z Bundle, params strMapT) (result jsonT, rsc int, err error) {
 	return ApiCall("DELETE", url, z, nil, params, false) // false = quiet, for normal ops
 }
 
+// ApiCall alias to do a DELETE with debugging on
 func ApiDeleteDebug(url string, z Bundle, params strMapT) (result jsonT, rsc int, err error) {
 	return ApiCall("DELETE", url, z, nil, params, true) // true = verbose, for debugging
 }
 
+// Makes API calls and returns JSON object, Response StatusCode, and error. For a more clear
+// explanation of how to interpret the JSON responses see https://eager.io/blog/go-and-json/
+// This function is the cornerstone of the maz package, extensively handling all API interactions.
 func ApiCall(method, url string, z Bundle, payload jsonT, params strMapT, verbose bool) (result jsonT, rsc int, err error) {
-	// Make API call and return JSON object, Response StatusCode, and error. See https://eager.io/blog/go-and-json/
-	// for a clear explanation of how to interpret JSON responses with GoLang
-
 	if !strings.HasPrefix(url, "http") {
 		utl.Die(utl.Trace() + "Error: Bad URL, " + url + "\n")
 	}
@@ -78,13 +85,13 @@ func ApiCall(method, url string, z Bundle, payload jsonT, params strMapT, verbos
 		if err != nil {
 			panic(err.Error())
 		}
-		req, err = http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
+		req, _ = http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
 	case "PUT":
 		jsonData, err := json.Marshal(payload)
 		if err != nil {
 			panic(err.Error())
 		}
-		req, err = http.NewRequest("PUT", url, bytes.NewBuffer(jsonData))
+		req, _ = http.NewRequest("PUT", url, bytes.NewBuffer(jsonData))
 	case "DELETE":
 		req, err = http.NewRequest("DELETE", url, nil)
 	default:
@@ -122,7 +129,7 @@ func ApiCall(method, url string, z Bundle, payload jsonT, params strMapT, verbos
 		panic(err.Error())
 	}
 	defer r.Body.Close()
-	body, err := ioutil.ReadAll(r.Body) // Read the response body
+	body, err := io.ReadAll(r.Body) // Read the response body
 	if err != nil {
 		panic(err.Error())
 	}
@@ -161,17 +168,17 @@ func ApiCall(method, url string, z Bundle, payload jsonT, params strMapT, verbos
 	return jsonResult, r.StatusCode, err
 }
 
+// Prints useful error information if they occur
 func ApiErrorCheck(method, url, caller string, r jsonT) {
-	// Print useful error information
 	if r["error"] != nil {
 		e := r["error"].(map[string]interface{})
 		errMsg := method + " " + url + "\n" + caller + "Error: " + e["message"].(string) + "\n"
-		fmt.Printf(utl.Red(errMsg))
+		fmt.Println(utl.Red(errMsg))
 	}
 }
 
+// Prints API error messages in 2 parts separated by a newline: A header, then a JSON byte slice
 func PrintApiErrMsg(msg string) {
-	// API error messages have 2 parts separated by a newline: A header, then a JSON byte slice
 	parts := strings.Split(msg, "\n")
 	fmt.Println(utl.Red(parts[0])) // Print error header
 	errorBytes := []byte(parts[1])
@@ -181,8 +188,8 @@ func PrintApiErrMsg(msg string) {
 	// utl.PrintYamlBytesColor(errorMsg) // Print error
 }
 
+// Prints HTTP headers specific to API calls. Simplifies ApiCall function.
 func PrintHeaders(headers http.Header) {
-	// HTTP headers printing fuction specific to API calls. Simplifies ApiCall function
 	if headers == nil {
 		return
 	}
@@ -201,8 +208,8 @@ func PrintHeaders(headers http.Header) {
 	}
 }
 
+// Prints HTTP parameters specific to API calls. Simplifies ApiCall function.
 func PrintParams(params url.Values) {
-	// HTTP parameters printing fuction specific to API calls. Simplifies ApiCall function
 	if params == nil {
 		return
 	}

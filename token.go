@@ -1,5 +1,3 @@
-// token.go
-
 package maz
 
 import (
@@ -12,14 +10,14 @@ import (
 
 	"github.com/AzureAD/microsoft-authentication-library-for-go/apps/confidential"
 	"github.com/AzureAD/microsoft-authentication-library-for-go/apps/public"
-	"github.com/git719/utl"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/queone/utl"
 )
 
+// Initiates an Azure JWT token acquisition with provided parameters, using a Username and a browser
+// pop up window. This is the 'Public' app auth flow and is documented at:
+// https://github.com/AzureAD/microsoft-authentication-library-for-go/blob/dev/apps/public/public.go
 func GetTokenInteractively(scopes []string, confDir, tokenFile, authorityUrl, username string) (token string, err error) {
-	// Interactive login with 'public' app
-	// See https://github.com/AzureAD/microsoft-authentication-library-for-go/blob/dev/apps/public/public.go
-
 	// Set up token cache storage file and accessor
 	cacheFilePath := filepath.Join(confDir, tokenFile)
 	cacheAccessor := &TokenCache{cacheFilePath}
@@ -66,10 +64,10 @@ func GetTokenInteractively(scopes []string, confDir, tokenFile, authorityUrl, us
 	return result.AccessToken, nil // Return only the AccessToken, which is of type string
 }
 
+// Initiates an Azure JWT token acquisition with provided parameters, using a Client ID plus a
+// Client Secret. This is the 'Confidential' app auth flow and is documented at:
+// https://github.com/AzureAD/microsoft-authentication-library-for-go/blob/dev/apps/confidential/confidential.go
 func GetTokenByCredentials(scopes []string, confDir, tokenFile, authorityUrl, clientId, clientSecret string) (token string, err error) {
-	// ClientId+Secret automated login with 'confidential' app
-	// See https://github.com/AzureAD/microsoft-authentication-library-for-go/blob/dev/apps/confidential/confidential.go
-
 	// Set up token cache storage file and accessor
 	cacheFilePath := filepath.Join(confDir, tokenFile)
 	cacheAccessor := &TokenCache{cacheFilePath}
@@ -103,16 +101,16 @@ func GetTokenByCredentials(scopes []string, confDir, tokenFile, authorityUrl, cl
 	return result.AccessToken, nil // Return only the AccessToken, which is of type string
 }
 
+// Does a very basic validation of the JWT token as defined in https://tools.ietf.org/html/rfc7519
 func TokenValid(tokenString string) bool {
-	// Validate as per https://tools.ietf.org/html/rfc7519
 	if tokenString == "" || (!strings.HasPrefix(tokenString, "eyJ") && !strings.Contains(tokenString, ".")) {
 		return false
 	}
 	return true
 }
 
+// Decode and dump token string, trusting without formaly verification and validation
 func DecodeJwtToken(tokenString string) {
-	// Decode and dump token string, trusting, without verifying/validating
 
 	// A JSON Web Token (JWT) consists of three parts which are separated using .(dot):
 	// Header: It indicates the token’s type and which signing algorithm has been used.
@@ -134,16 +132,16 @@ func DecodeJwtToken(tokenString string) {
 
 	// Parse the token without verifying the signature
 	claims := jwt.MapClaims{} // claims are actually a map[string]interface{}
-	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+	token, _ := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
 		return []byte("<YOUR VERIFICATION KEY>"), nil
 	})
 	// // Below no yet needed, since this is only printing claims in an unverified way
 	// if err != nil {
 	// 	fmt.Println(utl.Red("Token is invalid: " + err.Error()))
 	// }
-	if token == nil {
-		fmt.Println(utl.Red("Error parsing token: " + err.Error()))
-	}
+	// if token == nil {
+	// 	fmt.Println(utl.Red("Error parsing token: " + err.Error()))
+	// }
 
 	fmt.Println(utl.Blu("header") + ":")
 

@@ -1,15 +1,13 @@
 # maz
-This is a Go library package module for managing Microsoft Azure resource and security objects. Please review <https://que.tips/azure/> to better understand what we mean here by resource and security objects. Essentially this is a small library that provides basic MSAL authentication and token creation to allow principals to call the Azure Resource and Security (MS Graph) APIs. Other APIs could be added in the future.
-
-Please note that at lot of this code is still under constant changes.
+This is a Go library package module for managing Microsoft Azure resource and security objects. Please review <https://que.tips/azure/> to better understand what is meant here by *resource* and *security* objects. Essentially this is a library that provides basic MSAL authentication and token creation to allow principals to call the two primary Azure APIs, the Azure Resource Managment (ARM) API and the MS Graph API. Other APIs could be added in the future.
 
 ## Getting Started
-1. Any program or utility wanting to use this library module can simply import it, then instantiate a variable
+1. Any program wanting to use this library module can simply import it, then instantiate a variable
 of type `maz.Bundle` to manage the interaction. For example: 
 
 ```go
 import (
-    "github.com/git719/maz"
+    "github.com/queone/maz"
 )
 z := maz.Bundle{
     ConfDir:      "",                   // Set up later, see example below
@@ -52,7 +50,7 @@ three (3) special attributes:
 |4|Automated|Environment variables|Set up attributes via environment variables (**OVERIDES config file**)|
 
 1. *Interactive via config file*: The calling utility sets up a way to allow setting up the `~/.maz/credentials.yaml` file with
-   the 3 special attributes. For example, the [azm CLI utility](https://github.com/git719/azm) does this via the `-id`
+   the 3 special attributes. For example, the [azm CLI utility](https://github.com/queone/azm) does this via the `-id`
    switch, to _Set up MSAL interactive browser popup login_:
    ```
    azm -id 3f050090-20b0-40a0-a060-c05060104010 user1@domain.io
@@ -73,7 +71,7 @@ three (3) special attributes:
    ```
    Above values take **precedence** and **OVERIDE** any existing config `~/.maz/credentials.yaml` file values. 
 3. *Automated via config file*: The calling utility sets up a way to allow setting up the `~/.maz/credentials.yaml` file with
-   the 3 special attributes. For example, the [azm CLI utility](https://github.com/git719/azm) does this via the `-id`
+   the 3 special attributes. For example, the [azm CLI utility](https://github.com/queone/azm) does this via the `-id`
    switch, to _Set up MSAL automated ClientId + Secret login_:
    ```
    azm -id 3f050090-20b0-40a0-a060-c05060104010 f1110121-7111-4171-a181-e1614131e181 ACB8c~HdLejfQGiHeI9LUKgNOODPQRISNTmVLX_i
@@ -94,15 +92,11 @@ three (3) special attributes:
    ```
    Above values take **precedence** and **OVERIDE** any existing config `~/.maz/credentials.yaml` file values. 
 
-The benefit of using environment variables is of course to be able to override an existing `credentials.yaml` file, and
-specify different credentials, as well as being able to do this from different shell sessions _on the same host_. They also
-allow utilities written with this library to be more used in continuous delivery and other types of automation.
+The benefit of using environment variables is to be able to override an existing `credentials.yaml` file, and to specify different credentials, as well as being able to use different credentials from different shell sessions _on the same host_. They also allow utilities written with this library to be used in continuous delivery and other types of automation.
 
-*NOTE*: If all four `MAZ_USERNAME`, `MAZ_INTERACTIVE`, `MAZ_CLIENT_ID`, and `MAZ_CLIENT_SECRET` are properly define, then
-_precedence_ is given to the Username Interactive login. To force a ClientID ClientSecret login via environment variables,
-you must ensure the first two are `unset` in the current shell.
+*NOTE*: If all four `MAZ_USERNAME`, `MAZ_INTERACTIVE`, `MAZ_CLIENT_ID`, and `MAZ_CLIENT_SECRET` are properly define, then _precedence_ is given to the Username Interactive login. To force a ClientID ClientSecret login via environment variables, you must ensure the first two are `unset` in the current shell.
 
 ## Functions
-TODO: List of all available functions.
+TODO: List of all available functions?
 - **maz.SetupInterativeLogin**: This functions allows you to set up the`~/.maz/credentials.yaml` file for interactive Azure login.
 - ...

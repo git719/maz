@@ -1,5 +1,3 @@
-// helper.go
-
 package maz
 
 import (
@@ -7,11 +5,11 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/git719/utl"
+	"github.com/queone/utl"
 )
 
+// Creates or updates a role definition or assignment based on given specfile
 func UpsertAzObject(force bool, filePath string, z Bundle) {
-	// Create or Update role definition or assignment based on given specfile
 	if utl.FileNotExist(filePath) || utl.FileSize(filePath) < 1 {
 		utl.Die("File does not exist, or it is zero size\n")
 	}
@@ -31,11 +29,11 @@ func UpsertAzObject(force bool, filePath string, z Bundle) {
 	os.Exit(0)
 }
 
+// Deletes object based on string specifier (currently only supports roleDefinitions or Assignments)
+// String specifier can be either of 3: UUID, specfile, or displaName (only for roleDefinition)
+// 1) Search Azure by given identifier; 2) Grab object's Fully Qualified Id string;
+// 3) Print and prompt for confirmation; 4) Delete or abort
 func DeleteAzObject(force bool, specifier string, z Bundle) {
-	// Delete object based on string specifier (currently only supports roleDefinitions or Assignments)
-	// String specifier can be either of 3: UUID, specfile, or displaName (only for roleDefinition)
-	// 1) Search Azure by given identifier; 2) Grab object's Fully Qualified Id string;
-	// 3) Print and prompt for confirmation; 4) Delete or abort
 	if utl.ValidUuid(specifier) {
 		list := FindAzObjectsByUuid(specifier, z) // Get all objects that may match this UUID, hopefully just one
 		if len(list) > 1 {
@@ -118,11 +116,11 @@ func DeleteAzObject(force bool, specifier string, z Bundle) {
 	}
 }
 
+// Returns list of Azure objects with this UUID. We are saying a list because 1)
+// the UUID could be an appId shared by an app and an SP, or 2) there could be
+// UUID collisions with multiple objects potentially sharing the same UUID. Only
+// checks for the maz package limited set of Azure object types.
 func FindAzObjectsByUuid(uuid string, z Bundle) (list []interface{}) {
-	// Returns list of Azure objects with this UUID. We are saying a list because 1)
-	// the UUID could be an appId shared by an app and an SP, or 2) there could be
-	// UUID collisions with multiple objects potentially sharing the same UUID. Only
-	// checks for the maz limited set of Azure object types.
 	list = nil
 	for _, t := range mazTypes {
 		x := GetAzObjectByUuid(t, uuid, z)
@@ -135,8 +133,8 @@ func FindAzObjectsByUuid(uuid string, z Bundle) (list []interface{}) {
 	return list
 }
 
+// Retrieves Azure object by Object UUID
 func GetAzObjectByUuid(t, uuid string, z Bundle) (x map[string]interface{}) {
-	// Retrieve Azure object by Object UUID
 	switch t {
 	case "d":
 		return GetAzRoleDefinitionByUuid(uuid, z)
@@ -158,9 +156,9 @@ func GetAzObjectByUuid(t, uuid string, z Bundle) (x map[string]interface{}) {
 	return nil
 }
 
+// Gets all scopes in the Azure tenant RBAC hierarchy: Tenant Root Group and all
+// management groups, plus all subscription scopes
 func GetAzRbacScopes(z Bundle) (scopes []string) {
-	// Get all scopes in the Azure tenant RBAC hierarchy: Tenant Root Group and all
-	// management groups, plus all subscription scopes
 	scopes = nil
 	managementGroups := GetAzMgGroups(z) // Start by adding all the managementGroups scopes
 	for _, i := range managementGroups {
@@ -193,8 +191,8 @@ func GetAzRbacScopes(z Bundle) (scopes []string) {
 	return scopes
 }
 
+// Retrieves locally cached list of objects in given cache file
 func GetCachedObjects(cacheFile string) (cachedList []interface{}) {
-	// Return locally cached list of objects
 	cachedList = nil
 	if utl.FileUsable(cacheFile) {
 		rawList, _ := utl.LoadFileJsonGzip(cacheFile)
@@ -205,9 +203,9 @@ func GetCachedObjects(cacheFile string) (cachedList []interface{}) {
 	return cachedList
 }
 
+// Generic function to get objects of type t whose attributes match on filter.
+// If filter is the "" empty string return ALL of the objects of this type.
 func GetObjects(t, filter string, force bool, z Bundle) (list []interface{}) {
-	// Generic function to get objects of type t whose attributes match on filter.
-	// If filter is the "" empty string return ALL of the objects of this type.
 	switch t {
 	case "d":
 		return GetMatchingRoleDefinitions(filter, force, z)
@@ -231,8 +229,8 @@ func GetObjects(t, filter string, force bool, z Bundle) (list []interface{}) {
 	return nil
 }
 
+// Returns all Azure pages for given API URL call
 func GetAzAllPages(url string, z Bundle) (list []interface{}) {
-	// Return all Azure pages for given API URL call
 	list = nil
 	r, _, _ := ApiGet(url, z, nil)
 	for {
@@ -253,10 +251,10 @@ func GetAzAllPages(url string, z Bundle) (list []interface{}) {
 	return list
 }
 
+// Generic Azure object deltaSet retriever function. Returns the set of changed or new items,
+// and a deltaLink for running the next future Azure query. Implements the pattern described at
+// https://docs.microsoft.com/en-us/graph/delta-query-overview
 func GetAzObjects(url string, z Bundle, verbose bool) (deltaSet []interface{}, deltaLinkMap map[string]interface{}) {
-	// Generic Azure object deltaSet retriever function. Returns the set of changed or new items,
-	// and a deltaLink for running the next future Azure query. Implements the pattern described at
-	// https://docs.microsoft.com/en-us/graph/delta-query-overview
 	k := 1 // Track number of API calls
 	r, _, _ := ApiGet(url, z, nil)
 	ApiErrorCheck("GET", url, utl.Trace(), r)
@@ -288,6 +286,7 @@ func GetAzObjects(url string, z Bundle, verbose bool) (deltaSet []interface{}, d
 	}
 }
 
+// Removes specified cache file
 func RemoveCacheFile(t string, z Bundle) {
 	switch t {
 	case "id":
@@ -329,9 +328,8 @@ func RemoveCacheFile(t string, z Bundle) {
 	}
 }
 
+// Returns 3 values: File format type, single-letter object type, and the object itself
 func GetObjectFromFile(filePath string) (formatType, t string, obj map[string]interface{}) {
-	// Returns 3 values: File format type, single-letter object type, and the object itself
-
 	// Because JSON is essentially a subset of YAML, we have to check JSON first
 	// As an interesting aside regarding YAML & JSON, see https://news.ycombinator.com/item?id=31406473
 	formatType = "JSON"                         // Pretend it's JSON
@@ -362,6 +360,7 @@ func GetObjectFromFile(filePath string) (formatType, t string, obj map[string]in
 	}
 }
 
+// Compares specification file to what is in Azure
 func CompareSpecfileToAzure(filePath string, z Bundle) {
 	if utl.FileNotExist(filePath) || utl.FileSize(filePath) < 1 {
 		utl.Die("File does not exist, or is zero size\n")

@@ -1,16 +1,14 @@
-// az_subscriptions.go
-// Azure resource Subscriptions
-
 package maz
 
 import (
 	"fmt"
-	"github.com/git719/utl"
 	"path/filepath"
+
+	"github.com/queone/utl"
 )
 
+// Prints subscription object in YAML-like format
 func PrintSubscription(x map[string]interface{}) {
-	// Print subscription object in YAML-like
 	if x == nil {
 		return
 	}
@@ -23,6 +21,7 @@ func PrintSubscription(x map[string]interface{}) {
 	}
 }
 
+// Returns count of all subscriptions in local cache file
 func SubsCountLocal(z Bundle) int64 {
 	var cachedList []interface{} = nil
 	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_subscriptions."+ConstCacheFileExtension)
@@ -36,14 +35,15 @@ func SubsCountLocal(z Bundle) int64 {
 	return 0
 }
 
+// Returns count of all subscriptions in current Azure tenant
 func SubsCountAzure(z Bundle) int64 {
 	list := GetAzSubscriptions(z)
 	return int64(len(list))
 }
 
+// Gets all subscription full IDs, i.e. "/subscriptions/UUID", which are commonly
+// used as scopes for Azure resource RBAC role definitions and assignments
 func GetAzSubscriptionsIds(z Bundle) (scopes []string) {
-	// Get all subscription full IDs, i.e. "/subscriptions/UUID", which are commonly
-	// used as scopes for Azure resource RBAC role definitions and assignments
 	scopes = nil
 	subscriptions := GetAzSubscriptions(z)
 	for _, i := range subscriptions {
@@ -60,8 +60,8 @@ func GetAzSubscriptionsIds(z Bundle) (scopes []string) {
 	return scopes
 }
 
+// Returns id:name map of all subscriptions
 func GetIdMapSubs(z Bundle) (nameMap map[string]string) {
-	// Return subscription id:name map
 	nameMap = make(map[string]string)
 	roleDefs := GetMatchingSubscriptions("", false, z) // false = don't force a call to Azure
 	// By not forcing an Azure call we're opting for cache speed over id:name map accuracy
@@ -74,9 +74,8 @@ func GetIdMapSubs(z Bundle) (nameMap map[string]string) {
 	return nameMap
 }
 
+// Gets all Azure subscriptions matching on 'filter'. Returns entire list if filter is empty ""
 func GetMatchingSubscriptions(filter string, force bool, z Bundle) (list []interface{}) {
-	// Get all Azure subscriptions matching on 'filter'; return entire list if filter is empty ""
-
 	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_subscriptions."+ConstCacheFileExtension)
 	cacheFileAge := utl.FileAge(cacheFile)
 	if utl.InternetIsAvailable() && (force || cacheFileAge == 0 || cacheFileAge > ConstAzCacheFileAgePeriod) {
@@ -103,8 +102,8 @@ func GetMatchingSubscriptions(filter string, force bool, z Bundle) (list []inter
 	return matchingList
 }
 
+// Gets all subscription in current Azure tenant, and saves them to local cache file
 func GetAzSubscriptions(z Bundle) (list []interface{}) {
-	// Get ALL subscription in current Azure tenant AND save them to local cache file
 	list = nil                                               // We have to zero it out
 	params := map[string]string{"api-version": "2022-09-01"} // subscriptions
 	url := ConstAzUrl + "/subscriptions"
@@ -119,8 +118,8 @@ func GetAzSubscriptions(z Bundle) (list []interface{}) {
 	return list
 }
 
+// Gets specific Azure subscription by Object UUID
 func GetAzSubscriptionByUuid(uuid string, z Bundle) map[string]interface{} {
-	// Get Azure subscription by Object UUID
 	params := map[string]string{"api-version": "2022-09-01"} // subscriptions
 	url := ConstAzUrl + "/subscriptions/" + uuid
 	r, _, _ := ApiGet(url, z, params)

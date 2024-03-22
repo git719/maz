@@ -1,18 +1,15 @@
-// az_definitionsdiff.go
-// Azure resource RBAC role definitions difference printer
-
 package maz
 
 import (
 	"fmt"
 
-	"github.com/git719/utl"
+	"github.com/queone/utl"
 )
 
+// Compares two list of strings and returns added and removed items, and whether or not the
+// lists are the same. Note they come in as []interface{} but we know they are strings.
+// This is a special function for handling Azure RBAC role definition action differences.
 func DiffLists(list1, list2 []interface{}) (added, removed []interface{}, same bool) {
-	// Compares two list of strings and returns added and removed items, and whether or not the
-	// lists are the same. Note they come in as []interface{} but we know they are strings.
-
 	// Create maps for quick lookup
 	set1 := make(map[string]bool)
 	for _, i := range list1 {
@@ -53,11 +50,10 @@ func DiffLists(list1, list2 []interface{}) (added, removed []interface{}, same b
 	return added, removed, same
 }
 
+// Prints differences between role definition in Specfile (a) vs what is in Azure (b). The
+// calling function must ensure that both a & b are valid role definition objects from a
+// specfile and from Azure. A generic DiffJsonObject() function would probably be better for this.
 func DiffRoleDefinitionSpecfileVsAzure(a, b map[string]interface{}, z Bundle) {
-	// Prints differences between role definition in Specfile (a) vs what is in Azure (b). The
-	// calling function must ensure that both a & b are valid role definition objects from the
-	// specfile and from Azure. A generic DiffJsonObject() function would probably be better for this.
-
 	// Gather the SPECFILE object values
 	fileProp := a["properties"].(map[string]interface{})
 	fileDesc := utl.Str(fileProp["description"])

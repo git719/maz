@@ -1,17 +1,14 @@
-// mg_users.go
-// MS Graph users
-
 package maz
 
 import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/git719/utl"
+	"github.com/queone/utl"
 )
 
+// Prints user object in YAML-like format
 func PrintUser(x map[string]interface{}, z Bundle) {
-	// Print user object in YAML-like format
 	if x == nil {
 		return
 	}
@@ -40,8 +37,8 @@ func PrintUser(x map[string]interface{}, z Bundle) {
 	}
 }
 
+// Returns the number of entries in local cache file
 func UsersCountLocal(z Bundle) int64 {
-	// Return number of entries in local cache file
 	var cachedList []interface{} = nil
 	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_users."+ConstCacheFileExtension)
 	if utl.FileUsable(cacheFile) {
@@ -54,8 +51,8 @@ func UsersCountLocal(z Bundle) int64 {
 	return 0
 }
 
+// Returns the number of entries in Azure tenant
 func UsersCountAzure(z Bundle) int64 {
-	// Return number of entries in Azure tenant
 	z.MgHeaders["ConsistencyLevel"] = "eventual"
 	url := ConstMgUrl + "/v1.0/users/$count"
 	r, _, _ := ApiGet(url, z, nil)
@@ -66,8 +63,8 @@ func UsersCountAzure(z Bundle) int64 {
 	return 0
 }
 
+// Returns an id:name map of all users
 func GetIdMapUsers(z Bundle) (nameMap map[string]string) {
-	// Return users id:name map
 	nameMap = make(map[string]string)
 	users := GetMatchingUsers("", false, z) // false = don't force a call to Azure
 	// By not forcing an Azure call we're opting for cache speed over id:name map accuracy
@@ -80,9 +77,8 @@ func GetIdMapUsers(z Bundle) (nameMap map[string]string) {
 	return nameMap
 }
 
+// Gets all users matching on 'filter'. Returns entire list if filter is empty ""
 func GetMatchingUsers(filter string, force bool, z Bundle) (list []interface{}) {
-	// Get all users matching on 'filter'; return entire list if filter is empty ""
-
 	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_users."+ConstCacheFileExtension)
 	cacheFileAge := utl.FileAge(cacheFile)
 	if utl.InternetIsAvailable() && (force || cacheFileAge == 0 || cacheFileAge > ConstMgCacheFileAgePeriod) {
@@ -112,9 +108,8 @@ func GetMatchingUsers(filter string, force bool, z Bundle) (list []interface{}) 
 	return matchingList
 }
 
+// Gets all users from Azure and sync to local cache. Show progress if verbose = true
 func GetAzUsers(z Bundle, verbose bool) (list []interface{}) {
-	// Get all users from Azure and sync to local cache; show progress if verbose = true
-
 	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_users."+ConstCacheFileExtension)
 	deltaLinkFile := filepath.Join(z.ConfDir, z.TenantId+"_users_deltaLink."+ConstCacheFileExtension)
 
@@ -151,8 +146,8 @@ func GetAzUsers(z Bundle, verbose bool) (list []interface{}) {
 	return list
 }
 
+// Gets Azure user object by Object UUID, with all attributes
 func GetAzUserByUuid(uuid string, z Bundle) map[string]interface{} {
-	// Get Azure user by Object UUID, with all attributes
 	baseUrl := ConstMgUrl + "/beta/users"
 	selection := "?$select=*"
 	url := baseUrl + "/" + uuid + selection

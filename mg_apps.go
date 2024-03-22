@@ -1,6 +1,3 @@
-// mg_apps.go
-// MS Graph applications
-
 package maz
 
 import (
@@ -8,11 +5,11 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/git719/utl"
+	"github.com/queone/utl"
 )
 
+// Prints application object in YAML-like format
 func PrintApp(x map[string]interface{}, z Bundle) {
-	// Print application object in YAML-like format
 	if x == nil {
 		return
 	}
@@ -121,7 +118,7 @@ func PrintApp(x map[string]interface{}, z Bundle) {
 					}
 				}
 			}
-			if roleMap == nil {
+			if len(roleMap) < 1 {
 				fmt.Printf("  %-50s %s\n", resAppId, "Error getting list of appRoles.")
 				continue
 			}
@@ -150,6 +147,7 @@ func PrintApp(x map[string]interface{}, z Bundle) {
 	}
 }
 
+// Creates/adds a secret to the given application
 func AddAppSecret(uuid, displayName, expiry string, z Bundle) {
 	if !utl.ValidUuid(uuid) {
 		utl.Die("Invalid App UUID.\n")
@@ -196,6 +194,7 @@ func AddAppSecret(uuid, displayName, expiry string, z Bundle) {
 	}
 }
 
+// Removes a secret from the given application
 func RemoveAppSecret(uuid, keyId string, z Bundle) {
 	if !utl.ValidUuid(uuid) {
 		utl.Die("App UUID is not a valid UUID.\n")
@@ -258,8 +257,8 @@ func RemoveAppSecret(uuid, keyId string, z Bundle) {
 	}
 }
 
+// Retrieves count of all applications in local cache file
 func AppsCountLocal(z Bundle) int64 {
-	// Return number of entries in local cache file
 	var cachedList []interface{} = nil
 	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_applications."+ConstCacheFileExtension)
 	if utl.FileUsable(cacheFile) {
@@ -272,8 +271,8 @@ func AppsCountLocal(z Bundle) int64 {
 	return 0
 }
 
+// Retrieves count of all applications in Azure tenant
 func AppsCountAzure(z Bundle) int64 {
-	// Return number of entries in Azure tenant
 	z.MgHeaders["ConsistencyLevel"] = "eventual"
 	//url := ConstMgUrl + "/v1.0/applications/$count"
 	url := ConstMgUrl + "/beta/applications/$count"
@@ -285,8 +284,8 @@ func AppsCountAzure(z Bundle) int64 {
 	return 0
 }
 
+// Returns an id:name map of all applications
 func GetIdMapApps(z Bundle) (nameMap map[string]string) {
-	// Return applications id:name map
 	nameMap = make(map[string]string)
 	apps := GetMatchingApps("", false, z) // false = don't force a call to Azure
 	// By not forcing an Azure call we're opting for cache speed over id:name map accuracy
@@ -299,9 +298,8 @@ func GetIdMapApps(z Bundle) (nameMap map[string]string) {
 	return nameMap
 }
 
+// Gets all applications matching on 'filter'. Return entire list if filter is empty ""
 func GetMatchingApps(filter string, force bool, z Bundle) (list []interface{}) {
-	// Get all applications matching on 'filter'; return entire list if filter is empty ""
-
 	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_applications."+ConstCacheFileExtension)
 	cacheFileAge := utl.FileAge(cacheFile)
 	if utl.InternetIsAvailable() && (force || cacheFileAge == 0 || cacheFileAge > ConstMgCacheFileAgePeriod) {
@@ -331,9 +329,8 @@ func GetMatchingApps(filter string, force bool, z Bundle) (list []interface{}) {
 	return matchingList
 }
 
+// Gets all applications from Azure and sync to local cache. Shows progress if verbose = true
 func GetAzApps(z Bundle, verbose bool) (list []interface{}) {
-	// Get all applications from Azure and sync to local cache; show progress if verbose = true
-
 	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_applications."+ConstCacheFileExtension)
 	deltaLinkFile := filepath.Join(z.ConfDir, z.TenantId+"_applications_deltaLink."+ConstCacheFileExtension)
 
@@ -370,8 +367,8 @@ func GetAzApps(z Bundle, verbose bool) (list []interface{}) {
 	return list
 }
 
+// Gets application by its Object UUID or by its appId, with all attributes
 func GetAzAppByUuid(uuid string, z Bundle) map[string]interface{} {
-	// Get Azure AD application by its Object UUID or by its appId, with all attributes
 	baseUrl := ConstMgUrl + "/beta/applications"
 	selection := "?$select=*"
 	url := baseUrl + "/" + uuid + selection // First search is for direct Object Id

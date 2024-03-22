@@ -1,13 +1,11 @@
-// objects.go
-
 package maz
 
 import (
-	"github.com/git719/utl"
+	"github.com/queone/utl"
 )
 
+// Selects JSON object with given ID from slice
 func SelectObject(id string, objSet []interface{}) (x map[string]interface{}) {
-	// Select JSON object with given ID from slice
 	for _, obj := range objSet {
 		x = obj.(map[string]interface{})
 		objId := utl.Str(x["id"])
@@ -18,8 +16,8 @@ func SelectObject(id string, objSet []interface{}) (x map[string]interface{}) {
 	return nil
 }
 
+// Builds JSON mergeSet from deltaSet, and builds and returns the list of deleted IDs
 func NormalizeCache(baseSet, deltaSet []interface{}) (list []interface{}) {
-	// Build JSON mergeSet from deltaSet, and build list of deleted IDs
 	var deletedIds []string
 	var uniqueIds []string
 	var mergeSet []interface{} = nil

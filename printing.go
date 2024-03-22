@@ -1,14 +1,13 @@
-// printing.go
-
 package maz
 
 import (
 	"fmt"
 	"time"
 
-	"github.com/git719/utl"
+	"github.com/queone/utl"
 )
 
+// Prints a status count of all AZ and MG objects that are in Azure, and the local files.
 func PrintCountStatus(z Bundle) {
 	fmt.Printf("Note: Counting some Azure resources can take a long time\n")
 	fmt.Printf("%-36s%10s%10s\n", "OBJECTS", "LOCAL", "AZURE")
@@ -52,8 +51,8 @@ func PrintCountStatus(z Bundle) {
 	fmt.Print(status)
 }
 
+// Prints this single object of type 't' tersely, with minimal attributes.
 func PrintTersely(t string, object interface{}) {
-	// Print this single object of type 't' tersely (minimal attributes)
 	x := object.(map[string]interface{}) // Assert as JSON object
 	switch t {
 	case "d":
@@ -92,6 +91,7 @@ func PrintTersely(t string, object interface{}) {
 	}
 }
 
+// Prints object by given UUID
 func PrintObjectByUuid(uuid string, z Bundle) {
 	list := FindAzObjectsByUuid(uuid, z) // Search for this UUID under all maz objects types
 	for i, obj := range list {
@@ -114,6 +114,7 @@ func PrintObjectByUuid(uuid string, z Bundle) {
 	}
 }
 
+// Generic print object function
 func PrintObject(t string, x map[string]interface{}, z Bundle) {
 	switch t {
 	case "d":
@@ -137,8 +138,8 @@ func PrintObject(t string, x map[string]interface{}, z Bundle) {
 	}
 }
 
+// Prints appRoleAssignments for given service principal (SP)
 func PrintAppRoleAssignmentsSp(roleNameMap map[string]string, appRoleAssignments []interface{}) {
-	// Print appRoleAssignments for SP
 	if len(appRoleAssignments) < 1 {
 		return
 	}
@@ -163,8 +164,8 @@ func PrintAppRoleAssignmentsSp(roleNameMap map[string]string, appRoleAssignments
 	}
 }
 
+// Prints appRoleAssignments for other types of objects (Users and Groups)
 func PrintAppRoleAssignmentsOthers(appRoleAssignments []interface{}, z Bundle) {
-	// Print appRoleAssignments for others (Users and Groups)
 	if len(appRoleAssignments) < 1 {
 		return
 	}
@@ -198,9 +199,6 @@ func PrintAppRoleAssignmentsOthers(appRoleAssignments []interface{}, z Bundle) {
 				rId := utl.Str(a["id"])
 				displayName := utl.Str(a["displayName"])
 				roleNameMap[rId] = displayName // Update growing list of roleNameMap
-				if len(displayName) >= 60 {
-					displayName = utl.FirstN(displayName, 57) + "..."
-				}
 			}
 		}
 		roleName := roleNameMap[appRoleId] // Reference roleNameMap now
@@ -212,8 +210,8 @@ func PrintAppRoleAssignmentsOthers(appRoleAssignments []interface{}, z Bundle) {
 	}
 }
 
+// Prints all memberOf entries
 func PrintMemberOfs(t string, memberOf []interface{}) {
-	// Print all memberOf entries
 	if len(memberOf) < 1 {
 		return
 	}
@@ -228,8 +226,8 @@ func PrintMemberOfs(t string, memberOf []interface{}) {
 	}
 }
 
+// Prints secret list stanza for App and SP objects
 func PrintSecretList(secretsList []interface{}) {
-	// Print secret list stanza for App and SP objects
 	if len(secretsList) < 1 {
 		return
 	}
@@ -269,8 +267,8 @@ func PrintSecretList(secretsList []interface{}) {
 	}
 }
 
+// Prints certificate list stanza for Apps and Sps
 func PrintCertificateList(certificates []interface{}) {
-	// Print password credentials stanza for Apps and Sps
 	if len(certificates) < 1 {
 		return
 	}
@@ -313,8 +311,8 @@ func PrintCertificateList(certificates []interface{}) {
 	// https://learn.microsoft.com/en-us/graph/api/application-addkey
 }
 
+// Print owners stanza for Apps and Sps
 func PrintOwners(owners []interface{}) {
-	// Print owners stanza for Apps and Sps
 	if len(owners) < 1 {
 		return
 	}
@@ -338,8 +336,8 @@ func PrintOwners(owners []interface{}) {
 	}
 }
 
+// Prints string map in YAML-like format, sorted, and in color
 func PrintStringMapColor(strMap map[string]string) {
-	// Print string map in YAML-like format, sorted, and in color
 	sortedKeys := utl.SortMapStringKeys(strMap)
 	for _, k := range sortedKeys {
 		v := strMap[k]
@@ -348,8 +346,8 @@ func PrintStringMapColor(strMap map[string]string) {
 	}
 }
 
+// Prints all objects that match on given specifier
 func PrintMatching(printFormat, t, specifier string, z Bundle) {
-	// Print objects matching on specifier
 	if utl.ValidUuid(specifier) {
 		// If valid UUID string, get object direct from Azure
 		x := GetAzObjectByUuid(t, specifier, z)
@@ -385,5 +383,4 @@ func PrintMatching(printFormat, t, specifier string, z Bundle) {
 			}
 		}
 	}
-	return
 }

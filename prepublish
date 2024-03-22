@@ -14,9 +14,10 @@ esac
 printf "==> See publishing => https://go.dev/doc/modules/publishing (Not running list cmd to make mod fully available.)\n"
 printf "==> And versioning => https://go.dev/doc/modules/version-numbers\n"
 
-go fmt
 go mod tidy
+go fmt
 go test ./...
+staticcheck ./...
 
 printf "\n==> grep replace go.mod:\n$Red$(grep replace go.mod)$Rst"
 printf "\n==> Last 5 tag versions:\n"

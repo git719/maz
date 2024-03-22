@@ -1,16 +1,14 @@
-// mg_roles.go
-// MS Graph directory roles
-
 package maz
 
 import (
 	"fmt"
-	"github.com/git719/utl"
 	"path/filepath"
+
+	"github.com/queone/utl"
 )
 
+// Prints Azure AD role definition object in YAML-like format
 func PrintAdRole(x map[string]interface{}, z Bundle) {
-	// Print Azure AD role definition object in YAML-like format
 	if x == nil {
 		return
 	}
@@ -86,8 +84,8 @@ func PrintAdRole(x map[string]interface{}, z Bundle) {
 	}
 }
 
+// Returns count of Azure AD directory role entries in local cache file
 func AdRolesCountLocal(z Bundle) int64 {
-	// Return count of Azure AD directory role entries in local cache file
 	var cachedList []interface{} = nil
 	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_directoryRoles."+ConstCacheFileExtension)
 	if utl.FileUsable(cacheFile) {
@@ -100,8 +98,8 @@ func AdRolesCountLocal(z Bundle) int64 {
 	return 0
 }
 
+// Returns count of Azure AD directory role entries in current tenant
 func AdRolesCountAzure(z Bundle) int64 {
-	// Return count of Azure AD directory role entries in current tenant
 	// Note that endpoint "/v1.0/directoryRoles" is for Activated AD roles, so it wont give us
 	// the full count of all AD roles. Also, the actual role definitions, with what permissions
 	// each has is at endpoint "/v1.0/roleManagement/directory/roleDefinitions", but because
@@ -117,9 +115,8 @@ func AdRolesCountAzure(z Bundle) int64 {
 	return 0
 }
 
+// Gets all AD roles matching on 'filter'. Returns entire list if filter is empty ""
 func GetMatchingAdRoles(filter string, force bool, z Bundle) (list []interface{}) {
-	// Get all applications matching on 'filter'; return entire list if filter is empty ""
-
 	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_directoryRoles."+ConstCacheFileExtension)
 	cacheFileAge := utl.FileAge(cacheFile)
 	if utl.InternetIsAvailable() && (force || cacheFileAge == 0 || cacheFileAge > ConstMgCacheFileAgePeriod) {
@@ -149,9 +146,8 @@ func GetMatchingAdRoles(filter string, force bool, z Bundle) (list []interface{}
 	return matchingList
 }
 
+// Gets all directory role definitions from Azure and sync to local cache. Shows progress if verbose = true
 func GetAzAdRoles(z Bundle, verbose bool) (list []interface{}) {
-	// Get all directory role definitions from Azure and sync to local cache; show progress if verbose = true
-
 	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_directoryRoles."+ConstCacheFileExtension)
 
 	// There's no API delta options for this object (too short a list?), so just one call
@@ -166,8 +162,8 @@ func GetAzAdRoles(z Bundle, verbose bool) (list []interface{}) {
 	return list
 }
 
+// Gets Azure AD role definition by Object UUID, with all attributes
 func GetAzAdRoleByUuid(uuid string, z Bundle) map[string]interface{} {
-	// Get Azure AD role definition by Object UUID, with all attributes
 	// Note that role definitions are under a different area, until they are activated
 	baseUrl := ConstMgUrl + "/beta/roleManagement/directory/roleDefinitions"
 	selection := "?$select=*"

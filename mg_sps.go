@@ -1,6 +1,3 @@
-// mg_sps.go
-// MS Graph service principals
-
 package maz
 
 import (
@@ -9,11 +6,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/git719/utl"
+	"github.com/queone/utl"
 )
 
+// Prints service principal object in YAML-like format
 func PrintSp(x map[string]interface{}, z Bundle) {
-	// Print service principal object in YAML-like format
 	if x == nil {
 		return
 	}
@@ -175,6 +172,7 @@ func PrintSp(x map[string]interface{}, z Bundle) {
 	}
 }
 
+// Creates/adds a secret to the given SP
 func AddSpSecret(uuid, displayName, expiry string, z Bundle) {
 	if !utl.ValidUuid(uuid) {
 		utl.Die("Invalid SP UUID.\n")
@@ -221,6 +219,7 @@ func AddSpSecret(uuid, displayName, expiry string, z Bundle) {
 	}
 }
 
+// Removes a secret from the given SP
 func RemoveSpSecret(uuid, keyId string, z Bundle) {
 	if !utl.ValidUuid(uuid) {
 		utl.Die("SP UUID is not a valid UUID.\n")
@@ -288,8 +287,8 @@ func RemoveSpSecret(uuid, keyId string, z Bundle) {
 	}
 }
 
+// Retrieves counts of all SPs in local cache, 2 values: Native ones to this tenant, and all others
 func SpsCountLocal(z Bundle) (native, microsoft int64) {
-	// Retrieves counts of all SPs in local cache, 2 values: Native ones to this tenant, and all others
 	var nativeList []interface{} = nil
 	var microsoftList []interface{} = nil
 	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_servicePrincipals."+ConstCacheFileExtension)
@@ -311,9 +310,8 @@ func SpsCountLocal(z Bundle) (native, microsoft int64) {
 	return 0, 0
 }
 
+// Retrieves counts of all SPs in this Azure tenant, 2 values: Native ones to this tenant, and all others
 func SpsCountAzure(z Bundle) (native, microsoft int64) {
-	// Retrieves counts of all SPs in this Azure tenant, 2 values: Native ones to this tenant, and all others
-
 	// First, get total number of SPs in tenant
 	var all int64 = 0
 	z.MgHeaders["ConsistencyLevel"] = "eventual"
@@ -343,8 +341,8 @@ func SpsCountAzure(z Bundle) (native, microsoft int64) {
 	return native, microsoft
 }
 
+// Returns an id:name map of all service principals
 func GetIdMapSps(z Bundle) (nameMap map[string]string) {
-	// Return service principals id:name map
 	nameMap = make(map[string]string)
 	sps := GetMatchingSps("", false, z) // false = don't force a call to Azure
 	// By not forcing an Azure call we're opting for cache speed over id:name map accuracy
@@ -357,9 +355,8 @@ func GetIdMapSps(z Bundle) (nameMap map[string]string) {
 	return nameMap
 }
 
+// Gets all service principals matching on 'filter'. Return entire list if filter is empty ""
 func GetMatchingSps(filter string, force bool, z Bundle) (list []interface{}) {
-	// Get all service principals matching on 'filter'; return entire list if filter is empty ""
-
 	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_servicePrincipals."+ConstCacheFileExtension)
 	cacheFileAge := utl.FileAge(cacheFile)
 	if utl.InternetIsAvailable() && (force || cacheFileAge == 0 || cacheFileAge > ConstMgCacheFileAgePeriod) {
@@ -389,9 +386,8 @@ func GetMatchingSps(filter string, force bool, z Bundle) (list []interface{}) {
 	return matchingList
 }
 
+// Gets all service principals from Azure and sync to local cache. Shows progress if verbose = true
 func GetAzSps(z Bundle, verbose bool) (list []interface{}) {
-	// Get all service principals from Azure and sync to local cache; show progress if verbose = true
-
 	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_servicePrincipals."+ConstCacheFileExtension)
 	deltaLinkFile := filepath.Join(z.ConfDir, z.TenantId+"_servicePrincipals_deltaLink."+ConstCacheFileExtension)
 
@@ -428,8 +424,8 @@ func GetAzSps(z Bundle, verbose bool) (list []interface{}) {
 	return list
 }
 
+// Gets service principal by its Object UUID or by its appId, with all attributes
 func GetAzSpByUuid(uuid string, z Bundle) map[string]interface{} {
-	// Get Azure AD service principal by its Object UUID or by its appId, with all attributes
 	baseUrl := ConstMgUrl + "/beta/servicePrincipals"
 	selection := "?$select=*"
 	url := baseUrl + "/" + uuid + selection // First search is for direct Object Id

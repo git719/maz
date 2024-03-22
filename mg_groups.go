@@ -1,16 +1,14 @@
-// mg_groups.go
-// MS Graph groups
-
 package maz
 
 import (
 	"fmt"
-	"github.com/git719/utl"
 	"path/filepath"
+
+	"github.com/queone/utl"
 )
 
+// Print group object in YAML-like format
 func PrintGroup(x map[string]interface{}, z Bundle) {
-	// Print group object in YAML-like format
 	if x == nil {
 		return
 	}
@@ -76,8 +74,8 @@ func PrintGroup(x map[string]interface{}, z Bundle) {
 	}
 }
 
+// Returns number of group object entries in local cache file
 func GroupsCountLocal(z Bundle) int64 {
-	// Return number of entries in local cache file
 	var cachedList []interface{} = nil
 	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_groups."+ConstCacheFileExtension)
 	if utl.FileUsable(cacheFile) {
@@ -90,8 +88,8 @@ func GroupsCountLocal(z Bundle) int64 {
 	return 0
 }
 
+// Returns number of group object entries in Azure tenant
 func GroupsCountAzure(z Bundle) int64 {
-	// Return number of entries in Azure tenant
 	z.MgHeaders["ConsistencyLevel"] = "eventual"
 	url := ConstMgUrl + "/v1.0/groups/$count"
 	r, _, _ := ApiGet(url, z, nil)
@@ -102,8 +100,8 @@ func GroupsCountAzure(z Bundle) int64 {
 	return 0
 }
 
+// Returns id:name map of all groups
 func GetIdMapGroups(z Bundle) (nameMap map[string]string) {
-	// Return groups id:name map
 	nameMap = make(map[string]string)
 	groups := GetMatchingGroups("", false, z) // false = don't force a call to Azure
 	// By not forcing an Azure call we're opting for cache speed over id:name map accuracy
@@ -116,9 +114,8 @@ func GetIdMapGroups(z Bundle) (nameMap map[string]string) {
 	return nameMap
 }
 
+// Gets all groups matching on 'filter'. Returns entire list if filter is empty ""
 func GetMatchingGroups(filter string, force bool, z Bundle) (list []interface{}) {
-	// Get all groups matching on 'filter'; return entire list if filter is empty ""
-
 	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_groups."+ConstCacheFileExtension)
 	cacheFileAge := utl.FileAge(cacheFile)
 	if utl.InternetIsAvailable() && (force || cacheFileAge == 0 || cacheFileAge > ConstMgCacheFileAgePeriod) {
@@ -148,9 +145,8 @@ func GetMatchingGroups(filter string, force bool, z Bundle) (list []interface{})
 	return matchingList
 }
 
+// Gets all groups from Azure and sync to local cache. Shows progress if verbose = true
 func GetAzGroups(z Bundle, verbose bool) (list []interface{}) {
-	// Get all groups from Azure and sync to local cache; show progress if verbose = true
-
 	cacheFile := filepath.Join(z.ConfDir, z.TenantId+"_groups."+ConstCacheFileExtension)
 	deltaLinkFile := filepath.Join(z.ConfDir, z.TenantId+"_groups_deltaLink."+ConstCacheFileExtension)
 
@@ -187,8 +183,8 @@ func GetAzGroups(z Bundle, verbose bool) (list []interface{}) {
 	return list
 }
 
+// Gets Azure AD group by Object UUID, with all attributes
 func GetAzGroupByUuid(uuid string, z Bundle) map[string]interface{} {
-	// Get Azure AD group by Object UUID, with all attributes
 	baseUrl := ConstMgUrl + "/beta/groups"
 	selection := "?$select=*"
 	url := baseUrl + "/" + uuid + selection
@@ -196,8 +192,8 @@ func GetAzGroupByUuid(uuid string, z Bundle) map[string]interface{} {
 	return r
 }
 
+// Lists all cached Privileged Access Groups (PAGs)
 func PrintPags(z Bundle) {
-	// List all cached Privileged Access Groups
 	groups := GetMatchingGroups("", false, z) // Get all groups, false = don't hit Azure
 	for _, i := range groups {
 		x := i.(map[string]interface{})
